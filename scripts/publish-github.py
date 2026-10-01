@@ -3,7 +3,7 @@
 Creates new dedicated repositories; refuses unrelated existing repositories. No database operations.
 Private full source -> review branch/draft PR. Public repo -> launch artifact ONLY.
 """
-import os,json,base64,re,time,urllib.request,urllib.error,concurrent.futures
+import os,json,base64,re,time,hashlib,urllib.request,urllib.error,concurrent.futures
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 REPORT=ROOT/'release/deployment.json'
@@ -66,7 +66,7 @@ def upload_tree(repo,files,base_tree=None):
  return api('POST',f"/repos/{repo['full_name']}/git/trees",data)['sha']
 
 def commit_and_reference(repo,branch,tree,parent,message):
- data={'message':message,'tree':tree,'parents':[parent] if parent else [],'author':{'name':'PETAVU Workspace','email':'petavu-workspace@example.invalid'}}
+ data={'message':message,'tree':tree,'parents':[parent] if parent else [],'author':{'name':'PETAVU Workspace','email':'petavu-workspace@example.invalid'},'committer':{'name':'PETAVU Workspace','email':'petavu-workspace@example.invalid'}}
  commit=api('POST',f"/repos/{repo['full_name']}/git/commits",data)
  if branch_head(repo,branch):api('PATCH',f"/repos/{repo['full_name']}/git/refs/heads/{branch}",{'sha':commit['sha'],'force':False})
  else:api('POST',f"/repos/{repo['full_name']}/git/refs",{'ref':'refs/heads/'+branch,'sha':commit['sha']})
@@ -124,7 +124,7 @@ try:
    req=urllib.request.Request(url,headers={'User-Agent':'PETAVU-anonymous-launch-verification'})
    with urllib.request.urlopen(req,timeout=20) as r:
     html=r.read().decode('utf-8','replace');status=r.status
-   if status==200 and 'PETAVU' in html and 'assets/' in html:
+   if status==200 and hashlib.sha256(html.encode('utf-8')).hexdigest()==hashlib.sha256((artifact/'index.html').read_bytes()).hexdigest():
     state.update({'pages_ready':True,'anonymous_http_status':200,'status':'published'});save();print('PAGES_READY '+url,flush=True);break
   except (urllib.error.HTTPError,urllib.error.URLError,TimeoutError):pass
   if attempt%6==0:print('WAITING_FOR_PAGES_BUILD '+str(attempt),flush=True)

@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 import {brotliCompressSync,gzipSync,constants} from 'node:zlib';
 const root=await realpath(process.env.STATIC_DIR||path.resolve('dist/public'));
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2','.txt':'text/plain; charset=utf-8'};
-const allowed=u=>/^\/assets\/[A-Za-z0-9_-]+\.(?:js|css)$/.test(u)||/^\/fonts\/(?:Vazirmatn|Manrope)(?:\.woff2|-LICENSE\.txt)$/.test(u)||/^\/brand\/petavu-(?:mark|logo)\.svg$/.test(u)||u==='/images/petavu-ecosystem.webp';
+const allowed=u=>u==='/THIRD-PARTY-NOTICES.txt'||/^\/assets\/[A-Za-z0-9_-]+\.(?:js|css)$/.test(u)||/^\/fonts\/(?:Vazirmatn|Manrope)(?:\.woff2|-LICENSE\.txt)$/.test(u)||/^\/brand\/petavu-(?:mark|logo)\.svg$/.test(u)||u==='/images/petavu-ecosystem.webp';
 const cache=new Map();
 const server=http.createServer(async(req,res)=>{
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');
