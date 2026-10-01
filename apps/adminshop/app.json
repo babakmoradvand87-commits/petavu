@@ -1,0 +1,14 @@
+{
+  "name": "adminshop",
+  "title_fa": "مدیریت ویترین",
+  "hostname_prefix": "adminshop",
+  "build_command": "npm run build:adminshop",
+  "artifact": "dist/adminshop",
+  "session_cookie": "__Host-petavu-adminshop",
+  "auth_audience": "petavu-adminshop",
+  "required_capabilities": [
+    "shop.manage"
+  ],
+  "deploy_independently": true,
+  "backend_implemented": false
+}

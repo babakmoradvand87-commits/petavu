@@ -1,0 +1,21 @@
+{
+  "status": "design_only_backend_not_implemented",
+  "api_version": "v1",
+  "authentication": {"browser": "host-only HttpOnly session via BFF", "admin": "staff capability + MFA + step-up for sensitive changes"},
+  "endpoints": [
+    {"method":"GET","path":"/v1/content/pages/:key","scope":"public","service":"web"},
+    {"method":"POST","path":"/v1/auth/start","scope":"unauthenticated-with-rate-limit","service":"per-app-bff"},
+    {"method":"POST","path":"/v1/auth/callback","scope":"validated-state-pkce","service":"per-app-bff"},
+    {"method":"POST","path":"/v1/auth/logout","scope":"session+csrf","service":"per-app-bff"},
+    {"method":"GET","path":"/v1/organizations/me","scope":"member","service":"panel"},
+    {"method":"PATCH","path":"/v1/organizations/:id/profile","scope":"owner-or-manager-of-this-organization","service":"panel"},
+    {"method":"POST","path":"/v1/admin/organizations/:id/review","scope":"members.review+step-up+csrf","service":"adminpanel"},
+    {"method":"POST","path":"/v1/admin/content/drafts","scope":"site.manage+csrf","service":"adminpanel"},
+    {"method":"GET","path":"/v1/catalog","scope":"public-approved-b2b-listings","service":"shop"},
+    {"method":"POST","path":"/v1/admin/catalog/reviews","scope":"shop.manage+step-up+csrf","service":"adminshop"}
+  ],
+  "error_contract":{"fields":["code","message","request_id"],"exclude":["stack_trace","credential","database_query","private_record"]},
+  "pagination":{"strategy":"keyset","default_limit":20,"maximum_limit":100},
+  "changes_require_versioned_contract":true,
+  "no_orders_or_payments_in_initial_scope":true
+}

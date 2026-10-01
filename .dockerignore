@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.env
+.env.*
+secrets
+credentials
+backups
+release
+assets/preview-*.png
+test-results
+playwright-report
+*.dump
+*.backup

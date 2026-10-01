@@ -1,0 +1,14 @@
+{
+  "name": "shop",
+  "title_fa": "ویترین B2B",
+  "hostname_prefix": "shop",
+  "build_command": "npm run build:shop",
+  "artifact": "dist/shop",
+  "session_cookie": "__Host-petavu-shop",
+  "auth_audience": "petavu-shop",
+  "required_capabilities": [
+    "public.catalog.read"
+  ],
+  "deploy_independently": true,
+  "backend_implemented": false
+}

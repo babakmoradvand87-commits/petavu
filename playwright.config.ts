@@ -1,0 +1,3 @@
+import {defineConfig} from '@playwright/test';
+const managed=!!process.env.CI||process.env.TEST_WEB_SERVER==='1';const port=5190;
+export default defineConfig({testDir:'./tests',testMatch:'*.spec.ts',fullyParallel:false,workers:1,timeout:60000,reporter:[['list'],['json',{outputFile:'tests/browser-results.json'}]],use:{baseURL:process.env.TEST_BASE_URL||`http://127.0.0.1:${port}`,headless:true,launchOptions:{args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']}},webServer:managed?{command:`npx vite --host 0.0.0.0 --port ${port}`,url:`http://127.0.0.1:${port}`,reuseExistingServer:false,timeout:30000}:undefined,projects:[{name:'chromium',use:{browserName:'chromium'}}]});

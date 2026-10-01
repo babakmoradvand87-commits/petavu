@@ -1,0 +1,14 @@
+{
+  "name": "web",
+  "title_fa": "سایت معرفی",
+  "hostname_prefix": "root",
+  "build_command": "npm run build:web",
+  "artifact": "dist/web",
+  "session_cookie": "__Host-petavu-web",
+  "auth_audience": "petavu-web",
+  "required_capabilities": [
+    "public.content.read"
+  ],
+  "deploy_independently": true,
+  "backend_implemented": false
+}

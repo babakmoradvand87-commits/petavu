@@ -1,0 +1,16 @@
+{
+  "name": "adminpanel",
+  "title_fa": "مدیریت سایت و اعضا",
+  "hostname_prefix": "adminpanel",
+  "build_command": "npm run build:adminpanel",
+  "artifact": "dist/adminpanel",
+  "session_cookie": "__Host-petavu-adminpanel",
+  "auth_audience": "petavu-adminpanel",
+  "required_capabilities": [
+    "site.manage",
+    "members.review",
+    "security.review"
+  ],
+  "deploy_independently": true,
+  "backend_implemented": false
+}
