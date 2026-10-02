@@ -104,7 +104,12 @@ async function openPglite(dataDir, options) {
       try {
         return await fn(engine);
       } finally {
-        await db.exec('reset role');
+        /*
+         * اگر بدنه با خطای SQL افتاده باشد، تراکنش «لغوشده» است و `reset role`
+         * خودش خطای تازه می‌سازد — که خطای اصلی را می‌پوشاند. بازگشت تراکنش،
+         * نقش را هم برمی‌گرداند؛ پس شکست این پاک‌سازی را نادیده می‌گیریم.
+         */
+        await db.exec('reset role').catch(() => {});
       }
     },
     /** ست کردن زمینهٔ درخواست؛ `local=false` برای دوام در کل اتصال (تست). */

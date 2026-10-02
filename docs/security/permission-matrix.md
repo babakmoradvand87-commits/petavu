@@ -3,9 +3,9 @@
 این پرونده **تولیدشده** است (`npm run audit:security`). منبع حقیقت، پایگاه‌داده است؛
 ویرایش دستی این پرونده بی‌اثر است و در اجرای بعدی بازنویسی می‌شود (§103).
 
-- زمان تولید (UTC): 2026-10-02 12:47
+- زمان تولید (UTC): 2026-10-02 13:14
 - جدول‌های دامنه: 88 — همه با RLS فعال: بله
-- سیاست‌ها: 270
+- سیاست‌ها: 272
 - مجوزها: 61 — دامنه‌ای: 41، پلتفرمی: 20
 
 ## نقش‌های کسب‌وکار
@@ -112,11 +112,11 @@
 | `app.content_category` | روشن | 4 |
 | `app.content_review` | روشن | 3 |
 | `app.invitation` | روشن | 2 |
-| `app.membership` | روشن | 5 |
+| `app.membership` | روشن | 6 |
 | `app.ownership_transfer` | روشن | 3 |
 | `app.role` | روشن | 3 |
 | `app.role_permission` | روشن | 2 |
-| `auth.app_user` | روشن | 4 |
+| `auth.app_user` | روشن | 5 |
 | `auth.credential` | روشن | 1 |
 | `auth.device` | روشن | 4 |
 | `auth.identity` | روشن | 3 |
@@ -244,6 +244,7 @@
 | `app.invitation` | `invitation_reader` | SELECT | pv_reader |
 | `app.membership` | `membership_bootstrap_owner` | INSERT | pv_app |
 | `app.membership` | `membership_manager_all` | ALL | pv_app |
+| `app.membership` | `membership_member_read` | SELECT | pv_app, pv_worker |
 | `app.membership` | `membership_reader` | SELECT | pv_reader |
 | `app.membership` | `membership_self_leave` | UPDATE | pv_app |
 | `app.membership` | `membership_self_select` | SELECT | pv_app |
@@ -255,6 +256,7 @@
 | `app.role` | `role_write_member` | ALL | pv_app |
 | `app.role_permission` | `role_permission_member` | ALL | pv_app |
 | `app.role_permission` | `role_permission_read` | SELECT | pv_app, pv_reader |
+| `auth.app_user` | `app_user_directory_read` | SELECT | pv_app, pv_worker |
 | `auth.app_user` | `app_user_reader` | SELECT | pv_reader |
 | `auth.app_user` | `app_user_self_select` | SELECT | pv_app |
 | `auth.app_user` | `app_user_self_update` | UPDATE | pv_app |

@@ -142,7 +142,13 @@ function wrapPool(pool: PgPoolLike, config: DatabaseConfig): SqlClient {
       try {
         return await fn(makeClient(runner));
       } finally {
-        await runner.query({ text: 'reset role' });
+        /*
+         * در تراکنش لغوشده، `reset role` خطای 25P02 می‌سازد و بدین‌سان خطای
+         * واقعی را می‌پوشاند (کاربر به‌جای «تعارض نسخه» و «مجوز ندارید»،
+         * پیام می‌گیرد «تراکنش لغو شده»). بازگشت تراکنش نقش را برمی‌گرداند،
+         * پس پاک‌سازی شکست‌خورده را نادیده می‌گیریم.
+         */
+        await runner.query({ text: 'reset role' }).catch(() => {});
       }
     },
     async close() {
@@ -204,6 +210,25 @@ export function mapDatabaseError(error: unknown, options: { statementTimeoutMs?:
     case '57P01':
     case '57P03':
       return new AppError('database_unavailable', { details: { reason: 'shutdown_or_starting' }, cause: error });
+    /*
+     * `55000` همان `object_not_in_prerequisite_state` است: توابع دامنه با آن
+     * می‌گویند «این گذر از این وضعیت مجاز نیست». اگر نگاشت نشود، کاربر به‌جای
+     * «وضعیت اجازه نمی‌دهد» (412)، «خطای داخلی» می‌گیرد — و همین اتفاق در تست
+     * واقعی افتاد: گذر `draft → published` خطای 55000 داد.
+     */
+    case '55000':
+      return new AppError('precondition_failed', { details: { reason: 'prerequisite_state' }, cause: error });
+    /*
+     * خطاهای «ورودی بد» هم باید به کاربر برگردند، نه اینکه «خطای داخلی»
+     * شوند: متن نامعتبر، عدد بیرون دامنه، شناسهٔ uuid بدشکل.
+     */
+    case '22P02':
+    case '22003':
+    case '22023':
+    case '22001':
+      return new AppError('validation_failed', { details: { reason: 'invalid_input' }, cause: error });
+    case '23P01':
+      return new AppError('conflict', { details: { reason: 'exclusion_violation' }, cause: error });
     case 'P0002':
       return new AppError('not_found', { details: { reason: 'no_data_found' }, cause: error });
     default:
