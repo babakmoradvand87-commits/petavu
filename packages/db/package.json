@@ -1,0 +1,30 @@
+{
+  "name": "@petavu/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@petavu/shared": "0.1.0"
+  },
+  "description": "لایهٔ دسترسی به داده: قرارداد کلاینت، زمینهٔ درخواست، تراکنش، صفحه‌بندی نشانگری، کنترل نسخه، نگهبان مستأجر، رخداد و حسابرسی",
+  "peerDependencies": {
+    "pg": ">=8"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    }
+  }
+}
