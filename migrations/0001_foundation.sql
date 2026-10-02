@@ -139,8 +139,17 @@ returns trigger
 language plpgsql
 as $$
 begin
-  new.updated_at := now();
-  if to_jsonb(new) ? 'version' then
+  /*
+   * تحمل‌پذیر نسبت به شکل جدول: نه هر جدولی `updated_at` دارد (مثل
+   * `app.ownership_transfer` که فقط مهرهای رویدادی دارد) و نه هر جدولی
+   * `version`. پیش‌تر این تابع بی‌قید `new.updated_at` را می‌نوشت و روی جدول
+   * بدون آن ستون با خطای «record new has no field» می‌افتاد — یعنی ماشه‌ای
+   * که برای «جلو بردن نسخه» گذاشته شده بود، هر به‌روزرسانی را می‌شکست.
+   */
+  if to_jsonb(new) ? 'updated_at' then
+    new.updated_at := now();
+  end if;
+  if to_jsonb(new) ? 'version' and to_jsonb(old) ? 'version' then
     new.version := coalesce(old.version, 0) + 1;
   end if;
   return new;
