@@ -13,6 +13,8 @@
  */
 
 import { createHash } from 'node:crypto';
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 const CAPABILITIES = {
   pglite: {
@@ -53,6 +55,15 @@ export async function openDatabase(options = {}) {
 
 async function openPglite(dataDir, options) {
   const { PGlite } = await import('@electric-sql/pglite');
+  /*
+   * نصب تازه: پوشهٔ داده هنوز نیست.
+   *
+   * موتور تعبیه‌شده خودش پوشه نمی‌سازد و با `ENOENT` می‌افتد؛ روی نصب تازه
+   * این یعنی اولین اجرای `npm run migrate` به‌جای «پایگاه‌داده ساخته شد»،
+   * یک خطای نامفهوم می‌داد. اینجا مسیر ساخته می‌شود تا نصب تازه بی‌دستکاری
+   * کار کند (§187).
+   */
+  if (dataDir) mkdirSync(dataDir, { recursive: true });
   const db = dataDir ? new PGlite({ dataDir }) : new PGlite();
   await db.waitReady;
 

@@ -17,7 +17,9 @@
     "clean": "rm -rf packages/*/dist apps/*/dist *.tsbuildinfo packages/*/*.tsbuildinfo apps/*/*.tsbuildinfo",
     "test": "node --test --test-concurrency=1 tests/",
     "migrate": "node scripts/migrate.mjs",
-    "migrate:status": "node scripts/migrate.mjs --status"
+    "migrate:status": "node scripts/migrate.mjs --status",
+    "seed": "node scripts/seed.mjs",
+    "seed:list": "node scripts/seed.mjs --list"
   },
   "devDependencies": {
     "@types/node": "22.18.9",
