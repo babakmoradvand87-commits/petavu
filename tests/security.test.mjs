@@ -196,7 +196,10 @@ describe('توکن نشست (§11)', () => {
       `pv1.${id}.`,
       `pv1.${id}.short`,
       `pv1.${id}.${secret}.extra`,
-      `pv1.${id}.${secret.replace('-', '+')}`,
+      // نویسهٔ خارج از الفبای base64url — عمداً قطعی، نه وابسته به شانس:
+      // نسخهٔ پیشین این تست، فقط وقتی می‌شکست که راز تصادفی خط تیره داشت.
+      `pv1.${id}.${secret.slice(0, -1)}+`,
+      `pv1.${id}.${secret.slice(0, -1)}=`,
     ];
     for (const bad of cases) assert.equal(parseSessionToken(bad), null, `ورودی: ${bad}`);
     assert.equal(parseSessionToken(`${version}.${id}.${secret}`)?.secret, secret);

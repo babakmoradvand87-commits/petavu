@@ -15,10 +15,14 @@
     "build": "tsc -b",
     "typecheck": "tsc -b --force",
     "clean": "rm -rf packages/*/dist apps/*/dist *.tsbuildinfo packages/*/*.tsbuildinfo apps/*/*.tsbuildinfo",
-    "test": "node --test --test-concurrency=1 tests/"
+    "test": "node --test --test-concurrency=1 tests/",
+    "migrate": "node scripts/migrate.mjs",
+    "migrate:status": "node scripts/migrate.mjs --status"
   },
   "devDependencies": {
     "@types/node": "22.18.9",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "@electric-sql/pglite": "0.3.11",
+    "pg": "8.16.3"
   }
 }
