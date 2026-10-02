@@ -631,8 +631,25 @@ create trigger content_review_append_only
 create policy content_review_reader on app.content_review
   for select to pv_reader using (true);
 
-create policy category_read on ref.category
-  for select to pv_app, pv_public, pv_worker, pv_reader using (true);
+/*
+ * دسته: سراسری (پلتفرم) یا متعلق به یک کسب‌وکار.
+ *
+ * پیش‌تر این سیاست `using (true)` بود؛ یعنی دسته‌های خصوصی یک کسب‌وکار برای
+ * کسب‌وکار دیگر — و حتی برای بی‌نام — خواندنی بود. اکنون سه سیاست جدا:
+ * بی‌نام فقط سراسری‌ها، عضو فقط سراسری‌ها و دسته‌های خودش، گزارش‌گیر همه.
+ */
+create policy category_read_public on ref.category
+  for select to pv_public using (business_id is null);
+
+create policy category_read_app on ref.category
+  for select to pv_app, pv_worker using (
+    business_id is null
+    or app.is_member_of(business_id)
+    or app.current_platform_role() is not null
+  );
+
+create policy category_read_reader on ref.category
+  for select to pv_reader using (true);
 
 create policy category_write on ref.category
   for all to pv_app, pv_worker
@@ -682,7 +699,10 @@ grant select on media.album, media.album_item to pv_worker;
 
 grant select, insert, update, delete on app.content, app.content_block, app.content_category to pv_app;
 grant select, insert on app.content_review to pv_app;
-grant select on app.content, app.content_block, app.content_review, app.content_category to pv_public, pv_reader;
+grant select on app.content, app.content_block, app.content_category to pv_reader;
+-- `app.content_review` یادداشت‌های داخلی بازبینی است؛ نه بی‌نام آن را می‌بیند و نه
+-- عضو عادی. تنها سیاست خواندنش عضویت در محتوای والد است.
+grant select on app.content_block, app.content to pv_public;
 grant select, update on app.content to pv_worker;
 grant select on app.content_block, app.content_review to pv_worker;
 

@@ -20,7 +20,8 @@
     "migrate:status": "node scripts/migrate.mjs --status",
     "seed": "node scripts/seed.mjs",
     "seed:list": "node scripts/seed.mjs --list",
-    "status": "node scripts/status.mjs"
+    "status": "node scripts/status.mjs",
+    "audit:security": "node scripts/audit-security.mjs"
   },
   "devDependencies": {
     "@types/node": "22.18.9",

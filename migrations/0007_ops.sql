@@ -379,6 +379,8 @@ create table ops.webhook_delivery (
 
 comment on table ops.webhook_delivery is 'تلاش‌های تحویل وبهوک؛ با پس‌رفت و بازداری خودکار (§106–108)';
 
+create index webhook_delivery_business_idx on ops.webhook_delivery (business_id, created_at desc) where business_id is not null;
+create index webhook_endpoint_business_idx on ops.webhook_endpoint (business_id) where business_id is not null;
 create unique index webhook_delivery_event_idx on ops.webhook_delivery (endpoint_id, event_id);
 create index webhook_delivery_ready_idx on ops.webhook_delivery (next_attempt_at) where status in ('pending', 'failed');
 create index webhook_delivery_endpoint_idx on ops.webhook_delivery (endpoint_id, created_at desc);

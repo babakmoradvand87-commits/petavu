@@ -375,6 +375,7 @@ create unique index idempotency_scope_key_idx
   on ops.idempotency_key (scope, coalesce(business_id, '00000000-0000-0000-0000-000000000000'::uuid), key);
 
 create index idempotency_expiry_idx on ops.idempotency_key (expires_at);
+create index idempotency_business_idx on ops.idempotency_key (business_id) where business_id is not null;
 
 alter table ops.idempotency_key enable row level security;
 
@@ -455,6 +456,7 @@ comment on table ops.security_event is 'رخدادهای امنیتی و وضع�
 
 create index security_event_time_idx on ops.security_event (occurred_at desc);
 create index security_event_open_idx on ops.security_event (severity, occurred_at desc) where acknowledged_at is null;
+create index security_event_business_idx on ops.security_event (business_id, occurred_at desc) where business_id is not null;
 create index security_event_actor_idx on ops.security_event (actor_id, occurred_at desc) where actor_id is not null;
 
 alter table ops.security_event enable row level security;

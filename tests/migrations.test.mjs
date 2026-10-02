@@ -155,7 +155,13 @@ describe('RLS و ایزوله‌سازی (§14، §54–55)', () => {
       where n.nspname = 'ops' and c.relkind = 'r' and c.relrowsecurity
       group by c.relname
     `);
+    // دو استثنا، هر دو مستند:
+    //   • `ops.migration` دفتر اجرای مهاجرت است؛ زیرساخت، نه دامنه. RLS روی آن
+    //     روشن است تا حتی با گرنت ناخواسته هم ردیفی بیرون نرود، ولی هیچ نقش
+    //     برنامه‌ای به آن دسترسی ندارد، پس سیاست هم ندارد.
+    const INTENTIONALLY_CLOSED = ['migration'];
     for (const row of rows) {
+      if (INTENTIONALLY_CLOSED.includes(String(row.table_name))) continue;
       assert.ok(Number(row.policies) >= 1, `${String(row.table_name)} سیاست ندارد`);
     }
   });

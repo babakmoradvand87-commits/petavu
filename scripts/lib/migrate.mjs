@@ -71,6 +71,14 @@ create table if not exists ops.migration (
   duration_ms integer not null,
   statement_count integer not null
 );
+
+/*
+ * دفتر مهاجرت، «زیرساخت» است نه «دادهٔ دامنه»: هیچ نقش برنامه‌ای روی آن گرنت
+ * ندارد و هیچ سیاستی هم ندارد. اما RLS روی آن روشن می‌شود تا اگر روزی کسی
+ * ناخواسته گرنتی داد، باز هم هیچ ردیفی بیرون نرود — دفاع لایه‌دوم، حتی برای
+ * جدول‌های زیرساختی.
+ */
+alter table ops.migration enable row level security;
 comment on table ops.migration is 'دفتر مهاجرت‌های اجراشده؛ منبع حقیقت نسخهٔ اسکیما (§49–51)';
 `;
 

@@ -602,6 +602,10 @@ create table seo.content_opportunity (
 comment on table seo.content_opportunity is 'فرصت‌های محتوایی کشف‌شده با شواهد و پیشنهاد اقدام (Addendum §50، §55)';
 
 create index content_opportunity_open_idx on seo.content_opportunity (status, priority desc, detected_at desc) where status = 'open';
+create trigger content_opportunity_touch
+  before update on seo.content_opportunity
+  for each row execute function app.touch();
+
 create index content_opportunity_business_idx on seo.content_opportunity (business_id, status) where business_id is not null;
 create index content_opportunity_kind_idx on seo.content_opportunity (kind, status);
 
@@ -725,37 +729,79 @@ alter table seo.content_opportunity enable row level security;
 
 -- تنظیمات، قالب‌ها، کانونیکال، تغییر مسیر: خواندن آزاد (رندر لازم دارد)،
 -- نوشتن با مجوز سئو.
-create policy seo_settings_read on seo.settings
-  for select to pv_app, pv_public, pv_worker, pv_reader using (true);
+-- تنظیمات سئو: سراسری (پلتفرم) یا مختص کسب‌وکار (§103).
+create policy seo_settings_read_public on seo.settings
+  for select to pv_public using (business_id is null);
+
+create policy seo_settings_read_app on seo.settings
+  for select to pv_app, pv_worker using (
+    business_id is null or app.is_member_of(business_id) or app.current_platform_role() is not null
+  );
+
+create policy seo_settings_read_reader on seo.settings
+  for select to pv_reader using (true);
 create policy seo_settings_write on seo.settings
   for all to pv_app, pv_worker
   using ((business_id is not null and app.has_permission(business_id, 'seo.manage')) or app.current_platform_role() is not null)
   with check ((business_id is not null and app.has_permission(business_id, 'seo.manage')) or app.current_platform_role() is not null);
 
-create policy seo_template_read on seo.template
-  for select to pv_app, pv_public, pv_worker, pv_reader using (true);
+create policy seo_template_read_public on seo.template
+  for select to pv_public using (business_id is null);
+
+create policy seo_template_read_app on seo.template
+  for select to pv_app, pv_worker using (
+    business_id is null or app.is_member_of(business_id) or app.current_platform_role() is not null
+  );
+
+create policy seo_template_read_reader on seo.template
+  for select to pv_reader using (true);
 create policy seo_template_write on seo.template
   for all to pv_app, pv_worker
   using ((business_id is not null and app.has_permission(business_id, 'seo.manage')) or app.current_platform_role() is not null)
   with check ((business_id is not null and app.has_permission(business_id, 'seo.manage')) or app.current_platform_role() is not null);
 
-create policy canonical_read on seo.canonical
-  for select to pv_app, pv_public, pv_worker, pv_reader using (true);
+create policy canonical_read_public on seo.canonical
+  for select to pv_public using (business_id is null);
+
+create policy canonical_read_app on seo.canonical
+  for select to pv_app, pv_worker using (
+    business_id is null or app.is_member_of(business_id) or app.current_platform_role() is not null
+  );
+
+create policy canonical_read_reader on seo.canonical
+  for select to pv_reader using (true);
 create policy canonical_write on seo.canonical
   for all to pv_app, pv_worker
   using ((business_id is not null and app.has_permission(business_id, 'seo.manage')) or app.current_platform_role() is not null)
   with check ((business_id is not null and app.has_permission(business_id, 'seo.manage')) or app.current_platform_role() is not null);
 
-create policy redirect_read on seo.redirect
-  for select to pv_app, pv_public, pv_worker, pv_reader using (true);
+/*
+ * تغییر مسیر، تنها جدول سئو است که بی‌نام هم می‌خواند — و عمدی است.
+ *
+ * تغییر مسیر، *نگاشت نشانی عمومی* است: مرور بی‌نام باید پیش از هر احراز هویتی
+ * بتواند `/old-path` را به `/new-path` تبدیل کند. نگه‌داشتنش پشت احراز هویت
+ * یعنی همهٔ لینک‌های قدیمی برای خزنده‌ها و کاربران بی‌نام می‌شکنند.
+ */
+create policy redirect_read_public on seo.redirect
+  for select to pv_public, pv_app, pv_worker using (true);
+
+create policy redirect_read_reader on seo.redirect
+  for select to pv_reader using (true);
 create policy redirect_write on seo.redirect
   for all to pv_app, pv_worker
   using ((business_id is not null and app.has_permission(business_id, 'seo.redirect.manage')) or app.current_platform_role() is not null)
   with check ((business_id is not null and app.has_permission(business_id, 'seo.redirect.manage')) or app.current_platform_role() is not null);
 
 -- متادیتا: نوشتن با مجوز سئو؛ خواندن برای رندر.
-create policy seo_metadata_read on seo.metadata
-  for select to pv_app, pv_public, pv_worker, pv_reader using (true);
+-- فرادادهٔ سئو: حالت انتشار دارد، پس بی‌نام از این جدول نمی‌خواند. مسیر عمومی
+-- از تابع `seo.metadata_for_public` می‌گذرد که وضعیت انتشار را می‌سنجد.
+create policy seo_metadata_read_app on seo.metadata
+  for select to pv_app, pv_worker using (
+    business_id is null or app.is_member_of(business_id) or app.current_platform_role() is not null
+  );
+
+create policy seo_metadata_read_reader on seo.metadata
+  for select to pv_reader using (true);
 create policy seo_metadata_write on seo.metadata
   for all to pv_app, pv_worker
   using ((business_id is not null and app.has_permission(business_id, 'seo.manage')) or app.current_platform_role() is not null)
@@ -768,8 +814,23 @@ create policy structured_data_write on seo.structured_data
   using (app.current_platform_role() is not null)
   with check (app.current_platform_role() is not null);
 
-create policy sitemap_read on seo.sitemap
-  for select to pv_app, pv_public, pv_worker, pv_reader using (true);
+/*
+ * نقشهٔ سایت: بی‌نام فقط نقشه‌های سراسری پلتفرم را می‌بیند.
+ *
+ * نقشهٔ هر کسب‌وکار، *وضعیت ساخت* داخلی است (شمار نشانی، زمان ساخت، خطا) و
+ * پیش از انتشار در خط لوله اعتبارسنجی می‌شود؛ پس فقط اعضای همان کسب‌وکار
+ * (و کارکنان پلتفرم) آن را می‌بینند.
+ */
+create policy sitemap_read_public on seo.sitemap
+  for select to pv_public using (business_id is null);
+
+create policy sitemap_read_app on seo.sitemap
+  for select to pv_app, pv_worker using (
+    business_id is null or app.is_member_of(business_id) or app.current_platform_role() is not null
+  );
+
+create policy sitemap_read_reader on seo.sitemap
+  for select to pv_reader using (true);
 create policy sitemap_write on seo.sitemap
   for all to pv_app, pv_worker
   using (business_id is null or app.has_permission(business_id, 'seo.manage') or app.current_platform_role() is not null)
@@ -777,8 +838,13 @@ create policy sitemap_write on seo.sitemap
 
 create policy indexing_event_insert on seo.indexing_event
   for insert to pv_app, pv_worker with check (true);
-create policy indexing_event_read on seo.indexing_event
-  for select to pv_app, pv_worker, pv_reader using (app.current_platform_role() is not null or true);
+-- پیش‌تر این سیاست با `or true` نوشته شده بود؛ یعنی قید پلتفرمی هیچ اثری نداشت
+-- و شرط، همیشه درست بود. حالا واقعاً تفکیک می‌کند.
+create policy indexing_event_read_app on seo.indexing_event
+  for select to pv_app, pv_worker using (app.current_platform_role() is not null);
+
+create policy indexing_event_read_reader on seo.indexing_event
+  for select to pv_reader using (true);
 
 -- موضوع، کلیدواژه، موجودیت: دادهٔ برنامه‌ریزی محتوا؛ کسب‌وکاری یا پلتفرمی.
 create policy topic_read on seo.topic
@@ -832,8 +898,16 @@ create policy entity_mention_write on seo.entity_mention
     case when entity_kind = 'business' then entity_ref_id else null end
   ));
 
-create policy internal_link_read on seo.internal_link
-  for select to pv_app, pv_public, pv_worker, pv_reader using (true);
+create policy internal_link_read_public on seo.internal_link
+  for select to pv_public using (business_id is null);
+
+create policy internal_link_read_app on seo.internal_link
+  for select to pv_app, pv_worker using (
+    business_id is null or app.is_member_of(business_id) or app.current_platform_role() is not null
+  );
+
+create policy internal_link_read_reader on seo.internal_link
+  for select to pv_reader using (true);
 create policy internal_link_write on seo.internal_link
   for all to pv_app, pv_worker
   using ((business_id is not null and app.has_permission(business_id, 'seo.manage')) or app.current_platform_role() is not null)
@@ -889,3 +963,78 @@ grant execute on function seo.pick_template(text, text, uuid) to pv_app, pv_work
 grant execute on function seo.match_redirect(text, uuid) to pv_app, pv_public, pv_worker;
 grant execute on function seo.find_orphans(uuid, integer) to pv_app, pv_worker;
 grant execute on function seo.redirect_chain_issue(text, integer) to pv_app, pv_worker;
+
+
+-- ------------------------------------------------------------------ مسیر عمومی سئو
+/**
+ * فرادادهٔ سئو برای *نمایش عمومی*.
+ *
+ * چرا تابع، و نه سیاست روی جدول: بی‌نام نباید فرادادهٔ محتوای منتشرنشده را
+ * ببیند، و «منتشرشده بودن» در جدول فراداده نیست — در جدول محتواست. پس شرط را
+ * همین‌جا می‌سنجیم و تنها سطر سالم برمی‌گردد. این، همان قاعدهٔ §191 است:
+ * تصمیم دسترسی، سمت سرور و در پایگاه‌داده گرفته می‌شود، نه در کد کلاینت.
+ */
+create or replace function seo.metadata_for_public(
+  p_entity_kind text,
+  p_entity_id uuid,
+  p_locale text default 'fa-IR'
+)
+returns seo.metadata
+language sql
+stable
+security definer
+set search_path = pg_catalog, seo, app
+as $$
+  select m.*
+  from seo.metadata m
+  where m.entity_kind = p_entity_kind
+    and m.entity_id = p_entity_id
+    and m.locale = p_locale
+    and m.is_indexable
+    and (
+      m.entity_kind <> 'content'
+      or exists (
+        select 1 from app.content c
+        where c.id = m.entity_id
+          and c.status = 'published'
+          and c.visibility = 'public'
+          and c.deleted_at is null
+      )
+    )
+$$;
+
+comment on function seo.metadata_for_public is
+  'فرادادهٔ سئوی نمایش عمومی؛ محتوای منتشرنشده هرگز برنمی‌گردد (§103، §191)';
+
+/** نقشهٔ سایت فعال یک دامنه/بخش — همان چیزی که خزنده می‌خواند. */
+create or replace function seo.active_sitemaps(p_business_id uuid default null)
+returns setof seo.sitemap
+language sql
+stable
+security definer
+set search_path = pg_catalog, seo
+as $$
+  select s.*
+  from seo.sitemap s
+  where s.status = 'ready'
+    and (p_business_id is null or s.business_id is not distinct from p_business_id)
+  order by s.business_id nulls first, s.kind
+$$;
+
+comment on function seo.active_sitemaps is 'نقشه‌های سایت آماده برای خزنده (Addendum §39–۴۷)';
+
+revoke all on function seo.metadata_for_public(text, uuid, text) from public;
+revoke all on function seo.active_sitemaps(uuid) from public;
+grant execute on function seo.metadata_for_public(text, uuid, text) to pv_public, pv_app, pv_worker;
+grant execute on function seo.active_sitemaps(uuid) to pv_public, pv_app, pv_worker, pv_reader;
+
+-- ایندکس مستأجر برای جدول‌های سئو: هر کوئری، اول با business_id محدود می‌شود و
+-- RLS هم روی همین ستون تصمیم می‌گیرد (Addendum §79–۸۰).
+create index template_business_idx on seo.template (business_id) where business_id is not null;
+create index canonical_business_idx on seo.canonical (business_id) where business_id is not null;
+create index redirect_business_idx on seo.redirect (business_id) where business_id is not null;
+create index sitemap_business_idx on seo.sitemap (business_id) where business_id is not null;
+create index internal_link_business_idx on seo.internal_link (business_id) where business_id is not null;
+create index topic_business_idx on seo.topic (business_id) where business_id is not null;
+create index keyword_business_idx on seo.keyword (business_id) where business_id is not null;
+create index settings_business_idx on seo.settings (business_id) where business_id is not null;

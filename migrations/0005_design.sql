@@ -210,6 +210,9 @@ create trigger page_revision_append_only
   before update or delete on design.page_revision
   for each row execute function app.forbid_mutation();
 
+-- ایندکس مستأجر: بدون این، هر کوئری تم/بازرسی، پیمایش کامل با اجرای RLS روی
+-- هر ردیف است (Addendum §79–۸۰). ایندکس `design.token` از پیش در همین فایل هست.
+create index theme_business_idx on design.theme (business_id);
 create index page_revision_page_idx on design.page_revision (page_id, revision desc);
 create index page_revision_hash_idx on design.page_revision (page_id, tree_hash);
 
@@ -250,6 +253,11 @@ create unique index release_current_idx
   on design.release (coalesce(business_id, '00000000-0000-0000-0000-000000000000'::uuid)) where is_current;
 create index release_business_idx on design.release (business_id, created_at desc);
 
+-- بستهٔ انتشار، ستون `version` دارد؛ پس ماشهٔ نسخه لازم دارد (§58).
+create trigger release_touch
+  before update on design.release
+  for each row execute function app.touch();
+
 -- انتشار، سابقه است: نامهٔ تغییر آن قابل ویرایش نیست.
 create trigger release_append_only
   before delete on design.release
@@ -278,6 +286,7 @@ comment on table design.audit is 'یافته‌های بازرسی طراحی؛ 
 create index design_audit_page_idx on design.audit (page_id, severity, occurred_at desc);
 create index design_audit_open_idx on design.audit (severity, occurred_at desc) where resolved_at is null;
 create index design_audit_release_idx on design.audit (release_id) where release_id is not null;
+create index design_audit_business_idx on design.audit (business_id, occurred_at desc);
 
 -- ------------------------------------------------------------------ پیش‌نمایش
 create table design.preview_link (
@@ -466,15 +475,36 @@ alter table design.preview_link enable row level security;
 alter table design.page_template enable row level security;
 
 -- توکن‌ها و تم‌ها: خواندن عمومی (چون در رندر لازم‌اند)، نوشتن با مجوز طراحی.
-create policy token_read on design.token
-  for select to pv_app, pv_public, pv_worker, pv_reader using (true);
+/*
+ * توکن و تم: سراسری (سرور طراحی پلتفرم) یا متعلق به یک کسب‌وکار.
+ * بی‌نام فقط سراسری‌ها را می‌بیند؛ تم منتشرشدهٔ یک کسب‌وکار، در بستهٔ انتشار
+ * (`design.release`) به مرورگر می‌رود، نه از این جدول.
+ */
+create policy token_read_public on design.token
+  for select to pv_public using (business_id is null);
+
+create policy token_read_app on design.token
+  for select to pv_app, pv_worker using (
+    business_id is null or app.is_member_of(business_id) or app.current_platform_role() is not null
+  );
+
+create policy token_read_reader on design.token
+  for select to pv_reader using (true);
 create policy token_write on design.token
   for all to pv_app, pv_worker
   using (business_id is not null and app.has_permission(business_id, 'design.manage') or app.current_platform_role() is not null)
   with check (business_id is not null and app.has_permission(business_id, 'design.manage') or app.current_platform_role() is not null);
 
-create policy theme_read on design.theme
-  for select to pv_app, pv_public, pv_worker, pv_reader using (true);
+create policy theme_read_public on design.theme
+  for select to pv_public using (business_id is null);
+
+create policy theme_read_app on design.theme
+  for select to pv_app, pv_worker using (
+    business_id is null or app.is_member_of(business_id) or app.current_platform_role() is not null
+  );
+
+create policy theme_read_reader on design.theme
+  for select to pv_reader using (true);
 create policy theme_write on design.theme
   for all to pv_app, pv_worker
   using (business_id is not null and app.has_permission(business_id, 'design.manage') or app.current_platform_role() is not null)

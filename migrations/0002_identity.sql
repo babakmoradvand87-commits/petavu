@@ -562,9 +562,15 @@ create policy identity_reader on auth.identity
 -- اعتبارنامه: هیچ سیاستی برای `pv_app`/`pv_public` وجود ندارد.
 -- نبود سیاست یعنی «دیده نشدن» — پس حتی یک خطای شرط فراموش‌شده در کد، اینجا
 -- به نشت تبدیل نمی‌شود. دسترسی فقط از راه توابع بالا.
-create policy credential_reader on auth.credential
-  for select to pv_reader
-  using (true);
+/*
+ * اعتبارنامه، حتی برای «نقش گزارش‌گیر» خواندنی نیست.
+ *
+ * پیش‌تر سیاستی وجود داشت که به `pv_reader` اجازهٔ خواندن همهٔ اعتبارنامه‌ها را
+ * می‌داد. `pv_reader` نقش گزارش‌گیری است و برای تحلیل به دادهٔ دامنه نیاز دارد،
+ * ولی هش رمز، «دادهٔ دامنه» نیست: یک نقش تحلیلی نباید بتواند بازهٔ حملهٔ
+ * آفلاین را برای همهٔ کاربران بسازد. خواندن اعتبارنامه فقط از راه تابع
+ * `auth.credential_for_login` انجام می‌شود که *خودش* تصمیم می‌گیرد چه بدهد.
+ */
 
 create policy credential_staff_select on auth.credential
   for select to pv_app, pv_worker
@@ -582,6 +588,10 @@ create policy device_insert_login on auth.device
 create policy device_staff_select on auth.device
   for select to pv_app, pv_reader
   using (app.current_platform_role() is not null);
+
+create trigger device_touch
+  before update on auth.device
+  for each row execute function app.touch();
 
 create policy session_self on auth.session
   for all to pv_app
@@ -630,9 +640,12 @@ create policy one_time_token_reader on auth.one_time_token
   for select to pv_reader
   using (true);
 
-create policy recovery_code_reader on auth.recovery_code
-  for select to pv_reader
-  using (true);
+/*
+ * کدهای بازیابی، برای نقش گزارش‌گیر خواندنی نیستند.
+ * کد بازیابی، معادل یک رمز یک‌بارمصرف است؛ خواندنش برای هر نقشی — حتی
+ * تحلیلی — یعنی امکان برداشتن حساب کاربر. مصرفش فقط از راه تابع اتمی
+ * `auth.consume_recovery_code` انجام می‌شود.
+ */
 
 create policy login_attempt_insert on auth.login_attempt
   for insert to pv_app, pv_public
@@ -689,6 +702,21 @@ grant select, insert, update on auth.app_user to pv_app;
 grant select, insert, update on auth.identity to pv_app;
 grant select, insert, update on auth.device to pv_app;
 grant select, insert, update, delete on auth.session to pv_app;
+/*
+ * توکن و تلاش ورود: گرنت‌های پیش‌فرض اسکیما (`alter default privileges`) اینجا
+ * SELECT/UPDATE/DELETE هم می‌دادند؛ یعنی نقش برنامه می‌توانست هش توکن‌ها را
+ * بخواند یا بشمارد. صریحاً پس گرفته می‌شود:
+ *
+ *   • توکن یک‌بارمصرف: خواندن ندارد؛ ساخت با insert، مصرف با تابع اتمی.
+ *   • تلاش ورود: خواندن ندارد؛ ثبت با insert، خواندنِ خودِ کاربر با تابع
+ *     `auth.recent_login_attempts` که فقط ردیف‌های خودش را می‌دهد.
+ */
+revoke select, update, delete on auth.one_time_token from pv_app;
+revoke all on auth.login_attempt from pv_app;
+-- کارگر صف هم به هش توکن دسترسی خواندنی ندارد؛ کارش ارسال ایمیل است، نه
+-- دیدن توکن. توکنِ پیام، در همان لحظه ساخته و به کارگر داده می‌شود.
+revoke select, update on auth.one_time_token from pv_worker;
+
 grant insert on auth.one_time_token to pv_app;
 grant insert on auth.login_attempt to pv_app;
 grant select on auth.permission, auth.platform_role, auth.platform_role_permission to pv_app;
@@ -698,12 +726,13 @@ grant insert on auth.app_user, auth.identity, auth.device, auth.session to pv_pu
 grant insert on auth.one_time_token, auth.login_attempt to pv_public;
 grant select on auth.permission, auth.platform_role, auth.platform_role_permission to pv_public;
 
-grant select, insert, update on auth.app_user, auth.identity, auth.credential, auth.device, auth.session to pv_worker;
-grant select, insert, update on auth.one_time_token, auth.login_attempt, auth.recovery_code to pv_worker;
+grant select, insert, update on auth.app_user, auth.identity, auth.device, auth.session to pv_worker;
+grant insert, update on auth.one_time_token to pv_worker;
+grant select, insert, update on auth.login_attempt to pv_worker;
 grant select on auth.permission, auth.platform_role, auth.platform_role_permission, auth.user_platform_role to pv_worker;
 
-grant select on auth.app_user, auth.identity, auth.credential, auth.device, auth.session to pv_reader;
-grant select on auth.one_time_token, auth.recovery_code, auth.login_attempt to pv_reader;
+grant select on auth.app_user, auth.identity, auth.device, auth.session to pv_reader;
+grant select on auth.login_attempt to pv_reader;
 grant select on auth.permission, auth.platform_role, auth.platform_role_permission, auth.user_platform_role to pv_reader;
 
 -- توابع: اجرا برای نقش‌های لازم، و بستن مسیر پیش‌فرض `public`.
@@ -717,4 +746,181 @@ grant execute on function auth.find_login_candidate(text) to pv_app, pv_public;
 grant execute on function auth.record_login_attempt(text, uuid, text, boolean, text, inet, text, text, smallint) to pv_app, pv_public;
 grant execute on function auth.recent_failures(text, integer) to pv_app, pv_public;
 grant execute on function auth.consume_one_time_token(text, text) to pv_app, pv_public;
+
+/**
+ * تلاش‌های ورودِ *خودِ* کاربر — برای صفحهٔ امنیت حساب.
+ *
+ * چرا تابع و نه گرنت روی جدول: صفحهٔ «ورودهای اخیر» نباید به نقش برنامه
+ * اجازهٔ پرس‌وجوی آزاد روی جدول بدهد؛ می‌تواند تلاش‌های *دیگران* را بخواند.
+ * اینجا `user_id` قید شده است و ورودی، همان کاربر جاری است.
+ */
+create or replace function auth.recent_login_attempts(p_user_id uuid, p_limit integer default 20)
+returns table (occurred_at timestamptz, kind text, succeeded boolean, failure_reason text, ip inet)
+language sql
+stable
+security definer
+set search_path = pg_catalog, auth
+as $$
+  select a.occurred_at, a.kind, a.succeeded, a.failure_reason, a.ip
+  from auth.login_attempt a
+  where a.user_id = p_user_id
+  order by a.occurred_at desc
+  limit least(greatest(p_limit, 1), 100)
+$$;
+
+comment on function auth.recent_login_attempts is 'تلاش‌های ورود یک کاربر، برای صفحهٔ امنیت حساب (§13)';
+
+revoke all on function auth.recent_login_attempts(uuid, integer) from public;
+grant execute on function auth.recent_login_attempts(uuid, integer) to pv_app;
+
+-- ------------------------------------------------------------------ کد بازیابی: بدون گرنت
+-- هیچ نقش برنامه‌ای روی `auth.recovery_code` گرنت ندارد. مصرف، اتمی است.
+revoke all on auth.recovery_code from pv_app, pv_worker, pv_public, pv_reader;
+
+/**
+ * مصرف یک کد بازیابی.
+ *
+ * یک‌بارمصرف است و «مصرف» را با `for update` قطعی می‌کند: دو درخواست
+ * هم‌زمان با یک کد، فقط یکی موفق می‌شود. کدِ سوخته هم برگردانده می‌شود تا
+ * تحلیل ریسک بفهمد «کد درست، ولی مرده» از «کد غلط» تفکیک شود.
+ */
+create or replace function auth.consume_recovery_code(p_code_hash text)
+returns table (user_id uuid, consumed boolean, already_used boolean)
+language plpgsql
+security definer
+set search_path = pg_catalog, auth
+as $$
+declare
+  v_row auth.recovery_code;
+begin
+  select * into v_row
+  from auth.recovery_code
+  where code_hash = p_code_hash
+  for update;
+
+  if not found then
+    return query select null::uuid, false, false;
+    return;
+  end if;
+
+  if v_row.used_at is not null then
+    return query select v_row.user_id, false, true;
+    return;
+  end if;
+
+  update auth.recovery_code set used_at = now() where id = v_row.id;
+  return query select v_row.user_id, true, false;
+end
+$$;
+
+comment on function auth.consume_recovery_code is 'مصرف اتمی کد بازیابی، یک‌بارمصرف (§11)';
+
+/** شمار کدهای بازیابی باقی‌ماندهٔ یک کاربر — برای هشدار «کدت کم است». */
+create or replace function auth.recovery_codes_left(p_user_id uuid)
+returns integer
+language sql
+stable
+security definer
+set search_path = pg_catalog, auth
+as $$
+  select count(*)::integer from auth.recovery_code where user_id = p_user_id and used_at is null
+$$;
+
+comment on function auth.recovery_codes_left is 'شمار کدهای بازیابی مصرف‌نشده (§11)';
+
+revoke all on function auth.consume_recovery_code(text) from public;
+revoke all on function auth.recovery_codes_left(uuid) from public;
+grant execute on function auth.consume_recovery_code(text) to pv_app, pv_public;
+grant execute on function auth.recovery_codes_left(uuid) to pv_app;
+
+-- ------------------------------------------------------------------ اعتبارنامه: بدون گرنت
+-- هیچ نقش برنامه‌ای روی `auth.credential` گرنت ندارد — نه پوشاندن با RLS، بلکه
+-- نبود گرنت. تنها مسیر خواندن، دو تابع `security definer` زیر است.
+revoke all on auth.credential from pv_app, pv_worker, pv_public, pv_reader;
+
+/**
+ * اعتبارنامهٔ ورود، برای *همان* شناسه‌ای که کاربر داده است.
+ *
+ * ورودی، هش شناسه است (نه ایمیل خام)، پس این تابع نمی‌تواند به فهرست‌کشی
+ * حساب‌ها تبدیل شود: کسی که هش را ندارد، چیزی نمی‌گیرد. و اگر اعتبارنامه
+ * باطل شده باشد، ردیف `is_revoked = true` برمی‌گردد تا لایهٔ ورود، پیام
+ * *غیرافشاگر* بدهد (§7).
+ */
+create or replace function auth.credential_for_login(p_identifier_hash text)
+returns table (
+  credential_id uuid,
+  user_id uuid,
+  kind text,
+  secret_hash text,
+  hash_params jsonb,
+  is_revoked boolean,
+  user_status text
+)
+language sql
+stable
+security definer
+set search_path = pg_catalog, auth
+as $$
+  select c.id, c.user_id, c.kind, c.secret_hash, c.hash_params,
+         c.revoked_at is not null,
+         u.status
+  from auth.identity i
+  join auth.credential c on c.user_id = i.user_id and c.kind = 'password'
+  join auth.app_user u on u.id = i.user_id
+  where i.value_key = p_identifier_hash
+    and i.deleted_at is null
+  order by c.created_at
+  limit 1
+$$;
+
+comment on function auth.credential_for_login is
+  'تنها مسیر خواندن اعتبارنامه، برای بررسی رمز در لایهٔ برنامه (§7، §191)';
+
+/** ثبت مصرف اعتبارنامه: موفق یا ناموفق — ورودی تحلیل ریسک (§13). */
+create or replace function auth.record_credential_use(p_credential_id uuid, p_succeeded boolean)
+returns void
+language sql
+security definer
+set search_path = pg_catalog, auth
+as $$
+  update auth.credential
+     set last_used_at = now(),
+         used_count = used_count + case when p_succeeded then 1 else 0 end,
+         failed_count = failed_count + case when p_succeeded then 0 else 1 end
+   where id = p_credential_id
+$$;
+
+comment on function auth.record_credential_use is 'ثبت مصرف اعتبارنامه برای تحلیل ریسک (§13)';
+
+revoke all on function auth.credential_for_login(text) from public;
+revoke all on function auth.record_credential_use(uuid, boolean) from public;
+grant execute on function auth.credential_for_login(text) to pv_app, pv_public;
+grant execute on function auth.record_credential_use(uuid, boolean) to pv_app, pv_public;
+
 grant execute on function auth.count_active_tokens(text, uuid, text) to pv_app;
+
+-- ------------------------------------------------------------------ سخت‌گیری نهایی روی رازها
+/*
+ * چرا این پس‌گرفتن‌ها در *پایان* فایل است، نه کنار هر جدول:
+ *
+ * `alter default privileges` در مهاجرت بنیان، به `pv_app` چهار مجوز و به
+ * `pv_reader` خواندن می‌دهد — و این گرنت‌ها هنگام *ساخت* هر جدول تازه اعمال
+ * می‌شوند. پس هر گرنتی که وسط فایل پس گرفته شود، با گرنت بعدی برمی‌گردد.
+ * «پس‌گرفتن» باید آخرین حرف باشد.
+ *
+ * نتیجه: سه جدول راز، هیچ مسیر خواندن مستقیمی ندارند؛ فقط توابع
+ * `security definer`. ساختشان (درج) مجاز است، خواندنی نیست.
+ */
+revoke all on auth.credential, auth.recovery_code, auth.one_time_token
+  from pv_app, pv_worker, pv_public, pv_reader;
+
+grant insert on auth.credential to pv_app;      -- ثبت‌نام و تغییر رمز
+grant insert on auth.recovery_code to pv_app;   -- تولید مجموعهٔ کد بازیابی
+grant insert on auth.one_time_token to pv_app, pv_public, pv_worker;  -- ساخت توکن جریان
+
+comment on table auth.credential is
+  'اعتبارنامه‌ها: رمز (Argon2id) و کلید WebAuthn. بدون گرنت؛ تنها از راه auth.credential_for_login خوانده می‌شود (§7–۱۱، §191)';
+comment on table auth.recovery_code is
+  'کدهای بازیابی یک‌بارمصرف. بدون گرنت؛ مصرف تنها با auth.consume_recovery_code (§11)';
+comment on table auth.one_time_token is
+  'توکن‌های یک‌بارمصرف (بازیابی رمز، تأیید ایمیل). بدون گرنت خواندن؛ مصرف با auth.consume_one_time_token (§9، §106)';

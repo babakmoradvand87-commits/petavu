@@ -464,6 +464,34 @@ comment on table app.ownership_transfer is 'انتقال مالکیت کسب‌�
 create unique index ownership_transfer_open_idx on app.ownership_transfer (business_id)
   where status in ('requested', 'awaiting_acceptance');
 create index ownership_transfer_parties_idx on app.ownership_transfer (from_user_id, to_user_id, requested_at desc);
+create index ownership_transfer_business_idx on app.ownership_transfer (business_id, requested_at desc);
+create index invitation_business_idx on app.invitation (business_id, created_at desc);
+create index relationship_business_idx on app.business_relationship (from_business_id, to_business_id);
+create index business_verification_review_idx on app.business_verification (reviewed_by) where reviewed_by is not null;
+create index role_business_idx on app.role (business_id) where business_id is not null;
+
+/*
+ * ماشهٔ نسخه: هر جدولی که ستون `version` دارد (§58).
+ *
+ * بدون این ماشه، شمارندهٔ نسخه هیچ‌وقت جلو نمی‌رود و «هم‌روندی خوش‌بینانه»
+ * عملاً غیرفعال است: دو نویسندهٔ هم‌زمان، هر دو موفق می‌شوند و یکی روی دیگری
+ * می‌نویسد، در حالی که سیستم فکر می‌کند تعارض را گرفته است.
+ */
+create trigger business_relationship_touch
+  before update on app.business_relationship
+  for each row execute function app.touch();
+
+create trigger business_verification_touch
+  before update on app.business_verification
+  for each row execute function app.touch();
+
+create trigger invitation_touch
+  before update on app.invitation
+  for each row execute function app.touch();
+
+create trigger ownership_transfer_touch
+  before update on app.ownership_transfer
+  for each row execute function app.touch();
 
 -- ------------------------------------------------------------------ پیوند نشست به کسب‌وکار فعال
 -- نشست، «کسب‌وکار فعال» را حمل می‌کند تا هر درخواست، زمینهٔ خودش را داشته
