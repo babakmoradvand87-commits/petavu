@@ -199,6 +199,9 @@ describe('گرنت و سیاست، دست‌به‌دست هم (§14)', () => {
       'auth.device',
       'auth.login_attempt',
       'ops.security_event',
+      // سنجهٔ عملکرد: بیگانه می‌تواند بگوید «این صفحه چقدر کند بود»، ولی نمی‌تواند
+      // بخواند — نه حتی بشمارد (§101).
+      'ops.vitals_sample',
     ];
     for (const name of INSERT_ONLY) {
       const [schema, table] = name.split('.');

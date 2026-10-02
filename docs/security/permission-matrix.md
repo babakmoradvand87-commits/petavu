@@ -3,9 +3,9 @@
 این پرونده **تولیدشده** است (`npm run audit:security`). منبع حقیقت، پایگاه‌داده است؛
 ویرایش دستی این پرونده بی‌اثر است و در اجرای بعدی بازنویسی می‌شود (§103).
 
-- زمان تولید (UTC): 2026-10-02 12:31
-- جدول‌های دامنه: 84 — همه با RLS فعال: بله
-- سیاست‌ها: 257
+- زمان تولید (UTC): 2026-10-02 12:35
+- جدول‌های دامنه: 88 — همه با RLS فعال: بله
+- سیاست‌ها: 270
 - مجوزها: 61 — دامنه‌ای: 41، پلتفرمی: 20
 
 ## نقش‌های کسب‌وکار
@@ -155,12 +155,16 @@
 | `ops.migration` | روشن | 0 |
 | `ops.notification` | روشن | 5 |
 | `ops.page_budget` | روشن | 2 |
+| `ops.performance_baseline` | روشن | 2 |
+| `ops.performance_regression` | روشن | 2 |
 | `ops.rate_limit_counter` | روشن | 3 |
 | `ops.restore_test` | روشن | 3 |
 | `ops.retention_policy` | روشن | 3 |
 | `ops.retention_run` | روشن | 3 |
 | `ops.security_event` | روشن | 2 |
 | `ops.setting` | روشن | 3 |
+| `ops.vitals_rollup` | روشن | 3 |
+| `ops.vitals_sample` | روشن | 6 |
 | `ops.webhook_delivery` | روشن | 4 |
 | `ops.webhook_endpoint` | روشن | 3 |
 | `ref.business_type` | روشن | 2 |
@@ -362,6 +366,10 @@
 | `ops.notification` | `notification_worker_all` | ALL | pv_worker |
 | `ops.page_budget` | `page_budget_read` | SELECT | pv_app, pv_public, pv_reader, pv_worker |
 | `ops.page_budget` | `page_budget_write` | ALL | pv_app, pv_worker |
+| `ops.performance_baseline` | `performance_baseline_read` | SELECT | pv_app, pv_reader |
+| `ops.performance_baseline` | `performance_baseline_write` | ALL | pv_app, pv_worker |
+| `ops.performance_regression` | `performance_regression_read` | SELECT | pv_app, pv_reader |
+| `ops.performance_regression` | `performance_regression_write` | ALL | pv_app, pv_worker |
 | `ops.rate_limit_counter` | `rate_limit_counter_reader` | SELECT | pv_reader |
 | `ops.rate_limit_counter` | `rate_limit_counter_staff_select` | SELECT | pv_app |
 | `ops.rate_limit_counter` | `rate_limit_counter_worker_all` | ALL | pv_worker |
@@ -379,6 +387,15 @@
 | `ops.setting` | `setting_business_all` | ALL | pv_app |
 | `ops.setting` | `setting_global_read` | SELECT | pv_app, pv_public |
 | `ops.setting` | `setting_staff_all` | ALL | pv_app, pv_worker |
+| `ops.vitals_rollup` | `vitals_rollup_read` | SELECT | pv_app, pv_reader |
+| `ops.vitals_rollup` | `vitals_rollup_worker_all` | ALL | pv_worker |
+| `ops.vitals_rollup` | `vitals_rollup_write` | ALL | pv_app, pv_worker |
+| `ops.vitals_sample` | `vitals_sample_app_insert` | INSERT | pv_app |
+| `ops.vitals_sample` | `vitals_sample_member_select` | SELECT | pv_app |
+| `ops.vitals_sample` | `vitals_sample_public_insert` | INSERT | pv_public |
+| `ops.vitals_sample` | `vitals_sample_reader` | SELECT | pv_reader |
+| `ops.vitals_sample` | `vitals_sample_staff_select` | SELECT | pv_app |
+| `ops.vitals_sample` | `vitals_sample_worker_all` | ALL | pv_worker |
 | `ops.webhook_delivery` | `webhook_delivery_member_select` | SELECT | pv_app |
 | `ops.webhook_delivery` | `webhook_delivery_reader` | SELECT | pv_reader |
 | `ops.webhook_delivery` | `webhook_delivery_staff_select` | SELECT | pv_app |
