@@ -1,0 +1,24 @@
+{
+  "name": "petavu",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PETAVU — B2B network for the pet and equine industry",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --force",
+    "clean": "rm -rf packages/*/dist apps/*/dist *.tsbuildinfo packages/*/*.tsbuildinfo apps/*/*.tsbuildinfo",
+    "test": "node --test --test-concurrency=1 tests/"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.9",
+    "typescript": "5.9.3"
+  }
+}
