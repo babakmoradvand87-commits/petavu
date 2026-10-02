@@ -13,27 +13,15 @@
 
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { readFile, readdir } from 'node:fs/promises';
 
 import { openDatabase } from './lib/engine.mjs';
 import { migrate } from './lib/migrate.mjs';
-import { checksumOf } from './lib/migrate.mjs';
+import { applySeeds, seedFiles } from './lib/seed.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(here, '..');
 const migrationsDir = join(projectRoot, 'migrations');
 const seedsDir = join(projectRoot, 'seeds');
-
-const BOOTSTRAP = `
-create schema if not exists ops;
-create table if not exists ops.seed (
-  filename text primary key,
-  checksum text not null,
-  applied_at timestamptz not null default now(),
-  duration_ms integer not null
-);
-comment on table ops.seed is 'دفتر فایل‌های seed اجراشده؛ همان قاعدهٔ مهاجرت، برای دادهٔ مرجع';
-`;
 
 function parseArgs(argv) {
   const args = { memory: false, url: undefined, list: false, dataDir: join(projectRoot, '.data', 'pg') };
@@ -57,13 +45,8 @@ const engine = await openDatabase({
 });
 
 try {
-  const entries = (await readdir(seedsDir, { withFileTypes: true }))
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.sql'))
-    .map((entry) => entry.name)
-    .sort();
-
   if (args.list) {
-    for (const filename of entries) log(filename);
+    for (const filename of await seedFiles(seedsDir)) log(filename);
     process.exit(0);
   }
 
@@ -73,36 +56,7 @@ try {
     log(`${migrationResult.applied.length} مهاجرت پیش از seed اجرا شد.`);
   }
 
-  await engine.exec(BOOTSTRAP);
-  const applied = new Map(
-    (await engine.query('select filename, checksum from ops.seed')).map((row) => [String(row.filename), String(row.checksum)]),
-  );
-
-  let ran = 0;
-  let skipped = 0;
-
-  for (const filename of entries) {
-    const sql = await readFile(join(seedsDir, filename), 'utf8');
-    const checksum = checksumOf(sql);
-    if (applied.get(filename) === checksum) {
-      skipped += 1;
-      continue;
-    }
-
-    const startedAt = Date.now();
-    await engine.withTransaction(async (handle) => {
-      await handle.exec(sql);
-      await handle.query(
-        `insert into ops.seed (filename, checksum, duration_ms) values ($1, $2, $3)
-         on conflict (filename) do update set checksum = excluded.checksum, duration_ms = excluded.duration_ms, applied_at = now()`,
-        [filename, checksum, Date.now() - startedAt],
-      );
-    });
-    ran += 1;
-    log(`اجرا شد ${filename} (${Date.now() - startedAt} میلی‌ثانیه)`);
-  }
-
-  log(ran === 0 ? `همهٔ ${skipped} فایل seed از قبل اجرا شده بود.` : `${ran} فایل seed اجرا شد (${skipped} از قبل).`);
+  await applySeeds(engine, { dir: seedsDir, log });
 } finally {
   await engine.close();
 }

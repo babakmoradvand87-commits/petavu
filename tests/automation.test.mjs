@@ -20,6 +20,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDatabase } from '../scripts/lib/engine.mjs';
 import { migrate } from '../scripts/lib/migrate.mjs';
+import { applySeeds } from '../scripts/lib/seed.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(here, '..');
@@ -95,7 +96,7 @@ async function makeRule(overrides = {}) {
 before(async () => {
   engine = await openDatabase();
   await migrate(engine, { dir: join(projectRoot, 'migrations') });
-  await engine.exec(await readFile(join(projectRoot, 'seeds', '0001_reference.sql'), 'utf8'));
+  await applySeeds(engine, { dir: join(projectRoot, 'seeds') });
 
   const users = await engine.query(
     `insert into auth.app_user (display_name, status) values ('آلیس رضایی', 'active'), ('بابک مرادی', 'active') returning id`,
@@ -374,12 +375,14 @@ describe('یک‌بار و فقط یک‌بار (§180، §106)', () => {
   });
 
   test('پردازش دوبارهٔ رخداد (کارگر پس از قطعی) بی‌اثر است', async () => {
+    // رخداد اختصاصی این تست: قاعده‌های سیستمیِ seed روی رخدادهای واقعی نشسته‌اند
+    // و شمارش دقیق را جابه‌جا می‌کنند (که خودش نشانهٔ درست‌بودن seed است).
     const ruleId = await makeRule({
-      eventType: 'content.published',
+      eventType: 'test.replay',
       actions: [{ type: 'notify', user_path: 'actor', title: 'انتشار' }],
     });
 
-    const eventId = await emit('content.published', { payload: { actor: aliceId } });
+    const eventId = await emit('test.replay', { payload: { actor: aliceId } });
     const first = await asWorker((handle) => handle.query(`select ops.process_event($1) as s`, [eventId]));
     const second = await asWorker((handle) => handle.query(`select ops.process_event($1) as s`, [eventId]));
 

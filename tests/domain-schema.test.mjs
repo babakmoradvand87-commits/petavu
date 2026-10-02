@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 import { openDatabase } from '../scripts/lib/engine.mjs';
 import { migrate } from '../scripts/lib/migrate.mjs';
+import { applySeeds } from '../scripts/lib/seed.mjs';
 import { uuidv7 } from '../packages/shared/dist/index.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -57,10 +58,8 @@ before(async () => {
   engine = await openDatabase();
   await migrate(engine, { dir: join(projectRoot, 'migrations') });
 
-  // دادهٔ مرجع از همان فایل واقعی seed؛ نه یک نسخهٔ ساختگی برای تست (§102).
-  const { readFile } = await import('node:fs/promises');
-  const seedSql = await readFile(join(projectRoot, 'seeds', '0001_reference.sql'), 'utf8');
-  await engine.exec(seedSql);
+  // دادهٔ مرجع از همان فایل‌های واقعی seed؛ نه یک نسخهٔ ساختگی برای تست (§102).
+  await applySeeds(engine, { dir: join(projectRoot, 'seeds') });
 
   const ownerRole = await engine.query("select id from app.role where business_id is null and key = 'owner'");
   roleOwnerId = String(ownerRole[0].id);
@@ -89,12 +88,24 @@ after(async () => {
 
 describe('دادهٔ مرجع — seed ایدمپوتنت (§180)', () => {
   test('اجرای دوبارهٔ seed، خطا نمی‌دهد و داده را دوبرابر نمی‌کند', async () => {
-    const before = await engine.query(`select count(*)::int as c from ref.business_type`);
-    const { readFile } = await import('node:fs/promises');
-    const seedSql = await readFile(join(projectRoot, 'seeds', '0001_reference.sql'), 'utf8');
-    await engine.exec(seedSql);
-    const after = await engine.query(`select count(*)::int as c from ref.business_type`);
-    assert.equal(Number(before[0].c), Number(after[0].c));
+    const count = async () => {
+      const rows = await engine.query(`
+        select
+          (select count(*)::int from ref.business_type) as types,
+          (select count(*)::int from auth.permission) as permissions,
+          (select count(*)::int from design.component) as components,
+          (select count(*)::int from ops.feature) as features,
+          (select count(*)::int from design.token) as tokens
+      `);
+      return rows[0];
+    };
+
+    const before = await count();
+    // اجرای دوبارهٔ عمدی: کل SQL دوباره فرستاده می‌شود، نه اینکه دفتر seed ردش کند.
+    await applySeeds(engine, { dir: join(projectRoot, 'seeds'), force: true });
+    const after = await count();
+
+    assert.deepEqual(after, before, 'اجرای دوبارهٔ seed نباید هیچ ردیفی را دوبرابر کند');
   });
 
   test('مجوزها، نقش‌ها، انواع، صنعت، مکان، کامپوننت، قالب و فیچر ثبت شده‌اند', async () => {

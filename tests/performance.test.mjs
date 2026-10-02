@@ -18,6 +18,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDatabase } from '../scripts/lib/engine.mjs';
 import { migrate } from '../scripts/lib/migrate.mjs';
+import { applySeeds } from '../scripts/lib/seed.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(here, '..');
@@ -65,7 +66,7 @@ async function seedSamples(path, metric, values, { minutesAgo = 30, releaseKey =
 before(async () => {
   engine = await openDatabase();
   await migrate(engine, { dir: join(projectRoot, 'migrations') });
-  await engine.exec(await readFile(join(projectRoot, 'seeds', '0001_reference.sql'), 'utf8'));
+  await applySeeds(engine, { dir: join(projectRoot, 'seeds') });
 
   const users = await engine.query(
     `insert into auth.app_user (display_name, status) values ('آلیس رضایی', 'active'), ('بابک مرادی', 'active') returning id`,

@@ -12,6 +12,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDatabase } from '../scripts/lib/engine.mjs';
 import { migrate } from '../scripts/lib/migrate.mjs';
+import { applySeeds } from '../scripts/lib/seed.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(here, '..');
@@ -58,7 +59,7 @@ async function makeBusiness(ownerId, slug, name) {
 before(async () => {
   engine = await openDatabase();
   await migrate(engine, { dir: join(projectRoot, 'migrations') });
-  await engine.exec(await readFile(join(projectRoot, 'seeds', '0001_reference.sql'), 'utf8'));
+  await applySeeds(engine, { dir: join(projectRoot, 'seeds') });
 
   const roles = await engine.query(`select id, key from app.role where business_id is null`);
   for (const row of roles) roleIds[String(row.key)] = String(row.id);
