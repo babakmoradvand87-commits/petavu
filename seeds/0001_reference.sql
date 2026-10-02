@@ -84,7 +84,8 @@ insert into auth.permission (key, name_fa, category, description, is_sensitive) 
   ('platform.api_key.manage', 'مدیریت کلید API', 'platform', 'کلید برنامه‌نویسی کسب‌وکار', true),
   ('platform.export', 'خروجی داده', 'platform', 'خروجی کامل داده‌های پلتفرم', true),
   ('business.integration.manage', 'مدیریت یکپارچه‌سازی و وبهوک', 'business', 'ساخت و مدیریت مقصد وبهوک و کلید یکپارچه‌سازی کسب‌وکار', true),
-  ('platform.job.observe', 'پایش صف', 'platform', 'دیدن وضعیت صف و خطاها', false)
+  ('platform.job.observe', 'پایش صف', 'platform', 'دیدن وضعیت صف و خطاها', false),
+  ('automation.manage', 'مدیریت خودکارسازی', 'automation', 'ساخت، ویرایش و فعال‌سازی قاعدهٔ خودکارسازی', true)
 on conflict (key) do update
   set name_fa = excluded.name_fa,
       category = excluded.category,
@@ -918,3 +919,45 @@ on conflict (scope) do update
       retain_days = excluded.retain_days,
       action = excluded.action,
       description = excluded.description;
+
+-- ---------------------------------------------------------------------------
+-- بودجهٔ عملکرد پایه (Addendum §1–۴)
+--
+-- این اعداد «آرزو» نیستند؛ سقف‌اند. صفحه‌ای که از این‌ها بگذرد، در دروازهٔ
+-- انتشار رد می‌شود. هر الگوی مسیر که در سایت هست، باید اینجا بودجه داشته
+-- باشد — مسیر بی‌بودجه یعنی مسیری که هیچ‌کس اندازه‌اش نمی‌گیرد، و این دقیقاً
+-- همان چیزی است که در گام ۱۴ به‌عنوان باگ پیدا شد.
+-- ---------------------------------------------------------------------------
+insert into ops.page_budget (
+  route_pattern, scope, name_fa, lcp_ms, inp_ms, cls, ttfb_ms, weight_kb, request_count, api_p95_ms, rum_sample_rate, notes
+) values
+  ('/',                     'platform', 'صفحهٔ اصلی',              1800, 150, 0.05, 600,  900,  60, 300, 0.20, 'LCP سخت‌گیرانه: تصویر اصلی eager و preload'),
+  ('/b/:slug',              'platform', 'پروفایل کسب‌وکار',        2200, 200, 0.08, 700, 1200,  70, 350, 0.20, 'اولین تصویر کسب‌وکار، عنصر LCP است'),
+  ('/blog/:slug',           'platform', 'مقاله',                  2500, 200, 0.10, 800, 1200,  70, 400, 0.10, 'متن بلند؛ فونت زیرمجموعه و preload محدود'),
+  ('/search',               'platform', 'جست‌وجو',                2000, 250, 0.08, 700, 1000,  65, 450, 0.10, 'نتیجهٔ اول باید از سرور بیاید'),
+  ('/membership',           'platform', 'عضویت',                   2000, 150, 0.05, 700, 1000,  50, 300, 0.10, null),
+  ('/join',                 'platform', 'ثبت‌نام',                 2000, 150, 0.05, 700,  950,  45, 300, 0.10, null),
+  ('/auth/:step',           'platform', 'ورود و احراز',            1800, 150, 0.05, 600,  850,  40, 300, 0.00, 'بدون نمونه‌گیری RUM: مسیر احراز هویت'),
+  ('/panel',                'business', 'داشبورد پنل',             1800, 200, 0.05, 600, 1100,  55, 350, 0.05, null),
+  ('/panel/:section',       'business', 'بخش‌های پنل',             2500, 300, 0.10, 800, 1600,  90, 450, 0.05, 'جدول‌ها با صفحه‌بندی نشانگر (cursor)'),
+  ('/design-studio',        'business', 'استودیو طراحی',           2500, 350, 0.10, 800, 1800, 100, 500, 0.05, 'ویرایشگر، سنگین‌تر؛ بارگذاری مرحله‌ای'),
+  ('/shop/:slug',           'shop',     'فروشگاه',                 2200, 200, 0.08, 700, 1300,  75, 400, 0.10, null),
+  ('/cart',                 'shop',     'سبد خرید',                1800, 200, 0.05, 600,  900,  50, 350, 0.10, null),
+  ('/admin',                'admin',    'داشبورد ادمین',           2000, 250, 0.08, 700, 1300,  70, 400, 0.00, null),
+  ('/admin/:section',       'admin',    'بخش‌های ادمین',           2500, 300, 0.10, 800, 1600,  90, 450, 0.00, null)
+on conflict (scope, route_pattern) do nothing;
+
+-- حداقل یک قاعدهٔ سیستمی: نگهبان رخداد دروازهٔ انتشار.
+insert into ops.automation_rule (key, name_fa, description, event_type, conditions, actions, status, is_system, priority)
+values (
+  'platform.publish_gate_guard',
+  'نگهبان دروازهٔ انتشار',
+  'هر تلاش انتشار طراحی را از دروازهٔ انتشار می‌گذراند و در صورت انسداد، به دارندهٔ کسب‌وکار اعلان می‌دهد.',
+  'design.publish_requested',
+  '{"all":[{"path":"gate","op":"exists"}]}'::jsonb,
+  '[{"type":"notify","recipient":"business_owner","kind":"design.publish_blocked","severity":"warning","title":"انتشار طراحی متوقف شد","body":"دروازهٔ انتشار مانع دارد؛ جزئیات در استودیو طراحی.","action_path":"/design-studio"}]'::jsonb,
+  'paused',
+  true,
+  10
+)
+on conflict do nothing;

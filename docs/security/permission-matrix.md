@@ -3,16 +3,16 @@
 این پرونده **تولیدشده** است (`npm run audit:security`). منبع حقیقت، پایگاه‌داده است؛
 ویرایش دستی این پرونده بی‌اثر است و در اجرای بعدی بازنویسی می‌شود (§103).
 
-- زمان تولید (UTC): 2026-10-02 12:23
-- جدول‌های دامنه: 79 — همه با RLS فعال: بله
-- سیاست‌ها: 239
-- مجوزها: 60 — دامنه‌ای: 40، پلتفرمی: 20
+- زمان تولید (UTC): 2026-10-02 12:31
+- جدول‌های دامنه: 84 — همه با RLS فعال: بله
+- سیاست‌ها: 257
+- مجوزها: 61 — دامنه‌ای: 41، پلتفرمی: 20
 
 ## نقش‌های کسب‌وکار
 
 | نقش | نام | رتبه | شمار مجوز |
 | --- | --- | --- | --- |
-| `owner` | مالک | 10 | 40 |
+| `owner` | مالک | 10 | 41 |
 | `admin` | مدیر | 20 | 32 |
 | `editor` | ویرایشگر محتوا | 40 | 9 |
 | `marketer` | بازاریاب | 45 | 13 |
@@ -23,7 +23,7 @@
 
 | نقش | نام | رتبه | شمار مجوز |
 | --- | --- | --- | --- |
-| `superadmin` | مدیر ارشد پلتفرم | 10 | 60 |
+| `superadmin` | مدیر ارشد پلتفرم | 10 | 61 |
 | `admin` | مدیر پلتفرم | 20 | 11 |
 | `moderator` | ناظر محتوا | 40 | 4 |
 | `support` | پشتیبانی | 60 | 2 |
@@ -35,6 +35,7 @@
 
 | مجوز | دسته | حساس | owner | admin | editor | marketer | member | viewer | superadmin | admin | moderator | support | analyst |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `automation.manage` | automation | بله | ● | — | — | — | — | — | ● | — | — | — | — |
 | `business.billing.manage` | billing | بله | ● | — | — | — | — | — | ● | — | — | — | — |
 | `business.analytics.view` | business | — | ● | ● | ● | ● | ● | ● | ● | — | — | — | — |
 | `business.archive` | business | بله | ● | ● | — | — | — | — | ● | — | — | — | — |
@@ -142,13 +143,18 @@
 | `media.asset` | روشن | 5 |
 | `media.derivative` | روشن | 4 |
 | `ops.audit_log` | روشن | 2 |
+| `ops.automation_rule` | روشن | 5 |
+| `ops.automation_run` | روشن | 4 |
 | `ops.backup` | روشن | 3 |
 | `ops.event` | روشن | 3 |
 | `ops.feature` | روشن | 2 |
+| `ops.feature_dependency` | روشن | 2 |
 | `ops.idempotency_key` | روشن | 2 |
 | `ops.job` | روشن | 2 |
 | `ops.job_attempt` | روشن | 3 |
 | `ops.migration` | روشن | 0 |
+| `ops.notification` | روشن | 5 |
+| `ops.page_budget` | روشن | 2 |
 | `ops.rate_limit_counter` | روشن | 3 |
 | `ops.restore_test` | روشن | 3 |
 | `ops.retention_policy` | روشن | 3 |
@@ -323,6 +329,15 @@
 | `media.derivative` | `derivative_worker` | ALL | pv_worker |
 | `ops.audit_log` | `audit_log_insert` | INSERT | pv_app, pv_public, pv_worker |
 | `ops.audit_log` | `audit_log_select_staff` | SELECT | pv_app, pv_public, pv_reader, pv_worker |
+| `ops.automation_rule` | `automation_rule_member_select` | SELECT | pv_app |
+| `ops.automation_rule` | `automation_rule_member_write` | ALL | pv_app |
+| `ops.automation_rule` | `automation_rule_reader` | SELECT | pv_reader |
+| `ops.automation_rule` | `automation_rule_staff_all` | ALL | pv_app, pv_worker |
+| `ops.automation_rule` | `automation_rule_worker_all` | ALL | pv_worker |
+| `ops.automation_run` | `automation_run_member_select` | SELECT | pv_app |
+| `ops.automation_run` | `automation_run_reader` | SELECT | pv_reader |
+| `ops.automation_run` | `automation_run_staff_select` | SELECT | pv_app |
+| `ops.automation_run` | `automation_run_worker_all` | ALL | pv_worker |
 | `ops.backup` | `backup_reader` | SELECT | pv_reader |
 | `ops.backup` | `backup_staff_all` | ALL | pv_app |
 | `ops.backup` | `backup_worker_all` | ALL | pv_worker |
@@ -331,6 +346,8 @@
 | `ops.event` | `event_select_worker` | SELECT | pv_worker |
 | `ops.feature` | `feature_read` | SELECT | pv_app, pv_public, pv_reader, pv_worker |
 | `ops.feature` | `feature_write_staff` | ALL | pv_app, pv_worker |
+| `ops.feature_dependency` | `feature_dependency_read` | SELECT | pv_app, pv_public, pv_reader, pv_worker |
+| `ops.feature_dependency` | `feature_dependency_write` | ALL | pv_app, pv_worker |
 | `ops.idempotency_key` | `idempotency_app_all` | ALL | pv_app |
 | `ops.idempotency_key` | `idempotency_staff_select` | SELECT | pv_reader, pv_worker |
 | `ops.job` | `job_staff_select` | SELECT | pv_app, pv_reader |
@@ -338,6 +355,13 @@
 | `ops.job_attempt` | `job_attempt_reader` | SELECT | pv_reader |
 | `ops.job_attempt` | `job_attempt_staff_select` | SELECT | pv_app |
 | `ops.job_attempt` | `job_attempt_worker_all` | ALL | pv_worker |
+| `ops.notification` | `notification_reader` | SELECT | pv_reader |
+| `ops.notification` | `notification_self_select` | SELECT | pv_app |
+| `ops.notification` | `notification_self_update` | UPDATE | pv_app |
+| `ops.notification` | `notification_staff_all` | ALL | pv_app, pv_worker |
+| `ops.notification` | `notification_worker_all` | ALL | pv_worker |
+| `ops.page_budget` | `page_budget_read` | SELECT | pv_app, pv_public, pv_reader, pv_worker |
+| `ops.page_budget` | `page_budget_write` | ALL | pv_app, pv_worker |
 | `ops.rate_limit_counter` | `rate_limit_counter_reader` | SELECT | pv_reader |
 | `ops.rate_limit_counter` | `rate_limit_counter_staff_select` | SELECT | pv_app |
 | `ops.rate_limit_counter` | `rate_limit_counter_worker_all` | ALL | pv_worker |

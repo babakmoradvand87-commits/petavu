@@ -114,8 +114,6 @@ async function openPglite(dataDir, options) {
         ['app.business_id', context.businessId],
         ['app.session_id', context.sessionId],
         ['app.platform_role', context.platformRole],
-        ['app.impersonated_by', context.impersonatedBy],
-        ['app.request_id', context.requestId],
         // جعل هویت (§31) و شناسهٔ درخواست (§76) هم بخشی از زمینه‌اند: رخداد و
         // حسابرسی از همین دو می‌فهمند «کی، از طرف کی، در کدام درخواست».
         ['app.impersonated_by', context.impersonatedBy],
@@ -212,6 +210,8 @@ async function openPostgres(url, options) {
         ['app.business_id', context.businessId],
         ['app.session_id', context.sessionId],
         ['app.platform_role', context.platformRole],
+        ['app.impersonated_by', context.impersonatedBy],
+        ['app.request_id', context.requestId],
       ];
       for (const [key, value] of entries) {
         if (value === undefined || value === null) continue;
