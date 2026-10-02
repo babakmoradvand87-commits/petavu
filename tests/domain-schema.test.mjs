@@ -140,7 +140,9 @@ describe('دادهٔ مرجع — seed ایدمپوتنت (§180)', () => {
     const defined = new Set((await engine.query('select key from auth.permission')).map((row) => String(row.key)));
     const referenced = new Set();
     for (const policy of policies) {
-      for (const match of String(policy.body).matchAll(/has_permission\([^,]+,\s*'([a-z0-9_.]+)'::text\)/g)) {
+      // هم `has_permission` (دامنه) و هم `has_platform_permission` (پنل مدیریت)
+      // باید به مجوزی موجود تکیه کنند؛ دومی هم می‌تواند خیالی باشد.
+      for (const match of String(policy.body).matchAll(/has_(?:platform_)?permission\([^,]+,\s*'([a-z0-9_.]+)'::text\)/g)) {
         referenced.add(match[1]);
       }
     }

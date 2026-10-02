@@ -83,6 +83,7 @@ insert into auth.permission (key, name_fa, category, description, is_sensitive) 
   ('platform.role.manage', 'مدیریت نقش‌های پلتفرم', 'platform', 'نقش و مجوز کارکنان', true),
   ('platform.api_key.manage', 'مدیریت کلید API', 'platform', 'کلید برنامه‌نویسی کسب‌وکار', true),
   ('platform.export', 'خروجی داده', 'platform', 'خروجی کامل داده‌های پلتفرم', true),
+  ('business.integration.manage', 'مدیریت یکپارچه‌سازی و وبهوک', 'business', 'ساخت و مدیریت مقصد وبهوک و کلید یکپارچه‌سازی کسب‌وکار', true),
   ('platform.job.observe', 'پایش صف', 'platform', 'دیدن وضعیت صف و خطاها', false)
 on conflict (key) do update
   set name_fa = excluded.name_fa,
@@ -124,7 +125,8 @@ where r.is_system and r.key = 'admin'
     'content.create', 'content.update', 'content.publish', 'content.review', 'content.category.manage',
     'media.upload', 'media.manage', 'design.view', 'design.manage', 'design.publish',
     'seo.manage', 'seo.redirect.manage', 'seo.audit.run', 'seo.keyword.manage',
-    'shop.product.manage', 'shop.order.view', 'shop.order.manage', 'shop.discount.manage'
+    'shop.product.manage', 'shop.order.view', 'shop.order.manage', 'shop.discount.manage',
+    'business.integration.manage'
   )
 on conflict do nothing;
 
@@ -891,3 +893,28 @@ on conflict (key) do update
       seo_metadata = excluded.seo_metadata,
       search_metadata = excluded.search_metadata,
       wiring = excluded.wiring;
+
+-- ================================================================== نگهداشت داده (§132)
+-- «حذف نرم» و «نگهداشت» دو چیزند: اولی می‌گوید کاربر دیگر نمی‌بیند، دومی
+-- می‌گوید داده چند وقت می‌ماند و بعد چه می‌شود. سیاست‌ها دامنه‌محورند، نه
+-- جدول‌محور؛ چون جدول‌ها با هر بازآرایی اسکیما عوض می‌شوند ولی دامنه نه.
+insert into ops.retention_policy (scope, name_fa, retain_days, action, description) values
+  ('audit.security', 'رخداد امنیتی', 730, 'archive',
+   'دو سال نگه داشته می‌شود؛ برای رسیدگی به رخداد و تحلیل زنجیره‌ای لازم است.'),
+  ('auth.login_attempts', 'تلاش‌های ورود', 180, 'delete',
+   'شش ماه برای تشخیص حملهٔ تدریجی کافی است و پس از آن، خودش دادهٔ حساس است.'),
+  ('auth.sessions', 'نشست‌های بسته‌شده', 90, 'delete',
+   'نشست منقضی یا باطل‌شده، پس از سه ماه حذف می‌شود.'),
+  ('ops.job_attempts', 'دفتر تلاش صف', 120, 'delete',
+   'چهار ماه سابقهٔ تلاش برای عیب‌یابی؛ کهنه‌تر از آن فقط حجم است.'),
+  ('seo.indexing_events', 'رخداد ایندکس', 400, 'archive',
+   'برای تحلیل روند ایندکس‌شدن نگه داشته می‌شود.'),
+  ('ops.webhook_deliveries', 'تحویل‌های وبهوک', 90, 'delete',
+   'سه ماه سابقهٔ تحویل، برای بازپخش و پیگیری مشتری.'),
+  ('content.deleted', 'محتوای حذف‌نرم‌شده', 365, 'anonymize',
+   'یک سال فرصت بازیابی؛ پس از آن، هویت پدیدآورنده و پیوست‌ها بی‌نام می‌شوند.')
+on conflict (scope) do update
+  set name_fa = excluded.name_fa,
+      retain_days = excluded.retain_days,
+      action = excluded.action,
+      description = excluded.description;
