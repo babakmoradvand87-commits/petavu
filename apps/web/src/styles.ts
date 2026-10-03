@@ -256,7 +256,9 @@ a:hover { color: var(--color-link-hover, #08494F); }
 .hero {
   position: relative;
   overflow: hidden;
-  color: var(--color-text-inverse, #FFFFFF);
+  /* neutral.0 در هر دو تم ثابت است؛ text.inverse در تم تاریک تیره می‌شد و
+     روی پردهٔ همیشه‌تاریک قهرمان ناخوانا می‌ماند. */
+  color: var(--color-neutral-0, #FFFFFF);
   background-color: var(--color-brand-900, #03201F);
   /* پردهٔ سینماتیک: دو منبع نور، بدون تصویر. تصویر قهرمان، LCP را می‌کشد؛
      این پرده صفر بایت است و همان حس را می‌دهد. */
@@ -651,6 +653,142 @@ th { font-weight: var(--font-weight-semibold, 600); color: var(--color-text-mute
 .ds-card--surface { background-color: var(--color-surface, var(--color-bg, #FFFFFF)); }
 .ds-card--muted { background-color: var(--color-bg-subtle, #F7F8F9); }
 .ds-card--outline { background-color: transparent; border: 1px solid var(--color-border, #DDE1E6); }
+
+/* ============================================================ تاکسونومی و پیمایش سینماتیک (گام ۲۵) */
+
+/* تراشهٔ پیوندی: هدف لمس ۴۴ پیکسل، شمارندهٔ جدولی تا ستون اعداد نلرزد. */
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); list-style: none; padding: 0; margin: 0; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  min-block-size: var(--size-touch-target, 44px);
+  padding-inline: var(--space-4, 16px);
+  border: 1px solid var(--color-border-strong, #9AA3AE);
+  border-radius: var(--radius-full, 9999px);
+  background-color: var(--color-surface, #FFFFFF);
+  color: var(--color-text, #14171A);
+  text-decoration: none;
+  transition: background-color var(--motion-duration-fast, 160ms) var(--motion-ease-standard, ease),
+              border-color var(--motion-duration-fast, 160ms) var(--motion-ease-standard, ease);
+}
+.chip:hover { background-color: var(--color-brand-50, #EAF6F7); border-color: var(--color-brand-500, #0E7C86); }
+.chip__count { font-variant-numeric: tabular-nums; font-size: var(--font-size-xs, 12px); color: var(--color-text-muted, #4C545E); }
+
+/* شبکهٔ مرکز تاکسونومی: هر گروه یک کارت، با تراشه‌های فرزند. */
+.index-grid { display: grid; gap: var(--space-4, 16px); grid-template-columns: 1fr; }
+@media (min-width: 768px) { .index-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .index-grid { grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); } }
+.index-grid .card__title a { color: inherit; text-decoration: none; display: inline-flex; align-items: center; min-block-size: var(--size-touch-target, 44px); }
+.index-grid .card__title a:hover { color: var(--color-link-hover, #08494F); }
+
+/* فرم جست‌وجو: ستونی در موبایل، یک ردیف در دسکتاپ. */
+.search-form { display: grid; gap: var(--space-3, 12px); grid-template-columns: 1fr; align-items: end; max-inline-size: var(--font-measure-prose, 68ch); }
+@media (min-width: 768px) { .search-form { grid-template-columns: minmax(0, 1fr) auto; } }
+.search-form .field { max-inline-size: none; }
+.search-form .input { min-block-size: 48px; }
+
+/* ---- صحنه‌های صفحهٔ اصلی ---- */
+.scene { position: relative; }
+.scene--subtle { background-color: var(--color-bg-subtle, #F7F8F9); }
+.scene--dark {
+  background-color: var(--color-brand-900, #03201F);
+  color: var(--color-neutral-0, #FFFFFF);
+}
+.scene--dark .section-head__eyebrow,
+.scene--dark .section-head__lead { color: color-mix(in srgb, currentColor 78%, transparent); }
+.scene--dark .chip {
+  background-color: transparent;
+  color: inherit;
+  border-color: color-mix(in srgb, currentColor 38%, transparent);
+}
+.scene--dark .chip:hover { background-color: color-mix(in srgb, currentColor 14%, transparent); border-color: currentColor; }
+.scene--dark .chip__count { color: color-mix(in srgb, currentColor 72%, transparent); }
+.scene--dark .button--ghost { color: inherit; border-color: color-mix(in srgb, currentColor 45%, transparent); }
+.scene--dark .button--ghost:hover { background-color: color-mix(in srgb, currentColor 14%, transparent); }
+.scene--closing { text-align: center; }
+.scene--closing .section-head__lead { margin-inline: auto; }
+.scene--closing .cluster { justify-content: center; }
+
+.section-head { display: grid; gap: var(--space-2, 8px); max-inline-size: var(--font-measure-prose, 68ch); margin-block-end: var(--space-8, 32px); }
+.section-head__eyebrow {
+  font-size: var(--font-size-xs, 12px);
+  letter-spacing: var(--font-tracking-wide, 0.02em);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-brand-600, #0B626A);
+}
+.section-head__title {
+  font-size: clamp(var(--font-size-2xl, 24px), 4.5vw, var(--font-size-5xl, 48px));
+  line-height: var(--font-leading-tight, 1.2);
+  letter-spacing: var(--font-tracking-tight, -0.01em);
+}
+.section-head__lead { font-size: var(--font-size-lg, 18px); color: var(--color-text-muted, #4C545E); }
+
+/* نوار عددها: عدد بزرگ، برچسب کوچک؛ عددِ جدولی، بدون پرش. */
+.stat-strip { display: grid; gap: var(--space-8, 32px); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 768px) { .stat-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.stat-strip .metric { border-block-start: 1px solid var(--color-border-strong, #9AA3AE); padding-block-start: var(--space-4, 16px); }
+.stat-strip .metric__value {
+  display: block;
+  font-size: clamp(var(--font-size-4xl, 36px), 9vw, var(--font-size-display, 76px));
+  line-height: 1;
+  letter-spacing: var(--font-tracking-tight, -0.01em);
+  font-weight: var(--font-weight-bold, 700);
+}
+
+/* قهرمان سینماتیک: تمام‌قد، با دو «نور» که با اسکرول آرام جابه‌جا می‌شوند. */
+.hero--cinema { display: grid; align-items: end; min-block-size: min(100svh, 52rem); isolation: isolate; }
+.hero--cinema::before,
+.hero--cinema::after { content: ""; position: absolute; inset: -20%; z-index: -1; pointer-events: none; }
+.hero--cinema::before {
+  background: radial-gradient(38% 38% at 72% 28%, color-mix(in srgb, var(--color-accent-400, #F5A623) 26%, transparent), transparent 72%);
+}
+.hero--cinema::after {
+  background: radial-gradient(46% 46% at 18% 82%, color-mix(in srgb, var(--color-brand-400, #33A7B0) 30%, transparent), transparent 70%);
+}
+.hero__cue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--size-touch-target, 44px);
+  block-size: var(--size-touch-target, 44px);
+  margin-block-start: var(--space-10, 40px);
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  border-radius: var(--radius-full, 9999px);
+  color: inherit;
+  text-decoration: none;
+}
+.hero__cue:hover { background-color: color-mix(in srgb, currentColor 14%, transparent); }
+
+/* نوار پیشرفت اسکرول: فقط با پشتیبانی مرورگر و بدون درخواست کاهش حرکت.
+   بدون پشتیبانی، پنهان می‌ماند — هیچ نشانه‌ای از «خراب‌بودن» دیده نمی‌شود. */
+.scroll-progress { display: none; }
+@keyframes progress-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes scene-in { from { opacity: 0; transform: translateY(var(--motion-parallax-max, 24px)); } to { opacity: 1; transform: none; } }
+@keyframes hero-drift { from { transform: none; opacity: 1; } to { transform: translateY(8%); opacity: 0.4; } }
+@keyframes cue-bob { 0%, 100% { transform: none; } 50% { transform: translateY(var(--space-1, 4px)); } }
+
+@supports (animation-timeline: view()) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    .scroll-progress {
+      display: block;
+      position: fixed;
+      inset-block-start: 0;
+      inset-inline: 0;
+      block-size: 3px;
+      z-index: var(--z-sticky, 100);
+      background-color: var(--color-accent-400, #F5A623);
+      transform-origin: 100% 50%;
+      pointer-events: none;
+      animation: progress-grow linear both;
+      animation-timeline: scroll(root block);
+    }
+    :root[dir="ltr"] .scroll-progress { transform-origin: 0 50%; }
+    .rv { animation: scene-in linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+    .hero--cinema .hero__inner { animation: hero-drift linear both; animation-timeline: view(); animation-range: exit 0% exit 100%; }
+    .hero__cue { animation: cue-bob var(--motion-duration-cinematic, 700ms) var(--motion-ease-standard, ease) infinite alternate; }
+  }
+}
 
 /* ============================================================ چاپ */
 @media print {

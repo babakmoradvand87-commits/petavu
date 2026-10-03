@@ -64,7 +64,12 @@ export function renderShell(input: DocumentShellInput): string {
     siteName: input.siteName,
     jsonLd: input.jsonLd,
     bodyClass: input.bodyClass,
-    header: siteHeader({ siteKind: input.site.kind, currentPath: input.url.pathname, siteName: input.siteName }),
+    header: siteHeader({
+      siteKind: input.site.kind,
+      currentPath: input.url.pathname,
+      siteName: input.siteName,
+      items: platformNav(input.chrome, input.site.kind),
+    }),
     main: input.content,
     footer: siteFooter({
       siteName: input.siteName,
@@ -77,22 +82,22 @@ export function renderShell(input: DocumentShellInput): string {
 }
 
 /**
- * ناوبری: مسیرهای ساختاری + صفحه‌های واقعاً منتشرشده.
+ * ناوبری: مسیرهای ساختاری — که همه **همیشه وجود دارند** (§182).
  *
- * چرا از داده: پیوند به صفحه‌ای که وجود ندارد، هم کاربر را می‌بندد و هم
- * خزنده را به ۴۰۴ می‌فرستد. پس هر پیوند در ناوبری، پیش از نمایش **وجود**
- * دارد. `خانه` و `کسب‌وکارها` مسیرهای کدِ خودمان‌اند و همیشه هستند.
+ * پنج مسیر تاکسونومی و جست‌وجو، کدِ خودمان‌اند و بی‌داده هم ۲۰۰ می‌دهند؛ پس
+ * پیوند مرده‌ای در ناوبری نیست. صفحه‌های محتوای پلتفرم (قوانین، درباره، …) به
+ * شرط انتشار در پاورقی می‌آیند؛ سرصفحه را شلوغ نمی‌کنند.
  */
-export function platformNav(chrome: ChromeData, siteKind: SitePolicy['kind']): NavItem[] {
+export function platformNav(_chrome: ChromeData, siteKind: SitePolicy['kind']): NavItem[] {
   if (siteKind !== 'public') return [];
-  const items: NavItem[] = [
+  return [
     { href: '/', label: 'خانه' },
     { href: '/businesses', label: 'کسب‌وکارها' },
+    { href: '/t', label: 'انواع' },
+    { href: '/i', label: 'صنف‌ها' },
+    { href: '/l', label: 'شهرها' },
+    { href: '/search', label: 'جست‌وجو' },
   ];
-  for (const page of chrome.pages) {
-    items.push({ href: `/${page.slug}`, label: page.title });
-  }
-  return items;
 }
 
 export function footerColumns(chrome: ChromeData, siteKind: SitePolicy['kind']): FooterColumn[] {
@@ -100,34 +105,40 @@ export function footerColumns(chrome: ChromeData, siteKind: SitePolicy['kind']):
 
   const pageLinks: NavItem[] = chrome.pages.map((page) => ({ href: `/${page.slug}`, label: page.title }));
 
-  return [
+  const columns: FooterColumn[] = [
     {
       title: 'پِتاوو',
       items: [
         { href: '/', label: 'صفحهٔ اصلی' },
         { href: '/businesses', label: 'فهرست کسب‌وکارها' },
+        { href: '/search', label: 'جست‌وجو' },
       ],
     },
     {
-      title: 'صفحه‌ها',
-      items: pageLinks.length > 0 ? pageLinks : [{ href: '/businesses', label: 'کسب‌وکارها' }],
-    },
-    {
-      title: 'برای کسب‌وکار',
+      title: 'کاوش',
       items: [
-        { href: '/businesses', label: 'حضور در شبکه' },
-        { href: '/businesses', label: 'راهنمای ثبت' },
-      ],
-    },
-    {
-      // مسیرهای ماشینی: برای خزنده‌ها مفیدند و برای کاربر هم ضرری ندارند.
-      title: 'دسترسی‌ها',
-      items: [
-        { href: '/sitemap.xml', label: 'نقشهٔ سایت' },
-        { href: '/robots.txt', label: 'robots.txt' },
+        { href: '/t', label: 'انواع کسب‌وکار' },
+        { href: '/i', label: 'صنف‌ها' },
+        { href: '/l', label: 'شهرها و استان‌ها' },
+        { href: '/k', label: 'دسته‌های محتوا' },
       ],
     },
   ];
+
+  // صفحه‌های منتشرشدهٔ پلتفرم فقط وقتی هستند که واقعاً هستند.
+  if (pageLinks.length > 0) columns.push({ title: 'صفحه‌ها', items: pageLinks });
+
+  columns.push({
+    // مسیرهای ماشینی: برای خزنده‌ها مفیدند و برای کاربر هم ضرری ندارند.
+    title: 'دسترسی‌ها',
+    items: [
+      { href: '/sitemap.xml', label: 'نقشهٔ سایت' },
+      { href: '/robots.txt', label: 'robots.txt' },
+      { href: '/llms.txt', label: 'llms.txt' },
+    ],
+  });
+
+  return columns;
 }
 
 /** نشان «تأییدشده» فقط وقتی داده می‌گوید تأیید شده — نه هر وقت زیبا بود. */

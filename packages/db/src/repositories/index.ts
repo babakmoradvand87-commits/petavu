@@ -54,6 +54,7 @@ export { businessRepository } from './business.js';
 export { identityRepository } from './identity.js';
 export { contentRepository } from './content.js';
 export { catalogRepository } from './catalog.js';
+export type { SearchHit } from './catalog.js';
 export { designRepository } from './design.js';
 export { seoRepository } from './seo.js';
 export { opsRepository } from './ops.js';

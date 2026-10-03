@@ -14,6 +14,22 @@ import { PAGE } from './support.js';
 import type { Row } from '../types.js';
 import type { RepoDeps } from './support.js';
 
+/** یک نتیجهٔ جست‌وجوی عمومی (خروجی `app.search_businesses`). */
+export interface SearchHit extends Row {
+  readonly id: string;
+  readonly slug: string;
+  readonly name: string;
+  readonly tagline: string | null;
+  readonly summary: string | null;
+  readonly business_type_key: string;
+  readonly type_name: string | null;
+  readonly industry_key: string | null;
+  readonly verification_level: string;
+  readonly city_slug: string | null;
+  readonly city_name: string | null;
+  readonly score: number;
+}
+
 export function catalogRepository(deps: RepoDeps) {
   const { dal } = deps;
 
@@ -94,6 +110,24 @@ export function catalogRepository(deps: RepoDeps) {
             from ref.category c where ${where}
             order by c.sort_order asc, c.name_fa asc
             limit ${PAGE.maxLimit}`,
+      );
+    },
+
+    /**
+     * جست‌وجوی کسب‌وکارهای عمومی (گام ۲۵؛ §57–۶۳).
+     *
+     * شرط، در پرس‌وجو است (`app.search_businesses`)، نه فیلتر روی یک صفحه از
+     * پاسخ. نسخهٔ نخستین این مسیر یک صفحه از فهرست را می‌خواند و بعد در حافظه
+     * فیلتر می‌کرد؛ کسب‌وکاری که بیرون از آن صفحه بود، هرگز پیدا نمی‌شد.
+     *
+     * سقف نتیجه ۵۰ است (در خود تابع هم اعمال می‌شود): جست‌وجو «بهترین چند
+     * نتیجه» است، نه فهرست صفحه‌بندی‌شده. برای پیمایش، فهرست و دسته‌ها هستند.
+     */
+    async searchBusinesses(query: string, limit = 24): Promise<SearchHit[]> {
+      return dal.query<SearchHit>(
+        sql`select s.id, s.slug, s.name, s.tagline, s.summary, s.business_type_key, s.type_name, s.industry_key,
+                   s.verification_level, s.city_slug, s.city_name, s.score
+            from app.search_businesses(${query}, ${Math.max(1, Math.min(50, Math.trunc(limit)))}) s`,
       );
     },
 

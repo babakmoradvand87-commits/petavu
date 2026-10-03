@@ -13,7 +13,9 @@
 
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
+import { promisify } from 'node:util';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDatabase } from '../scripts/lib/engine.mjs';
@@ -157,6 +159,76 @@ describe('گرنت و سیاست، دست‌به‌دست هم (§14)', () => {
         assert.equal(row.allowed, false, `${role} نباید روی ${schema}.${table} دسترسی خواندن داشته باشد`);
       }
     }
+  });
+
+  test('هر سیاست، گرنت هم‌پای خود را دارد (حصاری که به دری نمی‌رسد، مرده است)', async () => {
+    /*
+     * سیاست حصار است و گرنت در. اگر برای نقشی سیاست نوشتیم ولی گرنت ندادیم،
+     * سیاست هیچ‌وقت اجرا نمی‌شود و نویسنده گمان می‌کند دسترسی برقرار است.
+     * همین، «صفحهٔ دسته» را در گام ۲۵ شکست: `content_category_public` از مهاجرت
+     * ۰۰۰۴ بود ولی `select` روی جدول به `pv_public` داده نشده بود.
+     *
+     * استثناها فقط دو دسته‌اند و هر دو مستند:
+     *   • سیاست `using (false)` («بسته» به‌عمد) — اصلاً قرار نیست باز شود.
+     *   • فهرست `EXPECTED_DEAD`: هر ورودی دلیل دارد. ورودی تازه یعنی تصمیمی آگاهانه.
+     */
+    const EXPECTED_DEAD = new Map([
+      // جدول‌های راز: گرنت عمداً بسته است؛ سیاست، لایهٔ دوم است (تست «جدول‌های راز» همین را می‌سنجد).
+      ['auth.credential|credential_staff_select', 'جدول راز'],
+      ['auth.one_time_token|one_time_token_reader', 'جدول راز'],
+      ['auth.one_time_token|one_time_token_staff_select', 'جدول راز'],
+      // مرور تلاش‌های ورود برای کارکنان هنوز مسیری در API/پنل ندارد (گام ۲۹).
+      ['auth.login_attempt|login_attempt_staff_select', 'مصرف‌کننده‌ای هنوز نیست؛ بازنگری در گام ۲۹'],
+      // حسابرسی هرگز عمومی نیست؛ سیاست، دفاع در عمق است.
+      ['ops.audit_log|audit_log_select_staff', 'حسابرسی عمومی نیست'],
+      // گراف دانش و پیوند داخلی: گرنت تا مصرف‌کنندهٔ وب (گام ۲۶) بسته مانده است.
+      ['seo.entity|entity_read', 'بازنگری در گام ۲۶'],
+      ['seo.entity_link|entity_link_read', 'بازنگری در گام ۲۶'],
+      ['seo.entity_mention|entity_mention_read', 'جدول خصوصی در تست پوشش؛ سیاست باید اصلاح شود'],
+      ['seo.internal_link|internal_link_read_public', 'بازنگری در گام ۲۶'],
+    ]);
+    const needs = { SELECT: ['select'], INSERT: ['insert'], UPDATE: ['update'], DELETE: ['delete'], ALL: ['select', 'insert', 'update', 'delete'] };
+
+    const policies = await engine.query(
+      `select p.schemaname, p.tablename, p.policyname, p.cmd, p.roles, p.qual
+         from pg_policies p
+        where p.schemaname = any ($1::text[])
+        order by 1, 2, 3`,
+      [DOMAIN_SCHEMAS],
+    );
+
+    const dead = [];
+    const seenExpected = new Set();
+    for (const policy of policies) {
+      if (String(policy.qual).trim() === 'false') continue; // بستهٔ عمدی
+      const roles = (Array.isArray(policy.roles) ? policy.roles : String(policy.roles).replace(/[{}]/g, '').split(',')).filter(
+        (role) => role && role !== 'public',
+      );
+      for (const role of roles) {
+        const checks = [];
+        for (const privilege of needs[policy.cmd]) {
+          const [row] = await engine.query(`select has_table_privilege($1, $2, $3) as allowed`, [
+            role,
+            `${policy.schemaname}.${policy.tablename}`,
+            privilege,
+          ]);
+          checks.push(row.allowed);
+        }
+        const live = policy.cmd === 'ALL' ? checks.some(Boolean) : checks[0];
+        if (live) continue;
+        const key = `${policy.schemaname}.${policy.tablename}|${policy.policyname}`;
+        if (EXPECTED_DEAD.has(key)) {
+          seenExpected.add(key);
+          continue;
+        }
+        dead.push(`${key} (${policy.cmd} → ${role})`);
+      }
+    }
+    assert.deepEqual(dead, [], `سیاستِ بی‌گرنت (مرده): ${dead.join('؛ ')}`);
+
+    // فهرست استثناها هم باید زنده بماند: ورودیِ بی‌مصرف یعنی مشکل برطرف شده و باید حذف شود.
+    const stale = [...EXPECTED_DEAD.keys()].filter((key) => !seenExpected.has(key));
+    assert.deepEqual(stale, [], `استثنای کهنه در EXPECTED_DEAD: ${stale.join('؛ ')}`);
   });
 
   test('جدول‌های خصوصی، برای بی‌نام هیچ دسترسی خواندنی ندارند', async () => {
@@ -445,6 +517,19 @@ describe('سابقه‌ها، غیرقابل‌ویرایش‌اند (§94، §1
     for (const role of APP_ROLES) {
       const [row] = await engine.query(`select has_table_privilege($1, 'ops.event', 'delete') as allowed`, [role]);
       assert.equal(row.allowed, false, `${role} نباید رخداد را حذف کند`);
+    }
+  });
+});
+
+describe('سند زنده، با واقعیت هم‌خوان است (§103، §142)', () => {
+  test('ماتریس مجوزِ کامیت‌شده با پایگاه‌دادهٔ تازه‌ساخته یکی است', async () => {
+    // پیش‌تر ماتریس پس از یک مهاجرت بازتولید نشد و هیچ آزمونی نشکست.
+    const run = promisify(execFile);
+    try {
+      const { stdout } = await run(process.execPath, ['scripts/audit-security.mjs', '--check'], { cwd: projectRoot, timeout: 120_000 });
+      assert.match(stdout, /هم‌خوان است/);
+    } catch (error) {
+      assert.fail(`ماتریس مجوز کهنه است: ${String(error.stderr ?? error.message).trim()}`);
     }
   });
 });

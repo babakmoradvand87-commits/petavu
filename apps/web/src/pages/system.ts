@@ -16,6 +16,7 @@ import { buildHead } from '@petavu/seo';
 import { container, heading, paragraph, section } from '../components.js';
 import { PLATFORM_NAME, jsonPageResponse, renderShell } from '../chrome.js';
 import { escapeText } from '../html.js';
+import { searchForm } from './search.js';
 import type { PageContext, PageResponse } from './types.js';
 
 export interface ErrorPageOptions {
@@ -30,6 +31,18 @@ export function notFoundPage(context: PageContext, options: ErrorPageOptions): P
     message: options.message ?? 'نشانی‌ای که دنبالش بودید وجود ندارد یا جابه‌جا شده است.',
     reason: options.reason,
     link: { href: '/businesses', label: 'دیدن فهرست کسب‌وکارها' },
+    /*
+     * ۴۰۴ بن‌بست نیست: کسی که به نشانی مرده رسیده، هنوز چیزی می‌خواهد. جست‌وجو و
+     * مسیرهای کاوش، همان چیزی است که صفحهٔ بعدی‌اش می‌شود (و برای خزنده هم
+     * پیوندهای زنده‌ای هستند که از ۴۰۴ به سایت برمی‌گردند).
+     */
+    extra:
+      searchForm('', { id: 'q-404' }) +
+      `<p class="cluster">` +
+      `<a class="button button--ghost" href="/t">انواع کسب‌وکار</a>` +
+      `<a class="button button--ghost" href="/i">صنف‌ها</a>` +
+      `<a class="button button--ghost" href="/l">شهرها</a>` +
+      `</p>`,
   });
 }
 
@@ -56,6 +69,8 @@ interface ErrorDocumentOptions {
   readonly message: string;
   readonly reason: string;
   readonly link: { href: string; label: string };
+  /** HTML اضافه (ساخته‌شده با سازنده‌های امن) که پس از دکمهٔ اصلی می‌آید. */
+  readonly extra?: string;
 }
 
 function errorDocument(context: PageContext, status: number, options: ErrorDocumentOptions): PageResponse {
@@ -77,6 +92,7 @@ function errorDocument(context: PageContext, status: number, options: ErrorDocum
       heading(1, options.title) +
         paragraph(options.message) +
         `<p><a class="button button--primary" href="${options.link.href}">${escapeText(options.link.label)}</a></p>` +
+        (options.extra ? `<div class="section--tight stack">${options.extra}</div>` : '') +
         `<p class="field__hint">شناسهٔ درخواست: <code>${escapeText(requestId)}</code></p>`,
     ),
   });

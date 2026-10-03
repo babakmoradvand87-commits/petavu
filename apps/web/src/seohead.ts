@@ -46,7 +46,17 @@ import type { SeoSettingsRow } from './data.js';
 const TRACKING_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid', 'ref', 'yclid'];
 
 export interface HeadEntity {
-  readonly kind: 'home' | 'business' | 'content' | 'search' | 'listing' | 'category' | 'location' | 'index';
+  readonly kind:
+    | 'home'
+    | 'business'
+    | 'content'
+    | 'search'
+    | 'listing'
+    | 'category'
+    | 'location'
+    | 'business_type'
+    | 'industry'
+    | 'index';
   /** شناسهٔ موجودیت در جدول خودش؛ برای `home` تهی است. */
   readonly id: string | null;
   /** کلید مسیر برای صفحه‌های بدون موجودیت (مثلاً فهرست). */
@@ -111,6 +121,9 @@ const DIRECTIVES_BY_KIND: Readonly<Record<HeadEntity['kind'], readonly RobotsDir
   listing: ['max-image-preview:large'],
   category: ['max-image-preview:large'],
   location: ['max-image-preview:large'],
+  // گام ۲۵: صفحه‌های تاکسونومی، همانند فهرست‌اند — محتوایشان فهرست کسب‌وکارهاست.
+  business_type: ['max-image-preview:large'],
+  industry: ['max-image-preview:large'],
   index: ['noindex', 'follow'],
 };
 

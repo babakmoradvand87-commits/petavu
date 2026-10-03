@@ -7,7 +7,12 @@
  * مهاجرت و seed اجرا می‌شود، و آن‌چه واقعاً برقرار است استخراج و مکتوب می‌شود.
  *
  * خروجی: `docs/security/permission-matrix.md`
- * استفاده: `npm run audit:security`
+ * استفاده:
+ *   npm run audit:security              # تولید و نوشتن
+ *   npm run audit:security -- --check   # فقط مقایسه؛ اگر ماتریسِ کامیت‌شده کهنه باشد، با کد ۱ بیرون می‌آید
+ *
+ * `--check` از گام ۲۵ آمد: ماتریس پس از مهاجرت ۰۰۱۵ بازتولید نشده بود (۸۸ جدول به‌جای
+ * ۹۱) و هیچ آزمونی نمی‌شکست؛ «سند زنده» (§142) بی‌نگهبان، مدتی بعد سند مرده است.
  */
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -137,6 +142,24 @@ lines.push('');
 
 const report = lines.join('\n');
 const output = join(projectRoot, 'docs', 'security', 'permission-matrix.md');
+
+if (process.argv.includes('--check')) {
+  // زمان تولید در هر اجرا فرق می‌کند؛ مقایسه فقط روی محتواست.
+  const strip = (text) =>
+    text
+      .split('\n')
+      .filter((line) => !line.startsWith('- زمان تولید'))
+      .join('\n');
+  const committed = await readFile(output, 'utf8').catch(() => '');
+  await engine.close();
+  if (strip(committed) !== strip(report)) {
+    console.error('ماتریس مجوز با پایگاه‌داده هم‌خوان نیست؛ «npm run audit:security» را اجرا و نتیجه را کامیت کنید.');
+    process.exit(1);
+  }
+  console.log('ماتریس مجوز با پایگاه‌داده هم‌خوان است.');
+  process.exit(0);
+}
+
 await mkdir(dirname(output), { recursive: true });
 await writeFile(output, report, 'utf8');
 await engine.close();

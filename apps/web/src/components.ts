@@ -18,14 +18,6 @@ export interface NavItem {
   readonly label: string;
 }
 
-/** فهرست ناوبری عمومی — فقط مسیرهایی که **واقعاً** وجود دارند (§182). */
-export const PUBLIC_NAV: readonly NavItem[] = [
-  { href: '/', label: 'خانه' },
-  { href: '/businesses', label: 'کسب‌وکارها' },
-  { href: '/about', label: 'دربارهٔ پِتاوو' },
-  { href: '/contact', label: 'تماس' },
-];
-
 export function brandMark(size = 28): string {
   /*
    * نشانهٔ گرافیکی برند، SVG درون‌خطی: صفر درخواست، مقیاس‌پذیر، و رنگش از
@@ -38,8 +30,20 @@ export function brandMark(size = 28): string {
   );
 }
 
-export function siteHeader(options: { siteKind: SiteKind; currentPath: string; siteName: string }): string {
-  const items = options.siteKind === 'public' ? PUBLIC_NAV : [];
+/**
+ * سرصفحه. فهرست ناوبری را **فراخواننده می‌دهد** (`platformNav`)، نه ثابتی در کد.
+ *
+ * نسخهٔ نخست، فهرستی ثابت داشت که به `/about` و `/contact` پیوند می‌داد؛ این
+ * صفحه‌ها در نصب تازه وجود نداشتند و دو پیوند مرده در هر صفحه می‌ماند (§182:
+ * فقط مسیرهایی که واقعاً هستند).
+ */
+export function siteHeader(options: {
+  siteKind: SiteKind;
+  currentPath: string;
+  siteName: string;
+  items: readonly NavItem[];
+}): string {
+  const items = options.siteKind === 'public' ? options.items : [];
 
   const nav = tag(
     'ul',

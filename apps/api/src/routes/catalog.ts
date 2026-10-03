@@ -125,10 +125,14 @@ export const catalogRoutes: RouteDefinition[] = [
 ];
 
 /**
- * جست‌وجو، امروز روی PostgreSQL.
+ * جست‌وجو، امروز روی PostgreSQL (گام ۲۵).
  *
  * `q` کوتاه‌تر از دو نویسه، جست‌وجو نیست — پاسخ، فهرست خالی با دلیل صریح است،
  * نه خطا: کاربر در حال تایپ است و خطا دادن به او، تجربهٔ بدی می‌سازد.
+ *
+ * شرط در **پرس‌وجو** است (`app.search_businesses`). نسخهٔ نخست، یک صفحه از
+ * فهرست را می‌خواند و در حافظه فیلتر می‌کرد؛ پس کسب‌وکاری که خارج از آن صفحه
+ * بود، هرگز پیدا نمی‌شد. فیلتر نوع و صنعت اینجا در همان نتیجه اعمال می‌شود.
  */
 async function searchBusinesses(
   request: { query: URLSearchParams; businessId: string | null },
@@ -149,37 +153,26 @@ async function searchBusinesses(
     };
   }
 
-  const limit = Number(request.query.get('limit') ?? 24);
-  const page = await scope.repos.business.list({
-    limit: Number.isFinite(limit) ? Math.max(1, Math.min(50, limit)) : 24,
-    cursor: request.query.get('cursor'),
-    businessTypeKey: request.query.get('type') ?? undefined,
-    industryKey: request.query.get('industry') ?? undefined,
-    onlyPublic: true,
-  });
+  const requested = Number(request.query.get('limit') ?? 24);
+  const limit = Number.isFinite(requested) ? Math.max(1, Math.min(50, Math.trunc(requested))) : 24;
+  const typeKey = request.query.get('type');
+  const industryKey = request.query.get('industry');
 
-  /*
-   * فیلتر متنی در همین لایه انجام می‌شود، ولی نه به‌عنوان «جست‌وجوی کامل»:
-   * PostgreSQL با `unaccent`/`pg_trgm` در موتور محلی موجود نیست، پس اینجا
-   * مقایسهٔ نرمال‌شدهٔ متن است. آداپتور موتور جست‌وجو در گام ۲۶ این را
-   * جایگزین می‌کند — با همان قرارداد پاسخ.
-   */
-  const needle = query.toLowerCase();
-  const results = page.items.filter((item) => {
-    const record = item as Record<string, unknown>;
-    const haystack = [record.name, record.name_latin, record.slug].filter((value) => typeof value === 'string').join(' ');
-    return haystack.toLowerCase().includes(needle);
-  });
+  // فیلتر نوع/صنعت بعد از جست‌وجو است، پس از سقف بزرگ‌تری می‌خوانیم و بعد برش می‌دهیم.
+  const hits = await scope.repos.catalog.searchBusinesses(query, typeKey || industryKey ? 50 : limit);
+  const results = hits
+    .filter((hit) => (typeKey ? hit.business_type_key === typeKey : true))
+    .filter((hit) => (industryKey ? hit.industry_key === industryKey : true))
+    .slice(0, limit);
 
   return {
     body: {
       query,
       driver,
       engine: 'postgres',
-      limit: page.items.length,
+      limit: results.length,
       results,
-      next_cursor: page.nextCursor,
-      has_more: page.hasMore,
+      has_more: hits.length >= 50,
       // صداقت: تا وقتی درایور جست‌وجو `postgres` است، این «جست‌وجوی کامل» نیست.
       note: driver === 'postgres' ? 'جست‌وجو روی PostgreSQL؛ موتور اختصاصی فعال نیست.' : null,
     },

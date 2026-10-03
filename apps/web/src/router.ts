@@ -16,6 +16,13 @@
  */
 
 import type { SiteKind } from './config.js';
+import {
+  parseCategorySegments,
+  parseIndustrySegments,
+  parseLocationSegments,
+  parseTypeSegments,
+  type TaxonomyFamily,
+} from './taxonomy.js';
 
 export const SLUG_PATTERN = /^[a-z0-9\u0600-\u06ff]+(?:-[a-z0-9\u0600-\u06ff]+)*$/;
 
@@ -32,12 +39,26 @@ export const RESERVED_SLUGS = new Set([
   'favicon.svg',
   'api',
   'media',
+  // گام ۲۵: مسیرهای تاکسونومی و جست‌وجو؛ محتوایی با این نامک‌ها نباید آن‌ها را بپوشاند.
+  'search',
+  't',
+  'i',
+  'l',
+  'k',
 ]);
 
 export type RouteTarget =
   | { readonly type: 'home' }
   | { readonly type: 'businesses' }
   | { readonly type: 'business'; readonly slug: string }
+  | { readonly type: 'search' }
+  /** مرکز یک خانوادهٔ تاکسونومی: `/t`، `/i`، `/l`، `/k`. */
+  | { readonly type: 'taxonomy_index'; readonly family: TaxonomyFamily }
+  | { readonly type: 'business_type'; readonly key: string }
+  | { readonly type: 'industry'; readonly path: string }
+  /** `suffix` مسیر بی‌ریشهٔ مکان است (`alborz.karaj`)؛ ریشه از داده می‌آید. */
+  | { readonly type: 'location'; readonly suffix: string }
+  | { readonly type: 'category'; readonly path: string }
   | { readonly type: 'content'; readonly slug: string }
   | { readonly type: 'asset'; readonly path: string }
   | { readonly type: 'media'; readonly id: string }
@@ -49,6 +70,13 @@ export type RouteTarget =
   | { readonly type: 'method_not_allowed'; readonly allow: string }
   | { readonly type: 'forbidden' }
   | { readonly type: 'not_found' };
+
+const TAXONOMY_FAMILY_BY_PREFIX: Readonly<Record<string, TaxonomyFamily | undefined>> = {
+  t: 'type',
+  i: 'industry',
+  l: 'location',
+  k: 'category',
+};
 
 const ASSET_PREFIX = '/assets/';
 const MEDIA_PREFIX = '/media/';
@@ -92,8 +120,38 @@ export function resolveTarget(pathname: string, siteKind: SiteKind): RouteTarget
   if (pathname === '/llms.txt') return { type: 'llms' };
   if (pathname === '/businesses') return { type: 'businesses' };
   if (pathname === '/businesses/') return { type: 'businesses' };
+  if (pathname === '/search') return { type: 'search' };
 
   const segments = pathname.split('/').filter((segment) => segment !== '');
+
+  /*
+   * تاکسونومی (گام ۲۵): هر بخش نشانی **پیش از هر کوئری** با قالب سخت‌گیر
+   * سنجیده می‌شود. رمزگشا `null` بدهد، همان ۴۰۴ است؛ پس نشانی‌ای که یک شکل
+   * کانونیک ندارد (`/t/Veterinary_Clinic`) هرگز به پایگاه‌داده نمی‌رسد و
+   * هرگز دو نسخه از یک صفحه نمی‌سازد.
+   */
+  if (segments.length >= 1) {
+    const [prefix, ...rest] = segments as [string, ...string[]];
+    const family = TAXONOMY_FAMILY_BY_PREFIX[prefix];
+    if (family) {
+      if (rest.length === 0) return { type: 'taxonomy_index', family };
+      if (family === 'type') {
+        const key = parseTypeSegments(rest);
+        return key ? { type: 'business_type', key } : { type: 'not_found' };
+      }
+      if (family === 'industry') {
+        const path = parseIndustrySegments(rest);
+        return path ? { type: 'industry', path } : { type: 'not_found' };
+      }
+      if (family === 'location') {
+        const suffix = parseLocationSegments(rest);
+        return suffix ? { type: 'location', suffix } : { type: 'not_found' };
+      }
+      const path = parseCategorySegments(rest);
+      return path ? { type: 'category', path } : { type: 'not_found' };
+    }
+  }
+
   if (segments.length === 2) {
     const [prefix, slug] = segments as [string, string];
     if (prefix === 'b') {

@@ -24,6 +24,7 @@ import {
   type Page,
   type RequestContext,
   type Row,
+  type SearchHit,
   type SqlClient,
 } from '@petavu/db';
 import type { Logger } from '@petavu/shared';
@@ -31,6 +32,7 @@ import type { Logger } from '@petavu/shared';
 import type { RegistryRow } from './registry.js';
 import type { MediaAssetRow } from './media.js';
 import type { ThemeMode } from './tokens.js';
+import { ancestorPaths, subtreePrefix } from './taxonomy.js';
 
 export interface TokenQueryRow extends Row {
   key: string;
@@ -59,6 +61,8 @@ export interface PublicBusinessRow extends Row {
   founded_year: number | null;
   city_name: string | null;
   city_slug: string | null;
+  /** نام فارسی نوع کسب‌وکار؛ کلید خام (`pet_shop`) هرگز به کاربر نشان داده نمی‌شود. */
+  type_name: string | null;
 }
 
 /**
@@ -166,6 +170,70 @@ export interface BusinessLocationRow extends Row {
   is_primary: boolean;
 }
 
+/* ------------------------------------------------------------------ تاکسونومی (گام ۲۵) */
+
+/** نوع کسب‌وکار با شمار کسب‌وکارهای عمومی‌اش. */
+export interface TypeFacetRow extends Row {
+  key: string;
+  name_fa: string;
+  plural_fa: string | null;
+  description: string | null;
+  parent_key: string | null;
+  depth: number;
+  business_count: number;
+}
+
+/** صنف با شمار کسب‌وکارهای **کل زیردرخت**. */
+export interface IndustryFacetRow extends Row {
+  key: string;
+  name_fa: string;
+  parent_key: string | null;
+  path: string;
+  depth: number;
+  description: string | null;
+  business_count: number;
+}
+
+/** استان/شهر با شمار کسب‌وکارهای کل زیردرخت. */
+export interface LocationFacetRow extends Row {
+  id: string;
+  kind: string;
+  name_fa: string;
+  parent_id: string | null;
+  path: string;
+  slug: string;
+  business_count: number;
+}
+
+/** دستهٔ محتوا با شمار محتوای منتشرشدهٔ کل زیردرخت. */
+export interface CategoryFacetRow extends Row {
+  id: string;
+  slug: string;
+  name_fa: string;
+  description: string | null;
+  parent_id: string | null;
+  path: string;
+  content_count: number;
+}
+
+export interface CategoryContentRow extends Row {
+  id: string;
+  slug: string;
+  kind: string;
+  title: string;
+  summary: string | null;
+  business_slug: string | null;
+  business_name: string | null;
+  published_at: string | null;
+  updated_at: string;
+}
+
+export interface TaxonomyFilter {
+  readonly typeKey?: string | null;
+  readonly industryPath?: string | null;
+  readonly locationPath?: string | null;
+}
+
 export interface WebData {
   /** توکن‌های سراسری پلتفرم — تنها چیزی که `pv_public` می‌بیند. */
   themeTokens(requestId: string): Promise<TokenQueryRow[]>;
@@ -175,9 +243,46 @@ export interface WebData {
   featuredBusinesses(limit: number, requestId: string): Promise<PublicBusinessRow[]>;
   /** فهرست عمومی با صفحه‌بندی نشانگری (نه `offset`) و فیلتر نوع کسب‌وکار. */
   listPublicBusinesses(
-    request: { limit: number; cursor?: string | null; businessTypeKey?: string | null },
+    request: {
+      limit: number;
+      cursor?: string | null;
+      businessTypeKey?: string | null;
+      /** مسیر کامل صنف؛ کل زیردرخت را می‌گیرد. */
+      industryPath?: string | null;
+      /** مسیر کامل مکان؛ کل زیردرخت را می‌گیرد. */
+      locationPath?: string | null;
+    },
     requestId: string,
   ): Promise<Page<PublicBusinessRow>>;
+  /** همهٔ انواع فعال، با شمار. */
+  businessTypes(requestId: string): Promise<TypeFacetRow[]>;
+  businessType(key: string, requestId: string): Promise<TypeFacetRow | null>;
+  /** فرزندهای مستقیم یک صنف (`null` = ریشه‌ها) با شمار زیردرخت. */
+  industryChildren(parentPath: string | null, requestId: string): Promise<IndustryFacetRow[]>;
+  /** همهٔ صنف‌های فعال با شمار زیردرخت — یک پرس‌وجو برای صفحهٔ مرکز (بدون N+1). */
+  industryTree(requestId: string): Promise<IndustryFacetRow[]>;
+  industryByPath(path: string, requestId: string): Promise<{ industry: IndustryFacetRow; ancestors: IndustryFacetRow[] } | null>;
+  /** ریشهٔ مکان‌ها (کشور). */
+  locationRoot(requestId: string): Promise<LocationFacetRow | null>;
+  locationChildren(parentId: string, requestId: string): Promise<LocationFacetRow[]>;
+  /** همهٔ استان‌ها و شهرهای فعال با شمار زیردرخت — یک پرس‌وجو برای صفحهٔ مرکز. */
+  locationTree(requestId: string): Promise<LocationFacetRow[]>;
+  /** `suffix` همان مسیر بی‌ریشهٔ نشانی است (`alborz.karaj`). */
+  locationBySuffix(suffix: string, requestId: string): Promise<{ location: LocationFacetRow; ancestors: LocationFacetRow[] } | null>;
+  categoryChildren(parentPath: string | null, requestId: string): Promise<CategoryFacetRow[]>;
+  /** همهٔ دسته‌های محتوای فعال با شمار زیردرخت — یک پرس‌وجو برای صفحهٔ مرکز. */
+  categoryTree(requestId: string): Promise<CategoryFacetRow[]>;
+  categoryByPath(path: string, requestId: string): Promise<{ category: CategoryFacetRow; ancestors: CategoryFacetRow[] } | null>;
+  contentByCategory(
+    request: { path: string; limit: number; cursor?: string | null },
+    requestId: string,
+  ): Promise<Page<CategoryContentRow>>;
+  /** شهرهایی که واقعاً کسب‌وکار دارند، با شمار (برای پیوند داخلی). */
+  facetCities(filter: TaxonomyFilter, limit: number, requestId: string): Promise<LocationFacetRow[]>;
+  /** نوع‌هایی که در این محدوده واقعاً کسب‌وکار دارند، با شمار. */
+  facetTypes(filter: TaxonomyFilter, limit: number, requestId: string): Promise<TypeFacetRow[]>;
+  /** جست‌وجوی متنی در کسب‌وکارهای عمومی (`app.search_businesses`). */
+  searchBusinesses(query: string, limit: number, requestId: string): Promise<SearchHit[]>;
   contentIndex(limit: number, requestId: string): Promise<ContentIndexRow[]>;
   redirectFor(pathname: string, requestId: string): Promise<RedirectRow | null>;
   readiness(requestId: string): Promise<Row | null>;
@@ -264,13 +369,42 @@ const BUSINESS_COLUMNS = raw(`
   b.id, b.slug, b.name, b.name_latin, b.business_type_key, b.industry_key,
   b.verification_level, b.listing_count, b.member_count, b.published_at, b.updated_at,
   p.tagline, p.summary, p.founded_year,
-  l.slug as city_slug, l.name_fa as city_name
+  l.slug as city_slug, l.name_fa as city_name,
+  bt.name_fa as type_name
 `);
 
 const BUSINESS_SOURCE = raw(`
   from app.business b
   left join app.business_profile p on p.business_id = b.id
   left join ref.location l on l.id = b.primary_location_id
+  left join ref.business_type bt on bt.key = b.business_type_key
+`);
+
+/*
+ * شرط «کسب‌وکار عمومی و فعال».
+ *
+ * یک جا نوشته می‌شود تا پانزده پرس‌وجوی تاکسونومی یک تعریف از «عمومی» داشته
+ * باشند. این شرط، همان شرط سیاست `business_public_select` است؛ سیاست، مرز
+ * امنیتی است و این شرط، بهینه‌سازی (§22: انتشار عمومی یک تصمیم است).
+ */
+const VISIBLE_BUSINESS = raw("b.status = 'active' and b.visibility = 'public' and b.deleted_at is null");
+
+/*
+ * شمار محتوای منتشرشدهٔ یک دسته (کل زیردرخت).
+ *
+ * `c` همان دستهٔ بیرونی است. محتوای کسب‌وکارِ غیرعمومی شمرده نمی‌شود: شمارنده‌ای
+ * که به صفحه‌ای اشاره کند که کاربر نمی‌بیند، ادعای نادرست است (§186).
+ */
+const CATEGORY_CONTENT_COUNT = raw(`
+  select count(distinct ct.id)
+  from app.content ct
+  join app.content_category cc on cc.content_id = ct.id
+  join ref.category x on x.id = cc.category_id
+  left join app.business b on b.id = ct.business_id and b.status = 'active' and b.visibility = 'public' and b.deleted_at is null
+  where ct.status = 'published' and ct.visibility = 'public' and ct.deleted_at is null
+    and (ct.published_at is null or ct.published_at <= now())
+    and (ct.business_id is null or b.id is not null)
+    and (x.path = c.path or starts_with(x.path, c.path || '.'))
 `);
 
 const METADATA_COLUMNS = raw(
@@ -427,16 +561,346 @@ export function createWebData(options: WebDataOptions): WebData {
             extract: (row) => ({ key: row.name, id: row.id }),
             statement: (cursor, fetchLimit) => {
               const typeFilter = request.businessTypeKey ? sql`and b.business_type_key = ${request.businessTypeKey}` : sql``;
+              /*
+               * صنف و مکان، **زیردرخت** را می‌گیرند: کسب‌وکاری که صنفش
+               * `animal_care.grooming` است در صفحهٔ `animal_care` هم دیده می‌شود.
+               * مقایسه با `starts_with` است، نه LIKE: زیرخط در LIKE جوکر است و
+               * `animal_care.%` به `animalXcare.…` هم می‌خورد.
+               */
+              const industryFilter = request.industryPath
+                ? sql`and b.industry_key in (select x.key from ref.industry x where x.path = ${request.industryPath} or starts_with(x.path, ${subtreePrefix(request.industryPath)}))`
+                : sql``;
+              const locationFilter = request.locationPath
+                ? sql`and b.primary_location_id in (select x.id from ref.location x where x.path = ${request.locationPath} or starts_with(x.path, ${subtreePrefix(request.locationPath)}))`
+                : sql``;
               return sql`
                 select ${BUSINESS_COLUMNS}
                 ${BUSINESS_SOURCE}
-                where b.status = 'active' and b.visibility = 'public' and b.deleted_at is null ${typeFilter}
+                where ${VISIBLE_BUSINESS} ${typeFilter} ${industryFilter} ${locationFilter}
                 ${pageTail({ orderBy: 'b.name', keyExpression: 'b.name', idColumn: 'b.id', direction: 'asc' })(cursor, fetchLimit)}
               `;
             },
           }),
         ),
       );
+    },
+
+    /* -------------------------------------------------------------- تاکسونومی (گام ۲۵) */
+
+    businessTypes(requestId) {
+      return degrade('taxonomy.types', [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<TypeFacetRow>(sql`
+            select t.key, t.name_fa, t.plural_fa, t.description, t.parent_key, t.depth,
+                   (select count(*) from app.business b
+                      where b.business_type_key = t.key and ${VISIBLE_BUSINESS})::int as business_count
+            from ref.business_type t
+            where t.is_active
+            order by t.depth asc, t.sort_order asc, t.key asc
+          `),
+        ),
+      );
+    },
+
+    businessType(key, requestId) {
+      return degrade(`taxonomy.type:${key}`, null, () =>
+        read(requestId, ({ dal }) =>
+          dal.maybeOne<TypeFacetRow>(sql`
+            select t.key, t.name_fa, t.plural_fa, t.description, t.parent_key, t.depth,
+                   (select count(*) from app.business b
+                      where b.business_type_key = t.key and ${VISIBLE_BUSINESS})::int as business_count
+            from ref.business_type t
+            where t.key = ${key} and t.is_active
+            limit 1
+          `),
+        ),
+      );
+    },
+
+    industryChildren(parentPath, requestId) {
+      return degrade(`taxonomy.industries:${parentPath ?? 'root'}`, [], () =>
+        read(requestId, ({ dal }) => {
+          const parent =
+            parentPath === null
+              ? sql`i.parent_key is null`
+              : sql`i.parent_key = (select p.key from ref.industry p where p.path = ${parentPath})`;
+          return dal.query<IndustryFacetRow>(sql`
+            select i.key, i.name_fa, i.parent_key, i.path, i.depth, i.description,
+                   (select count(*) from app.business b
+                      join ref.industry x on x.key = b.industry_key
+                      where ${VISIBLE_BUSINESS}
+                        and (x.path = i.path or starts_with(x.path, i.path || '.')))::int as business_count
+            from ref.industry i
+            where i.is_active and ${parent}
+            order by i.sort_order asc, i.name_fa asc
+          `);
+        }),
+      );
+    },
+
+    industryTree(requestId) {
+      return degrade('taxonomy.industries.tree', [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<IndustryFacetRow>(sql`
+            select i.key, i.name_fa, i.parent_key, i.path, i.depth, i.description,
+                   (select count(*) from app.business b
+                      join ref.industry x on x.key = b.industry_key
+                      where ${VISIBLE_BUSINESS}
+                        and (x.path = i.path or starts_with(x.path, i.path || '.')))::int as business_count
+            from ref.industry i
+            where i.is_active
+            order by i.path asc
+          `),
+        ),
+      );
+    },
+
+    industryByPath(path, requestId) {
+      return degrade(`taxonomy.industry:${path}`, null, () =>
+        read(requestId, async ({ dal }) => {
+          const industry = await dal.maybeOne<IndustryFacetRow>(sql`
+            select i.key, i.name_fa, i.parent_key, i.path, i.depth, i.description,
+                   (select count(*) from app.business b
+                      join ref.industry x on x.key = b.industry_key
+                      where ${VISIBLE_BUSINESS}
+                        and (x.path = i.path or starts_with(x.path, i.path || '.')))::int as business_count
+            from ref.industry i
+            where i.path = ${path} and i.is_active
+            limit 1
+          `);
+          if (!industry) return null;
+
+          const parents = ancestorPaths(industry.path);
+          const ancestors =
+            parents.length === 0
+              ? []
+              : await dal.query<IndustryFacetRow>(sql`
+                  select i.key, i.name_fa, i.parent_key, i.path, i.depth, i.description, 0::int as business_count
+                  from ref.industry i
+                  where i.path in (${parents}) and i.is_active
+                  order by i.depth asc
+                `);
+          return { industry, ancestors };
+        }),
+      );
+    },
+
+    locationRoot(requestId) {
+      return degrade('taxonomy.location.root', null, () =>
+        read(requestId, ({ dal }) =>
+          dal.maybeOne<LocationFacetRow>(sql`
+            select l.id, l.kind, l.name_fa, l.parent_id, l.path, l.slug,
+                   (select count(*) from app.business b where ${VISIBLE_BUSINESS})::int as business_count
+            from ref.location l
+            where l.kind = 'country' and l.parent_id is null and l.is_active
+            order by l.path asc
+            limit 1
+          `),
+        ),
+      );
+    },
+
+    locationChildren(parentId, requestId) {
+      return degrade(`taxonomy.location.children:${parentId}`, [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<LocationFacetRow>(sql`
+            select l.id, l.kind, l.name_fa, l.parent_id, l.path, l.slug,
+                   (select count(*) from app.business b
+                      join ref.location x on x.id = b.primary_location_id
+                      where ${VISIBLE_BUSINESS}
+                        and (x.path = l.path or starts_with(x.path, l.path || '.')))::int as business_count
+            from ref.location l
+            where l.parent_id = ${parentId} and l.is_active
+            order by l.name_fa asc
+          `),
+        ),
+      );
+    },
+
+    locationTree(requestId) {
+      return degrade('taxonomy.location.tree', [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<LocationFacetRow>(sql`
+            select l.id, l.kind, l.name_fa, l.parent_id, l.path, l.slug,
+                   (select count(*) from app.business b
+                      join ref.location x on x.id = b.primary_location_id
+                      where ${VISIBLE_BUSINESS}
+                        and (x.path = l.path or starts_with(x.path, l.path || '.')))::int as business_count
+            from ref.location l
+            where l.is_active and l.kind in ('province', 'city')
+            order by l.path asc
+          `),
+        ),
+      );
+    },
+
+    locationBySuffix(suffix, requestId) {
+      return degrade(`taxonomy.location:${suffix}`, null, () =>
+        read(requestId, async ({ dal }) => {
+          /*
+           * نشانی ریشهٔ کشور را ندارد؛ ریشه از خود داده می‌آید و به پسوند
+           * می‌چسبد. اگر مسیر ساخته‌شده در جدول نباشد، `null` است — همان ۴۰۴.
+           */
+          const location = await dal.maybeOne<LocationFacetRow>(sql`
+            select l.id, l.kind, l.name_fa, l.parent_id, l.path, l.slug,
+                   (select count(*) from app.business b
+                      join ref.location x on x.id = b.primary_location_id
+                      where ${VISIBLE_BUSINESS}
+                        and (x.path = l.path or starts_with(x.path, l.path || '.')))::int as business_count
+            from ref.location l
+            join ref.location c on c.kind = 'country' and c.parent_id is null
+            where l.path = c.path || '.' || ${suffix} and l.is_active
+            order by c.path asc
+            limit 1
+          `);
+          if (!location) return null;
+
+          const parents = ancestorPaths(location.path);
+          const ancestors =
+            parents.length === 0
+              ? []
+              : await dal.query<LocationFacetRow>(sql`
+                  select l.id, l.kind, l.name_fa, l.parent_id, l.path, l.slug, 0::int as business_count
+                  from ref.location l
+                  where l.path in (${parents}) and l.is_active
+                  order by length(l.path) asc
+                `);
+          return { location, ancestors };
+        }),
+      );
+    },
+
+    categoryChildren(parentPath, requestId) {
+      return degrade(`taxonomy.categories:${parentPath ?? 'root'}`, [], () =>
+        read(requestId, ({ dal }) => {
+          const parent =
+            parentPath === null
+              ? sql`c.parent_id is null`
+              : sql`c.parent_id = (select p.id from ref.category p where p.path = ${parentPath} and p.scope = 'content' and p.business_id is null)`;
+          return dal.query<CategoryFacetRow>(sql`
+            select c.id, c.slug, c.name_fa, c.description, c.parent_id, c.path,
+                   (${CATEGORY_CONTENT_COUNT}) as content_count
+            from ref.category c
+            where c.scope = 'content' and c.business_id is null and c.is_active and ${parent}
+            order by c.sort_order asc, c.name_fa asc
+          `);
+        }),
+      );
+    },
+
+    categoryTree(requestId) {
+      return degrade('taxonomy.categories.tree', [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<CategoryFacetRow>(sql`
+            select c.id, c.slug, c.name_fa, c.description, c.parent_id, c.path,
+                   (${CATEGORY_CONTENT_COUNT}) as content_count
+            from ref.category c
+            where c.scope = 'content' and c.business_id is null and c.is_active
+            order by c.path asc
+          `),
+        ),
+      );
+    },
+
+    categoryByPath(path, requestId) {
+      return degrade(`taxonomy.category:${path}`, null, () =>
+        read(requestId, async ({ dal }) => {
+          const category = await dal.maybeOne<CategoryFacetRow>(sql`
+            select c.id, c.slug, c.name_fa, c.description, c.parent_id, c.path,
+                   (${CATEGORY_CONTENT_COUNT}) as content_count
+            from ref.category c
+            where c.scope = 'content' and c.business_id is null and c.is_active and c.path = ${path}
+            limit 1
+          `);
+          if (!category) return null;
+
+          const parents = ancestorPaths(category.path);
+          const ancestors =
+            parents.length === 0
+              ? []
+              : await dal.query<CategoryFacetRow>(sql`
+                  select c.id, c.slug, c.name_fa, c.description, c.parent_id, c.path, 0::int as content_count
+                  from ref.category c
+                  where c.scope = 'content' and c.business_id is null and c.is_active and c.path in (${parents})
+                  order by length(c.path) asc
+                `);
+          return { category, ancestors };
+        }),
+      );
+    },
+
+    contentByCategory(request, requestId) {
+      const empty: Page<CategoryContentRow> = { items: [], nextCursor: null, hasMore: false };
+      return degrade(`taxonomy.category.content:${request.path}`, empty, () =>
+        read(requestId, ({ dal }) =>
+          dal.page<CategoryContentRow>({
+            request: { cursor: request.cursor ?? null, limit: request.limit },
+            extract: (row) => ({ key: row.title, id: row.id }),
+            statement: (cursor, fetchLimit) => sql`
+              select c.id, c.slug, c.kind, c.title, c.summary, b.slug as business_slug, b.name as business_name,
+                     c.published_at, c.updated_at
+              from app.content c
+              left join app.business b on b.id = c.business_id and ${VISIBLE_BUSINESS}
+              where c.status = 'published' and c.visibility = 'public' and c.deleted_at is null
+                and (c.published_at is null or c.published_at <= now())
+                and (c.business_id is null or b.id is not null)
+                and c.id in (
+                  select cc.content_id
+                  from app.content_category cc
+                  join ref.category x on x.id = cc.category_id
+                  where x.path = ${request.path} or starts_with(x.path, ${subtreePrefix(request.path)})
+                )
+              ${pageTail({ orderBy: 'c.title', keyExpression: 'c.title', idColumn: 'c.id', direction: 'asc' })(cursor, fetchLimit)}
+            `,
+          }),
+        ),
+      );
+    },
+
+    facetCities(filter, limit, requestId) {
+      return degrade('taxonomy.facet.cities', [], () =>
+        read(requestId, ({ dal }) => {
+          const type = filter.typeKey ? sql`and b.business_type_key = ${filter.typeKey}` : sql``;
+          const industry = filter.industryPath
+            ? sql`and b.industry_key in (select x.key from ref.industry x where x.path = ${filter.industryPath} or starts_with(x.path, ${subtreePrefix(filter.industryPath)}))`
+            : sql``;
+          return dal.query<LocationFacetRow>(sql`
+            select l.id, l.kind, l.name_fa, l.parent_id, l.path, l.slug, count(*)::int as business_count
+            from app.business b
+            join ref.location l on l.id = b.primary_location_id
+            where ${VISIBLE_BUSINESS} and l.kind = 'city' and l.is_active ${type} ${industry}
+            group by l.id, l.kind, l.name_fa, l.parent_id, l.path, l.slug
+            order by business_count desc, l.name_fa asc
+            limit ${limit}
+          `);
+        }),
+      );
+    },
+
+    facetTypes(filter, limit, requestId) {
+      return degrade('taxonomy.facet.types', [], () =>
+        read(requestId, ({ dal }) => {
+          const location = filter.locationPath
+            ? sql`and b.primary_location_id in (select x.id from ref.location x where x.path = ${filter.locationPath} or starts_with(x.path, ${subtreePrefix(filter.locationPath)}))`
+            : sql``;
+          const industry = filter.industryPath
+            ? sql`and b.industry_key in (select x.key from ref.industry x where x.path = ${filter.industryPath} or starts_with(x.path, ${subtreePrefix(filter.industryPath)}))`
+            : sql``;
+          return dal.query<TypeFacetRow>(sql`
+            select t.key, t.name_fa, t.plural_fa, t.description, t.parent_key, t.depth, count(*)::int as business_count
+            from app.business b
+            join ref.business_type t on t.key = b.business_type_key
+            where ${VISIBLE_BUSINESS} and t.is_active ${location} ${industry}
+            group by t.key, t.name_fa, t.plural_fa, t.description, t.parent_key, t.depth
+            order by business_count desc, t.name_fa asc
+            limit ${limit}
+          `);
+        }),
+      );
+    },
+
+    searchBusinesses(query, limit, requestId) {
+      return degrade('search.businesses', [], () => read(requestId, ({ repos }) => repos.catalog.searchBusinesses(query, limit)));
     },
 
     contentIndex(limit, requestId) {

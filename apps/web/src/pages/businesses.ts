@@ -12,34 +12,57 @@
 
 import { clampDescription } from '@petavu/seo';
 
-import { breadcrumb, card, container, emptyState, heading, paragraph, section, badge } from '../components.js';
-import { PLATFORM_NAME, renderShell, verificationBadge } from '../chrome.js';
-import { escapeText } from '../html.js';
+import { breadcrumb, container, emptyState, heading, paragraph, section } from '../components.js';
+import { PLATFORM_NAME, renderShell } from '../chrome.js';
 import { breadcrumbList, jsonLdBlocks } from '../structured.js';
 import { buildPageHead } from '../seohead.js';
+import { typeUrl } from '../taxonomy.js';
+import { PAGE_SIZE, businessGrid, paginationNav } from './landing.js';
 import type { PageContext, PageResponse } from './types.js';
 
-const PAGE_SIZE = 24;
+/**
+ * «یک مفهوم، یک نشانی» (گام ۲۵).
+ *
+ * `?q=` و `?type=` پیش‌تر روی همین صفحه می‌نشستند، ولی `q` اصلاً اعمال نمی‌شد و
+ * `type` یک نسخهٔ تکراری از صفحهٔ نوع می‌ساخت. حالا هر کدام صفحهٔ خودشان را دارند
+ * (`/search`، `/t/{نوع}`) و این‌جا فقط هدایت دائمی است — پیوند قدیمی کار می‌کند و
+ * موتور جست‌وجو یک صفحهٔ مرجع می‌بیند.
+ */
+function legacyRedirect(url: URL): PageResponse | null {
+  const query = url.searchParams.get('q')?.trim();
+  const typeKey = url.searchParams.get('type')?.trim();
+  const cursor = url.searchParams.get('cursor');
+
+  let target: string | null = null;
+  if (query) {
+    target = `/search?q=${encodeURIComponent(query)}`;
+  } else if (typeKey) {
+    const base = typeUrl(typeKey);
+    if (base) target = cursor ? `${base}?cursor=${encodeURIComponent(cursor)}` : base;
+  }
+
+  if (!target) return null;
+  return { status: 308, kind: 'text', body: '', headers: { location: target }, cacheable: false, seo: false };
+}
 
 export async function businessesPage(context: PageContext): Promise<PageResponse> {
   const { config, site, url, settings, requestId } = context;
   const origin = config.env.origins.public;
   const locale = settings?.default_locale ?? 'fa-IR';
 
-  const cursor = url.searchParams.get('cursor');
-  const typeKey = url.searchParams.get('type');
+  const redirected = legacyRedirect(url);
+  if (redirected) return redirected;
 
-  const page = await context.data.listPublicBusinesses(
-    { limit: PAGE_SIZE, cursor, businessTypeKey: typeKey?.trim() || null },
-    requestId,
-  );
+  const cursor = url.searchParams.get('cursor');
+
+  const page = await context.data.listPublicBusinesses({ limit: PAGE_SIZE, cursor }, requestId);
 
   const isFirstPage = !cursor;
   const title = isFirstPage
     ? `کسب‌وکارهای صنعت حیوانات خانگی و اسب | ${PLATFORM_NAME}`
     : `کسب‌وکارها — صفحهٔ بعد | ${PLATFORM_NAME}`;
 
-  const nextUrl = page.nextCursor ? `${origin}/businesses?cursor=${encodeURIComponent(page.nextCursor)}${typeKey ? `&type=${encodeURIComponent(typeKey)}` : ''}` : null;
+  const nextUrl = page.nextCursor ? `${origin}/businesses?cursor=${encodeURIComponent(page.nextCursor)}` : null;
 
   /*
    * کانونیکال این صفحه **همیشه** `/businesses` است، حتی وقتی فیلتر نوع فعال
@@ -54,14 +77,18 @@ export async function businessesPage(context: PageContext): Promise<PageResponse
     search: url.searchParams,
     entity: {
       /*
-       * «جست‌وجوی متنی» و «فهرست دسته‌بندی‌شده» دو چیزند: فهرست باید نمایه شود
-       * (راه ورود به پروفایل‌هاست)، ولی نتیجهٔ جست‌وجوی آزاد، صفحهٔ کم‌ارزشی است
-       * که باید `noindex, follow` بگیرد. پس نوع، از وجود پرس‌وجو تعیین می‌شود.
+       * جست‌وجوی متنی به `/search` رفته است؛ این صفحه فقط «فهرست» است — راه ورود
+       * به پروفایل‌ها — و باید نمایه شود.
        */
-      kind: url.searchParams.get('q') ? 'search' : 'listing',
+      kind: 'listing',
       id: null,
       routeKey: '/businesses',
-      values: { name: 'کسب‌وکارها', type: typeKey ?? 'کسب‌وکار' },
+      values: {
+        name: 'کسب‌وکارها',
+        type: 'کسب‌وکار',
+        title: 'کسب‌وکارهای صنعت حیوانات خانگی و اسب',
+        description: `فهرست زندهٔ کسب‌وکارهای فعال در صنعت حیوانات خانگی و اسب — ${PLATFORM_NAME}.`,
+      },
     },
     fallbackTitle: title,
     fallbackDescription: clampDescription(
@@ -79,27 +106,9 @@ export async function businessesPage(context: PageContext): Promise<PageResponse
 
   void locale;
 
-  const items = page.items.map((business) =>
-    card({
-      title: business.name,
-      href: `/b/${business.slug}`,
-      meta: [business.tagline, business.city_name].filter(Boolean).join(' — ') || undefined,
-      raised: true,
-      body:
-        paragraph(business.summary ?? 'اطلاعات این کسب‌وکار در پروفایل عمومی‌اش آمده است.') +
-        `<div class="cluster">${verificationBadge(business.verification_level) ?? ''}${badge(business.business_type_key)}</div>`,
-    }),
-  );
-
   const listing =
-    items.length > 0
-      ? `<div class="grid grid--3 section--tight">${items.join('')}</div>` +
-        (nextUrl
-          ? `<nav class="cluster cluster--between section--tight" aria-label="صفحه‌بندی">` +
-            `<a class="button button--ghost" rel="next" href="/businesses?cursor=${encodeURIComponent(page.nextCursor as string)}${typeKey ? `&type=${encodeURIComponent(typeKey)}` : ''}">صفحهٔ بعد</a>` +
-            `<span class="field__hint">${escapeText('فهرست با نشانگر پیمایش می‌شود؛ موردی از قلم نمی‌افتد.')}</span>` +
-            `</nav>`
-          : '')
+    page.items.length > 0
+      ? businessGrid(page.items) + (nextUrl ? paginationNav(`/businesses?cursor=${encodeURIComponent(page.nextCursor as string)}`) : '')
       : emptyState('هنوز کسب‌وکاری پروفایل عمومی منتشر نکرده است. به‌زودی این فهرست پر می‌شود.');
 
   const body = [
@@ -110,10 +119,7 @@ export async function businessesPage(context: PageContext): Promise<PageResponse
     section({
       children: container(
         heading(1, 'کسب‌وکارهای حاضر در شبکه') +
-          paragraph(
-            typeKey ? `این فهرست با فیلتر «${typeKey}» نشان داده می‌شود.` : 'همهٔ کسب‌وکارهایی که پروفایل عمومی فعال دارند.',
-            'field__hint',
-          ) +
+          paragraph('همهٔ کسب‌وکارهایی که پروفایل عمومی فعال دارند. برای دسته‌بندی، از انواع کسب‌وکار، صنف‌ها یا شهرها وارد شوید.', 'field__hint') +
           listing,
       ),
     }),

@@ -40,6 +40,8 @@ import { businessesPage } from './pages/businesses.js';
 import { llmsPage, robotsPage, sitemapPage } from './pages/feeds.js';
 import { homePage } from './pages/home.js';
 import { platformContentPage } from './pages/content.js';
+import { searchPage } from './pages/search.js';
+import { businessTypePage, categoryPage, industryPage, locationPage, taxonomyIndexPage } from './pages/taxonomy.js';
 import { gonePage, healthResponse, notFoundPage, readinessResponse } from './pages/system.js';
 import type { PageContext, PageResponse } from './pages/types.js';
 
@@ -274,6 +276,18 @@ export function createWebServer(options: WebServerOptions): WebServer {
         return finalize(await businessesPage(context), input.requestId);
       case 'business':
         return finalize(await businessPage(context, target.slug), input.requestId);
+      case 'search':
+        return finalize(await searchPage(context), input.requestId);
+      case 'taxonomy_index':
+        return finalize(await taxonomyIndexPage(context, target.family), input.requestId);
+      case 'business_type':
+        return finalize(await businessTypePage(context, target.key), input.requestId);
+      case 'industry':
+        return finalize(await industryPage(context, target.path), input.requestId);
+      case 'location':
+        return finalize(await locationPage(context, target.suffix), input.requestId);
+      case 'category':
+        return finalize(await categoryPage(context, target.path), input.requestId);
       case 'content':
         return finalize(await platformContentPage(context, target.slug), input.requestId);
       case 'forbidden':

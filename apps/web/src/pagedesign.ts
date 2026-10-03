@@ -291,7 +291,7 @@ export function buildBusinessView(
     id: business.id,
     slug: business.slug,
     name: business.name,
-    typeName: business.business_type_key,
+    typeName: business.type_name ?? business.business_type_key,
     cityName: business.city_name,
     url: `${origin}/b/${business.slug}`,
     address: primary?.address_line ?? null,

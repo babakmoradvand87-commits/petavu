@@ -418,8 +418,8 @@ describe('کانونیکال (Addendum §۴۴)', () => {
     assert.equal(page.canonical, `${ORIGIN}/b/seo-shop`);
   });
 
-  test('کانونیکال فهرست، پارامتر فیلتر را دور می‌ریزد', async () => {
-    const first = await head('/businesses?utm_medium=cpc&q=کلینیک');
+  test('کانونیکال فهرست، پارامتر ردیابی را دور می‌ریزد', async () => {
+    const first = await head('/businesses?utm_medium=cpc');
     assert.equal(first.canonical, `${ORIGIN}/businesses`);
   });
 });
@@ -691,14 +691,15 @@ describe('محیط تولید: دروازه‌ها و صفحه‌بندی', () =
   });
 
   test('جست‌وجوی آزاد `noindex, follow` می‌گیرد، فهرست نه', async () => {
-    const listing = await prodHead('/businesses?type=pet_shop');
+    const listing = await prodHead('/businesses');
     assert.ok(!(listing.robots ?? '').includes('noindex'), listing.robots ?? '');
 
-    const search = await prodHead('/businesses?q=کلینیک');
+    // گام ۲۵: جست‌وجو صفحهٔ خودش را دارد (`/search`)؛ حتی در تولید همیشه noindex است.
+    const search = await prodHead('/search?q=کلینیک');
     assert.match(search.robots ?? '', /noindex/);
     assert.match(search.robots ?? '', /follow/);
     // پرس‌وجو هرگز در کانونیکال نمی‌ماند.
-    assert.equal(search.canonical, `${PRODUCTION_ORIGIN}/businesses`);
+    assert.equal(search.canonical, `${PRODUCTION_ORIGIN}/search`);
   });
 
   test('صفحهٔ کسب‌وکار در تولید، عنوان و کانونیکال امن دارد', async () => {
