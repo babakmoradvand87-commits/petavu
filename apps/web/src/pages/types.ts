@@ -10,7 +10,10 @@
  * را ممکن می‌کند.
  */
 
+import type { Logger } from '@petavu/shared';
+
 import type { AssetRegistry } from '../assets.js';
+import type { ComponentRegistry } from '../registry.js';
 import type { SitePolicy, WebConfig } from '../config.js';
 import type { ContentIndexRow, PlatformPageRow, PublicBusinessRow, SeoSettingsRow, WebData, PlatformStats } from '../data.js';
 import type { FontSetup } from '../fonts.js';
@@ -46,6 +49,12 @@ export interface PageContext {
   readonly now: Date;
   /** پیوند پاورقی، داده‌محور: صفحه‌های منتشرشدهٔ پلتفرم. */
   readonly chrome: ChromeData;
+  /**
+   * Registry کامپوننت‌ها (گام ۲۳). `null` یعنی بارگذاری نشده — در آن حالت
+   * صفحه به چیدمان پایه برمی‌گردد و **خطا نمی‌دهد**.
+   */
+  readonly registry: ComponentRegistry | null;
+  readonly logger: Logger;
 }
 
 export interface ChromeData {

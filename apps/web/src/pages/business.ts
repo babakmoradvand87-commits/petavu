@@ -16,6 +16,7 @@ import { breadcrumb, badge, container, heading, paragraph, section } from '../co
 import { PLATFORM_NAME, renderShell, verificationBadge } from '../chrome.js';
 import { escapeText } from '../html.js';
 import { breadcrumbList, businessNode, jsonLdBlocks } from '../structured.js';
+import { renderDesignPage } from '../pagedesign.js';
 import { notFoundPage } from './system.js';
 import type { PageContext, PageResponse } from './types.js';
 
@@ -66,7 +67,7 @@ export async function businessPage(context: PageContext, slug: string): Promise<
   if (business.founded_year) facts.push(`سال تأسیس: ${business.founded_year}`);
   if (Number(business.listing_count) > 0) facts.push(`آگهی فعال: ${business.listing_count}`);
 
-  const body = [
+  const baseline = [
     section({
       tight: true,
       children: container(
@@ -92,6 +93,27 @@ export async function businessPage(context: PageContext, slug: string): Promise<
       ),
     }),
   ].join('\n');
+
+  /*
+   * درخت طراحی این کسب‌وکار (اگر منتشر شده باشد) حاکم است؛ وگرنه چیدمان پایه.
+   * عنوان‌های زمینه برای نگه‌دارنده‌های `{business_name}`، `{tagline}`،
+   * `{type_name}` و `{city}` از خود ردیف کسب‌وکار می‌آید.
+   */
+  const design = await renderDesignPage({
+    context,
+    businessId: business.id,
+    key: 'home',
+    pageUrl: canonical,
+    business,
+    strings: {
+      business_name: business.name,
+      tagline: business.tagline ?? '',
+      type_name: business.business_type_key,
+      city: business.city_name ?? '',
+    },
+  });
+
+  const body = design.used ? design.html ?? baseline : baseline;
 
   const nodes = [
     businessNode({

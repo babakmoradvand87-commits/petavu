@@ -30,6 +30,11 @@ export * from './router.js';
 export * from './headers.js';
 export * from './structured.js';
 export * from './styles.js';
+export * from './registry.js';
+export * from './tree.js';
+export * from './renderers.js';
+export * from './media.js';
+export * from './pagedesign.js';
 export * from './components.js';
 export * from './pages/types.js';
 

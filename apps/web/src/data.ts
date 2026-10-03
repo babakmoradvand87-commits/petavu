@@ -28,6 +28,8 @@ import {
 } from '@petavu/db';
 import type { Logger } from '@petavu/shared';
 
+import type { RegistryRow } from './registry.js';
+import type { MediaAssetRow } from './media.js';
 import type { ThemeMode } from './tokens.js';
 
 export interface TokenQueryRow extends Row {
@@ -103,6 +105,27 @@ export interface SeoSettingsRow extends Row {
   environment: 'production' | 'staging' | 'development';
 }
 
+/**
+ * دارایی رسانه و ردیف Registry، هر دو از همین لایه خوانده می‌شوند — نه با
+ * دسترسی مستقیم صفحه‌ها به پایگاه‌داده. دلیلش قاعدهٔ گام ۲۲ است: صفحه فقط
+ * «چه می‌خواهد» را می‌گوید؛ اینکه چگونه و با کدام نقش خوانده می‌شود، اینجاست.
+ */
+export interface BusinessContactRow extends Row {
+  kind: string;
+  value_display: string;
+  label: string | null;
+  is_public: boolean;
+}
+
+export interface BusinessLocationRow extends Row {
+  label: string | null;
+  address_line: string | null;
+  latitude: string | number | null;
+  longitude: string | number | null;
+  hours: unknown;
+  is_primary: boolean;
+}
+
 export interface WebData {
   /** توکن‌های سراسری پلتفرم — تنها چیزی که `pv_public` می‌بیند. */
   themeTokens(requestId: string): Promise<TokenQueryRow[]>;
@@ -124,6 +147,22 @@ export interface WebData {
   platformPage(slug: string, requestId: string): Promise<PlatformPageRow | null>;
   /** فهرست صفحه‌های منتشرشدهٔ پلتفرم — برای ناوبری و نقشهٔ سایت. */
   platformPages(requestId: string): Promise<PlatformPageRow[]>;
+  /**
+   * درخت منتشرشدهٔ یک صفحهٔ طراحی (گام ۲۳).
+   *
+   * ترتیب جست‌وجو: ابتدا صفحهٔ خود کسب‌وکار، بعد صفحهٔ سراسری پلتفرم. اگر
+   * هیچ‌کدام منتشر نشده باشد، `null` برمی‌گردد و صفحه به چیدمان پایهٔ کد
+   * برمی‌گردد — نه به یک صفحهٔ خالی.
+   */
+  pageTree(request: { businessId: string | null; key: string }, requestId: string): Promise<unknown | null>;
+  /** ردیف‌های Registry — منبع حقیقت کامپوننت‌های مجاز. */
+  componentRegistry(requestId: string): Promise<RegistryRow[]>;
+  /** دارایی‌های رسانه‌ای که درخت به آن‌ها اشاره کرده (تنها همان‌ها). */
+  mediaAssets(ids: readonly string[], requestId: string): Promise<MediaAssetRow[]>;
+  /** یک دارایی رسانه برای مسیر `/media/:id`. */
+  mediaAsset(id: string, requestId: string): Promise<MediaAssetRow | null>;
+  /** مکان‌ها و راه‌های تماس **عمومی** یک کسب‌وکار (زمینهٔ بلوک تماس و نقشه). */
+  businessContext(businessId: string, requestId: string): Promise<{ locations: BusinessLocationRow[]; contacts: BusinessContactRow[] }>;
 }
 
 export interface PlatformStats extends Row {
@@ -407,6 +446,97 @@ export function createWebData(options: WebDataOptions): WebData {
             order by c.weight desc, c.title asc
           `),
         ),
+      );
+    },
+
+    pageTree(request, requestId) {
+      return degrade(`design.page:${request.key}`, null, () =>
+        read(requestId, async ({ dal }) => {
+          const row = await dal.maybeOne<{ published_tree: unknown }>(sql`
+            select p.published_tree
+            from design.page p
+            where p.key = ${request.key}
+              and p.status = 'published'
+              and p.published_tree is not null
+              and (
+                (p.business_id = ${request.businessId} and ${request.businessId !== null})
+                or (p.business_id is null and p.is_system)
+              )
+            order by (p.business_id is null) asc
+            limit 1
+          `);
+          return row?.published_tree ?? null;
+        }),
+      );
+    },
+
+    componentRegistry(requestId) {
+      return degrade('design.registry', [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<RegistryRow>(sql`
+            select c.key, c.name_fa, c.category, c.props_schema, c.slots, c.a11y, c.seo, c.performance, c.status
+            from design.component c
+            where c.status <> 'removed'
+            order by c.category asc, c.key asc
+          `),
+        ),
+      );
+    },
+
+    mediaAssets(ids, requestId) {
+      if (ids.length === 0) return Promise.resolve([]);
+      return degrade('media.assets', [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<MediaAssetRow>(sql`
+            select a.id, a.driver, a.storage_key, a.bucket, a.detected_mime, a.kind, a.size_bytes,
+                   a.width, a.height, a.alt_text, a.original_name, a.checksum_sha256
+            from media.asset a
+            where a.id = any(${ids}::uuid[])
+          `),
+        ),
+      );
+    },
+
+    mediaAsset(id, requestId) {
+      return degrade(`media.asset:${id}`, null, () =>
+        read(requestId, ({ dal }) =>
+          dal.maybeOne<MediaAssetRow>(sql`
+            select a.id, a.driver, a.storage_key, a.bucket, a.detected_mime, a.kind, a.size_bytes,
+                   a.width, a.height, a.alt_text, a.original_name, a.checksum_sha256
+            from media.asset a
+            where a.id = ${id}::uuid
+            limit 1
+          `),
+        ),
+      );
+    },
+
+    businessContext(businessId, requestId) {
+      const empty = { locations: [] as BusinessLocationRow[], contacts: [] as BusinessContactRow[] };
+      return degrade(`business.context:${businessId}`, empty, () =>
+        read(requestId, async ({ dal }) => {
+          /*
+           * دو خواندن کوچک به‌جای یکی با اتصال: جدول‌ها رابطهٔ یک‌به‌چند دارند و
+           * اتصال، سطرها را تکثیر می‌کند. هر دو از پیش‌شرط‌های یکسانی عبور می‌کنند.
+           */
+          const locations = await dal.query<BusinessLocationRow>(sql`
+            select l.label, l.address_line, l.latitude, l.longitude, l.hours, l.is_primary
+            from app.business_location l
+            where l.business_id = ${businessId}
+            order by l.is_primary desc, l.created_at asc
+            limit 20
+          `);
+
+          const contacts = await dal.query<BusinessContactRow>(sql`
+            select c.kind, c.value_display, c.label, c.is_public
+            from app.business_contact c
+            where c.business_id = ${businessId} and c.is_public
+            order by c.sort_order asc, c.created_at asc
+            limit 20
+          `);
+
+          return { locations, contacts };
+        }),
       );
     },
 

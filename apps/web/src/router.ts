@@ -31,6 +31,7 @@ export const RESERVED_SLUGS = new Set([
   'favicon.ico',
   'favicon.svg',
   'api',
+  'media',
 ]);
 
 export type RouteTarget =
@@ -39,6 +40,7 @@ export type RouteTarget =
   | { readonly type: 'business'; readonly slug: string }
   | { readonly type: 'content'; readonly slug: string }
   | { readonly type: 'asset'; readonly path: string }
+  | { readonly type: 'media'; readonly id: string }
   | { readonly type: 'robots' }
   | { readonly type: 'sitemap' }
   | { readonly type: 'llms' }
@@ -49,6 +51,8 @@ export type RouteTarget =
   | { readonly type: 'not_found' };
 
 const ASSET_PREFIX = '/assets/';
+const MEDIA_PREFIX = '/media/';
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 export function resolveTarget(pathname: string, siteKind: SiteKind): RouteTarget {
   // مسیر باید نرمال‌شدهٔ همان چیزی باشد که آمد؛ وگرنه نرمال‌سازی مسیر = حمله.
@@ -61,6 +65,18 @@ export function resolveTarget(pathname: string, siteKind: SiteKind): RouteTarget
 
   if (pathname === '/healthz') return { type: 'health' };
   if (pathname === '/readyz') return { type: 'ready' };
+
+  /*
+   * رسانه (گام ۲۳): نشانی فقط **شناسهٔ** دارایی را دارد.
+   *
+   * مسیر فایل هرگز در نشانی نمی‌آید، پس پیمایش مسیر ساختاراً ممکن نیست.
+   * شناسهٔ نامعتبر، بی‌کوئری رد می‌شود.
+   */
+  if (pathname.startsWith(MEDIA_PREFIX)) {
+    if (siteKind !== 'public' && siteKind !== 'shop') return { type: 'not_found' };
+    const id = pathname.slice(MEDIA_PREFIX.length);
+    return UUID.test(id.toLowerCase()) ? { type: 'media', id: id.toLowerCase() } : { type: 'not_found' };
+  }
 
   /*
    * سطح مدیریتی روی میزبان عمومی، **وجود ندارد**. نه ۴۰۳: ۴۰۴. تفاوت مهم است:

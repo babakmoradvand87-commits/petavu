@@ -16,9 +16,18 @@ import { card, container, emptyState, formatNumber, heading, metric, paragraph, 
 import { PLATFORM_NAME, PLATFORM_TAGLINE, renderShell } from '../chrome.js';
 import { escapeText } from '../html.js';
 import { breadcrumbList, itemListNode, jsonLdBlocks } from '../structured.js';
+import { renderDesignPage } from '../pagedesign.js';
 import type { PageContext, PageResponse } from './types.js';
 
-export function homePage(context: PageContext): PageResponse {
+/**
+ * صفحهٔ اصلی.
+ *
+ * **دو لایه، یک خروجی.** اگر صفحهٔ `home` در `design.page` منتشر شده باشد،
+ * همان درخت رندر می‌شود؛ وگرنه چیدمان پایهٔ کد می‌آید. هر دو لایه دادهٔ
+ * ساخت‌یافته، هد سئو و پوستهٔ یکسانی دارند — پس سئو به «کدام لایه رندر شد»
+ * گره نمی‌خورد.
+ */
+export async function homePage(context: PageContext): Promise<PageResponse> {
   const { chrome, config, site, url, settings } = context;
   const origin = config.env.origins.public;
   const locale = settings?.default_locale ?? 'fa-IR';
@@ -125,9 +134,40 @@ export function homePage(context: PageContext): PageResponse {
     breadcrumbList([{ name: 'خانه', url: '/' }], { baseUrl: origin, brandName: PLATFORM_NAME }),
   ];
 
-  const body = [hero, statsSection, featuredSection, contentSection]
+  const baseline = [hero, statsSection, featuredSection, contentSection]
     .filter((part): part is string => typeof part === 'string')
     .join('\n');
+
+  const design = await renderDesignPage({
+    context,
+    businessId: null,
+    key: 'home',
+    pageUrl: `${origin}/`,
+    strings: {
+      business_name: PLATFORM_NAME,
+      tagline: PLATFORM_TAGLINE,
+      business_type: 'پلتفرم',
+      city: '',
+    },
+  });
+
+  /*
+   * درخت منتشرشدهٔ صفحهٔ اصلی جای چیدمان پایه را می‌گیرد. اگر درخت `h1` نداشت،
+   * عنوان سطح‌یک از داده می‌آید — صفحهٔ اصلی بدون `h1`، هم برای صفحه‌خوان و هم
+   * برای موتور جست‌وجو ناقص است.
+   */
+  const body = design.used
+    ? (design.hasH1
+        ? design.html ?? baseline
+        : section({
+            tight: true,
+            children: container(
+              heading(1, `${PLATFORM_NAME}؛ ${PLATFORM_TAGLINE}`) +
+                paragraph('فهرست زندهٔ کسب‌وکارهای صنعت حیوانات خانگی و اسب.', 'ds-text ds-text--lg'),
+            ),
+          }) + (design.html ?? '')
+      )
+    : baseline;
 
   const html = renderShell({
     config,

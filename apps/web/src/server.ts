@@ -32,6 +32,8 @@ import { createFontSetup, type FontSetup } from './fonts.js';
 import { buildTheme, type ThemeBundle } from './theme.js';
 import { SHELL_CSS } from './styles.js';
 import { canonicalRedirect, decodePath, resolveTarget } from './router.js';
+import { createRegistryCache, type ComponentRegistry } from './registry.js';
+import { mediaHeaders, readLocalMedia, resolveAssetSource, type MediaAssetRow } from './media.js';
 import { notModifiedHeaders, securityHeaders } from './headers.js';
 import { businessPage } from './pages/business.js';
 import { businessesPage } from './pages/businesses.js';
@@ -68,6 +70,13 @@ export interface RenderResult {
   readonly headers: Record<string, string>;
   /** بدنهٔ **رمزگشایی‌نشده**؛ فشرده‌سازی، کار لایهٔ شبکه است. */
   readonly body: string;
+  /**
+   * بدنهٔ دودویی (رسانه). اگر حاضر باشد، **به‌جای** `body` فرستاده می‌شود.
+   *
+   * چرا جدا: عبور فایل دودویی از `body` یعنی یک رفت‌وبرگشت UTF-8 که بایت‌ها
+   * را خراب می‌کند. جدایی این دو مسیر، جلوی همان خرابی را می‌گیرد.
+   */
+  readonly bytes?: Buffer;
 }
 
 export interface WebServer {
@@ -75,6 +84,8 @@ export interface WebServer {
   readonly config: WebConfig;
   readonly assets: AssetRegistry;
   readonly fonts: FontSetup;
+  /** Registry کامپوننت‌ها همان‌طور که سرور می‌بیند — برای آزمون و بازرسی. */
+  componentRegistry(): Promise<ComponentRegistry>;
   listen(port: number, host?: string): Promise<{ port: number }>;
   close(): Promise<void>;
   /** رندر یک درخواست بدون سوکت — برای تست و پیش‌گرم. */
@@ -90,6 +101,18 @@ export function createWebServer(options: WebServerOptions): WebServer {
   const now = options.now ?? (() => new Date());
   const config = createWebConfig(options.env, { assetsDirectory: options.assetsDirectory });
   const data: WebData = createWebData({ client: options.client, logger });
+
+  /*
+   * Registry کامپوننت‌ها با عمر محدود کش می‌شود: در هر رندر لازم است و خواندنش
+   * در هر درخواست، یک رفت‌وبرگشت اضافه به پایگاه‌داده است.
+   */
+  const registryCache = createRegistryCache({
+    load: () => data.componentRegistry('registry-cache'),
+    onError: (error) =>
+      logger.warn('خواندن Registry کامپوننت‌ها شکست خورد؛ Registry پیشین نگه داشته شد', {
+        error: error instanceof Error ? error.message : String(error),
+      }),
+  });
   const assets = createAssetRegistry({ directory: options.assetsDirectory });
 
   const fonts = createFontSetup({
@@ -126,9 +149,10 @@ export function createWebServer(options: WebServerOptions): WebServer {
       return assets.registerGenerated(CSS_ASSET, cssFor(theme), 'text/css; charset=utf-8');
     })());
 
-  /** راه‌اندازی گرم: پرس‌وجوی تم و ثبت CSS، پیش از شنیدن روی پورت. */
+  /** راه‌اندازی گرم: تم، CSS و Registry — پیش از شنیدن روی پورت. */
   async function warmup(): Promise<void> {
     await getCssAsset();
+    await registryCache.get();
   }
 
   async function buildContext(input: {
@@ -138,12 +162,13 @@ export function createWebServer(options: WebServerOptions): WebServer {
     site: SitePolicy;
     theme: ThemeBundle;
   }): Promise<PageContext> {
-    const [settings, pages, stats, featured, contents] = await Promise.all([
+    const [settings, pages, stats, featured, contents, registry] = await Promise.all([
       data.seoSettings(input.requestId),
       data.platformPages(input.requestId),
       data.platformStats(input.requestId),
       data.featuredBusinesses(6, input.requestId),
       data.contentIndex(4, input.requestId),
+      registryCache.get(),
     ]);
 
     return {
@@ -159,6 +184,8 @@ export function createWebServer(options: WebServerOptions): WebServer {
       siteName: PLATFORM_NAME,
       now: now(),
       chrome: { pages, stats, featured, contents },
+      registry,
+      logger,
     };
   }
 
@@ -216,6 +243,10 @@ export function createWebServer(options: WebServerOptions): WebServer {
       };
     }
 
+    if (target.type === 'media') {
+      return mediaResponse(target.id, input.requestId);
+    }
+
     /*
      * CSS باید **پیش از** رندر ثبت شده باشد: صفحه‌ها نشانی دارایی را از
      * رجیستری می‌پرسند. ثبت، یک‌بار انجام می‌شود (memoized) و اگر نشود،
@@ -238,7 +269,7 @@ export function createWebServer(options: WebServerOptions): WebServer {
       case 'sitemap':
         return finalize(await sitemapPage(context), input.requestId);
       case 'home':
-        return finalize(homePage(context), input.requestId);
+        return finalize(await homePage(context), input.requestId);
       case 'businesses':
         return finalize(await businessesPage(context), input.requestId);
       case 'business':
@@ -257,6 +288,54 @@ export function createWebServer(options: WebServerOptions): WebServer {
          */
         return finalize(notFoundPage(context, { reason: `route:${target.type}` }), input.requestId);
     }
+  }
+
+  /**
+   * پاسخ رسانه.
+   *
+   * سه مسیر، یک قاعده: **هیچ‌وقت ۵۰۰**. دارایی نامعتبر یا نبودِ فایل ⇒ ۴۰۴
+   * یکنواخت. تفکیک «نیست» از «هست ولی خصوصی است» یک اوراکل می‌سازد و RLS هم
+   * همین را تضمین می‌کند: بی‌نام فقط دارایی `is_public` و `ready` را می‌بیند.
+   */
+  async function mediaResponse(id: string, requestId: string): Promise<RenderResult> {
+    const asset = (await data.mediaAsset(id, requestId)) as MediaAssetRow | null;
+    if (!asset) return plain(404, 'media not found', requestId);
+
+    const source = resolveAssetSource(asset);
+    if (!source) {
+      logger.warn('نشانی رسانه ساخته نشد؛ دارایی بی‌نشانی است', { requestId, assetId: asset.id, driver: asset.driver });
+      return plain(404, 'media not found', requestId);
+    }
+
+    // دارایی بیرونی: هدایت. فایل دست ما نیست و نباید از دامنهٔ ما سرو شود.
+    if (source.redirect) return redirect(302, source.url, requestId);
+
+    const file = await readLocalMedia(options.env.storage.localDir, asset.storage_key, {
+      contentType: asset.detected_mime,
+    });
+
+    if (!file) {
+      logger.warn('فایل رسانه در انبار پیدا نشد', { requestId, assetId: asset.id, driver: asset.driver });
+      return plain(404, 'media not found', requestId);
+    }
+
+    const etag = `"${asset.checksum_sha256 ?? `bytes-${file.sizeBytes}`}"`;
+
+    return {
+      status: 200,
+      headers: {
+        ...securityHeaders({ env: options.env, kind: 'asset', cdnCacheable: true, requestId }),
+        ...mediaHeaders({
+          sizeBytes: file.sizeBytes,
+          contentType: file.contentType,
+          disposition: file.disposition,
+          etag,
+          fileName: asset.original_name,
+        }),
+      },
+      body: '',
+      bytes: file.body,
+    };
   }
 
   function finalize(response: PageResponse, requestId: string): RenderResult {
@@ -370,9 +449,9 @@ export function createWebServer(options: WebServerOptions): WebServer {
     }
 
     const acceptEncoding = String(request.headers['accept-encoding'] ?? '');
-    let body: Buffer = Buffer.from(result.body, 'utf8');
+    let body: Buffer = result.bytes ?? Buffer.from(result.body, 'utf8');
 
-    if (body.byteLength >= COMPRESS_THRESHOLD && isCompressible(headers['content-type'])) {
+    if (result.bytes === undefined && body.byteLength >= COMPRESS_THRESHOLD && isCompressible(headers['content-type'])) {
       const compressed = acceptEncoding.includes('br')
         ? brotliCompressSync(body)
         : acceptEncoding.includes('gzip')
@@ -445,6 +524,8 @@ export function createWebServer(options: WebServerOptions): WebServer {
     },
 
     render,
+
+    componentRegistry: () => registryCache.get(),
 
     async stylesheet() {
       return assets.body(await getCssAsset()).toString('utf8');
