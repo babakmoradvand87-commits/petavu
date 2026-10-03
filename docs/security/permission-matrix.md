@@ -3,9 +3,9 @@
 این پرونده **تولیدشده** است (`npm run audit:security`). منبع حقیقت، پایگاه‌داده است؛
 ویرایش دستی این پرونده بی‌اثر است و در اجرای بعدی بازنویسی می‌شود (§103).
 
-- زمان تولید (UTC): 2026-10-02 13:14
-- جدول‌های دامنه: 88 — همه با RLS فعال: بله
-- سیاست‌ها: 272
+- زمان تولید (UTC): 2026-10-03 10:17
+- جدول‌های دامنه: 91 — همه با RLS فعال: بله
+- سیاست‌ها: 275
 - مجوزها: 61 — دامنه‌ای: 41، پلتفرمی: 20
 
 ## نقش‌های کسب‌وکار
@@ -101,6 +101,7 @@
 
 | جدول | RLS | شمار سیاست |
 | --- | --- | --- |
+| `app.api_key` | روشن | 1 |
 | `app.business` | روشن | 8 |
 | `app.business_contact` | روشن | 3 |
 | `app.business_location` | روشن | 3 |
@@ -121,11 +122,13 @@
 | `auth.device` | روشن | 4 |
 | `auth.identity` | روشن | 3 |
 | `auth.login_attempt` | روشن | 3 |
+| `auth.login_ticket` | روشن | 1 |
 | `auth.one_time_token` | روشن | 3 |
 | `auth.permission` | روشن | 2 |
 | `auth.platform_role` | روشن | 2 |
 | `auth.platform_role_permission` | روشن | 2 |
 | `auth.recovery_code` | روشن | 0 |
+| `auth.registration_ticket` | روشن | 1 |
 | `auth.session` | روشن | 4 |
 | `auth.user_platform_role` | روشن | 2 |
 | `design.audit` | روشن | 3 |
@@ -194,6 +197,7 @@
 
 | جدول | سیاست | دستور | نقش‌ها |
 | --- | --- | --- | --- |
+| `app.api_key` | `api_key_closed` | ALL | pv_app |
 | `app.business` | `business_insert_self` | INSERT | pv_app |
 | `app.business` | `business_member_select` | SELECT | pv_app |
 | `app.business` | `business_owner_select` | SELECT | pv_app |
@@ -272,6 +276,7 @@
 | `auth.login_attempt` | `login_attempt_insert` | INSERT | pv_app, pv_public |
 | `auth.login_attempt` | `login_attempt_reader` | SELECT | pv_reader |
 | `auth.login_attempt` | `login_attempt_staff_select` | SELECT | pv_app, pv_worker |
+| `auth.login_ticket` | `login_ticket_closed` | ALL | pv_app |
 | `auth.one_time_token` | `one_time_token_insert` | INSERT | pv_app, pv_public |
 | `auth.one_time_token` | `one_time_token_reader` | SELECT | pv_reader |
 | `auth.one_time_token` | `one_time_token_staff_select` | SELECT | pv_app, pv_worker |
@@ -281,6 +286,7 @@
 | `auth.platform_role` | `platform_role_write` | ALL | pv_app, pv_worker |
 | `auth.platform_role_permission` | `platform_role_permission_read` | SELECT | pv_app, pv_public, pv_reader, pv_worker |
 | `auth.platform_role_permission` | `platform_role_permission_write` | ALL | pv_app, pv_worker |
+| `auth.registration_ticket` | `registration_ticket_closed` | ALL | pv_app |
 | `auth.session` | `session_insert_impersonation` | INSERT | pv_app, pv_public |
 | `auth.session` | `session_reader` | SELECT | pv_reader |
 | `auth.session` | `session_self` | ALL | pv_app |
