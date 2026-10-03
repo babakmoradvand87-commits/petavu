@@ -17,6 +17,7 @@ import type { ComponentRegistry } from '../registry.js';
 import type { SitePolicy, WebConfig } from '../config.js';
 import type { ContentIndexRow, PlatformPageRow, PublicBusinessRow, SeoSettingsRow, WebData, PlatformStats } from '../data.js';
 import type { FontSetup } from '../fonts.js';
+import type { ImagePicture } from '../imagepipeline.js';
 import type { ThemeBundle } from '../theme.js';
 
 export type ResponseKind = 'html' | 'text' | 'xml' | 'json';
@@ -54,6 +55,8 @@ export interface PageContext {
    * صفحه به چیدمان پایه برمی‌گردد و **خطا نمی‌دهد**.
    */
   readonly registry: ComponentRegistry | null;
+  /** خط لولهٔ تصویر (AVIF/WebP)؛ `null` ⇒ `<img>` ساده. */
+  readonly images: ImagePicture | null;
   readonly logger: Logger;
 }
 
@@ -62,6 +65,8 @@ export interface ChromeData {
   readonly stats: PlatformStats;
   readonly featured: readonly PublicBusinessRow[];
   readonly contents: readonly ContentIndexRow[];
+  /** نرخ نمونه‌گیری سنجش میدانی برای همین مسیر (۰ تا ۱)؛ ۰ ⇒ بیکن در صفحه نیست. */
+  readonly rumSampleRate: number;
 }
 
 export type PageHandler = (context: PageContext) => Promise<PageResponse> | PageResponse;

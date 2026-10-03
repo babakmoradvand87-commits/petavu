@@ -15,6 +15,7 @@
  */
 
 import { validateProps, type ComponentRegistry, type Finding } from './registry.js';
+import { plainImage, type ImagePicture } from './imagepipeline.js';
 import { RENDERERS, UNRENDERABLE, type MediaView, type OutlineEntry, type RenderHelpers, type TreeData, type TreeNode } from './renderers.js';
 
 export const TREE_LIMITS = {
@@ -345,6 +346,8 @@ export interface RenderOptions {
   readonly pageUrl: string;
   readonly locale: string;
   readonly media: ((assetId: string) => MediaView | null) | null;
+  /** خط لولهٔ تصویر؛ `null` ⇒ `<img>` ساده. */
+  readonly images?: ImagePicture | null;
 }
 
 export interface TreeRender {
@@ -414,6 +417,7 @@ export function renderTree(options: RenderOptions): TreeRender {
       }
       return options.media(assetId);
     },
+    image: (media, imageOptions) => (options.images ? options.images.picture(media, imageOptions) : plainImage(media, imageOptions)),
     outline: options.scan.outline,
     claimH1: () => {
       if (h1Claimed) return false;

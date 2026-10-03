@@ -17,6 +17,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { isAbsolute, join, normalize, resolve, sep } from 'node:path';
 
 import type { Row } from '@petavu/db';
+import { versionOf } from './imagepipeline.js';
 import type { MediaView } from './renderers.js';
 
 export interface MediaAssetRow extends Row {
@@ -117,6 +118,8 @@ export function mediaViewOf(row: MediaAssetRow): MediaView | null {
     height,
     alt: row.alt_text,
     kind,
+    // برای نسخه‌های AVIF/WebP؛ فقط دارایی محلی (فایلش دست ماست).
+    ...(row.driver === 'local' ? { assetId: row.id, mime: row.detected_mime, version: versionOf(row.checksum_sha256) } : {}),
   };
 }
 

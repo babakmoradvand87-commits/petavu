@@ -764,6 +764,32 @@ describe('عملکرد: مرز اعتماد عمومی (§91–۹۵)', () => {
       body: { samples: [{ metric: 'LCP', value: 1800, path: '/b/tak-pet', rating: 'good' }] },
     });
     assert.equal(response.status, 202, JSON.stringify(response.body));
+    // رگرسیون (گام ۲۷): ۲۰۲ به‌تنهایی چیزی ثابت نمی‌کند؛ نمونه باید **واقعاً** ثبت شده باشد.
+    assert.equal(response.body.recorded.accepted, 1, JSON.stringify(response.body));
+    assert.deepEqual(response.body.recorded.rejected, []);
+    const rows = await asRole('postgres', `select metric, page_path, route_pattern, rating from ops.vitals_sample where page_path = '/b/tak-pet'`);
+    assert.equal(rows.length, 1);
+    assert.deepEqual({ metric: rows[0].metric, route_pattern: rows[0].route_pattern, rating: rows[0].rating }, { metric: 'lcp', route_pattern: '/b/:slug', rating: 'good' });
+  });
+
+  test('مقدار شمارشیِ ناشناخته (`back-forward`، `LTE`، `phone`)، دسته را باطل نمی‌کند — «unknown» می‌شود', async () => {
+    const response = await request('/api/v1/public/vitals', {
+      method: 'POST',
+      body: {
+        samples: [
+          { metric: 'lcp', value: 900, path: '/enum-test', navigation_type: 'back-forward', connection: 'LTE', device_class: 'phone' },
+          { metric: 'cls', value: 0.02, path: '/enum-test', navigation_type: 'navigate', connection: '4g', device_class: 'mobile' },
+        ],
+      },
+    });
+    assert.equal(response.status, 202, JSON.stringify(response.body));
+    assert.equal(response.body.recorded.accepted, 2);
+    const rows = await asRole('postgres', `select metric, navigation_type, connection, device_class from ops.vitals_sample where page_path = '/enum-test' order by metric`);
+    assert.deepEqual(rows.map((row) => [row.metric, row.navigation_type, row.connection, row.device_class]), [
+      ['cls', 'navigate', '4g', 'mobile'],
+      // `back-forward` شکل دیگرِ همان `back_forward` است (کتابخانه‌ها هر دو را می‌نویسند)؛ `LTE` و `phone` ناشناس‌اند.
+      ['lcp', 'back_forward', 'unknown', 'unknown'],
+    ]);
   });
 
   test('سنجهٔ ناشناس، رد می‌شود (نه اینکه ذخیره و بعداً فیلتر شود)', async () => {

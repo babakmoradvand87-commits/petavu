@@ -34,7 +34,22 @@ import { SHELL_CSS } from './styles.js';
 import { canonicalRedirect, decodePath, resolveTarget } from './router.js';
 import { createRegistryCache, type ComponentRegistry } from './registry.js';
 import { mediaHeaders, readLocalMedia, resolveAssetSource, type MediaAssetRow } from './media.js';
+import {
+  createDiskVariantCache,
+  createLimiter,
+  createPicture,
+  loadImageEngine,
+  parseImageConfig,
+  parseVariantQuery,
+  variantKey,
+  versionOf,
+  type EngineStatus,
+  type ImageEngine,
+  type ImagePicture,
+  type ImagePipelineConfig,
+} from './imagepipeline.js';
 import { notModifiedHeaders, securityHeaders } from './headers.js';
+import { PROXY_RULES, forwardToApi, matchProxyRule } from './proxy.js';
 import { businessPage } from './pages/business.js';
 import { businessesPage } from './pages/businesses.js';
 import { llmsPage, robotsPage, sitemapPage, sitemapPartPage } from './pages/feeds.js';
@@ -60,6 +75,20 @@ export interface WebServerOptions {
   readonly assetsDirectory: string;
   /** ساعت تزریق‌شده — تست‌ها با آن زمان ثابت می‌سازند. */
   readonly now?: () => Date;
+  /**
+   * مبدأ داخلی API برای رلهٔ فهرست‌سفید (`proxy.ts`). پیش‌فرض: `API_PORT` روی میزبان
+   * پیکربندی‌شده. در استقرار با پروکسی، این رله استفاده نمی‌شود.
+   */
+  readonly apiOrigin?: string;
+  /** پوشهٔ نسخه‌های تصویر (AVIF/WebP). پیش‌فرض: کنار `STORAGE_LOCAL_DIR`، با پسوند `.variants`. */
+  readonly variantsDirectory?: string;
+  /** عمر کش تنظیمات خط لولهٔ تصویر (میلی‌ثانیه)؛ آزمون‌ها صفر می‌دهند. پیش‌فرض ۶۰ ثانیه. */
+  readonly imageConfigTtlMs?: number;
+  /**
+   * موتور تبدیل تصویر تزریق‌شده. پیش‌فرض: بارگذاری پویای `sharp`. تزریق، درز آزمون است (سنجش
+   * «موتور نیست» و شمردن تبدیل‌ها)، نه جایگزین موتور واقعی.
+   */
+  readonly imageEngine?: ImageEngine;
 }
 
 export interface RenderRequest {
@@ -96,6 +125,8 @@ export interface WebServer {
   render(request: RenderRequest): Promise<RenderResult>;
   /** CSS نهایی (توکن‌ها + فونت + پوسته). پیش از اولین درخواست ساخته می‌شود. */
   stylesheet(): Promise<string>;
+  /** وضعیت صریح موتور تصویر (PART 102): `configured` یا `not_configured` با دلیل. */
+  imagePipelineStatus(): Promise<EngineStatus>;
   /** تحلیل نهایی سهم بایت‌های بحرانی — پایهٔ سنجش بودجهٔ عملکرد. */
   budgetSnapshot(): Promise<{ cssBytes: number; fontBytes: number; documents: number }>;
 }
@@ -118,6 +149,31 @@ export function createWebServer(options: WebServerOptions): WebServer {
       }),
   });
   const assets = createAssetRegistry({ directory: options.assetsDirectory });
+  const apiOrigin =
+    options.apiOrigin ??
+    `http://${['0.0.0.0', '::', ''].includes(options.env.http.host) ? '127.0.0.1' : options.env.http.host}:${options.env.apiPort}`;
+
+  /*
+   * خط لولهٔ تصویر. موتور (sharp) یک‌بار و تنبل بارگذاری می‌شود؛ نبودش سایت را نمی‌شکند.
+   * تنظیمات از `platform.image_pipeline` (داده) با عمر کوتاه کش می‌شود.
+   */
+  const variantCache = createDiskVariantCache(
+    options.variantsDirectory ?? `${options.env.storage.localDir.replace(/[\\/]+$/, '')}.variants`,
+  );
+  const limitTranscode = createLimiter(2);
+  const inflightVariants = new Map<string, Promise<Buffer>>();
+  let enginePromise: Promise<ImageEngine> | null = null;
+  const getEngine = (): Promise<ImageEngine> => (enginePromise ??= options.imageEngine ? Promise.resolve(options.imageEngine) : loadImageEngine(logger));
+  let imageState: { config: ImagePipelineConfig; picture: ImagePicture; engine: ImageEngine; at: number } | null = null;
+
+  async function getImages(): Promise<{ config: ImagePipelineConfig; picture: ImagePicture; engine: ImageEngine }> {
+    const ttl = options.imageConfigTtlMs ?? 60_000;
+    if (imageState && Date.now() - imageState.at < ttl) return imageState;
+    const engine = await getEngine();
+    const config = parseImageConfig(await data.platformSetting('platform.image_pipeline', 'image-config'));
+    imageState = { config, engine, picture: createPicture(config, engine), at: Date.now() };
+    return imageState;
+  }
 
   const fonts = createFontSetup({
     assetsDirectory: options.assetsDirectory,
@@ -157,6 +213,7 @@ export function createWebServer(options: WebServerOptions): WebServer {
   async function warmup(): Promise<void> {
     await getCssAsset();
     await registryCache.get();
+    await getEngine();
   }
 
   async function buildContext(input: {
@@ -166,13 +223,16 @@ export function createWebServer(options: WebServerOptions): WebServer {
     site: SitePolicy;
     theme: ThemeBundle;
   }): Promise<PageContext> {
-    const [settings, pages, stats, featured, contents, registry] = await Promise.all([
+    const [settings, pages, stats, featured, contents, registry, rumSampleRate, images] = await Promise.all([
       data.seoSettings(input.requestId),
       data.platformPages(input.requestId),
       data.platformStats(input.requestId),
       data.featuredBusinesses(6, input.requestId),
       data.contentIndex(4, input.requestId),
       registryCache.get(),
+      // نرخ نمونه‌گیری سنجش میدانی، از بودجهٔ همین مسیر (داده، نه ثابت کد): مسیرِ بی‌بودجه ⇒ ۰.
+      input.site.kind === 'public' ? data.rumSampleRate(input.url.pathname, input.requestId) : Promise.resolve(0),
+      getImages(),
     ]);
 
     return {
@@ -187,8 +247,9 @@ export function createWebServer(options: WebServerOptions): WebServer {
       settings,
       siteName: PLATFORM_NAME,
       now: now(),
-      chrome: { pages, stats, featured, contents },
+      chrome: { pages, stats, featured, contents, rumSampleRate },
       registry,
+      images: images.picture,
       logger,
     };
   }
@@ -236,6 +297,13 @@ export function createWebServer(options: WebServerOptions): WebServer {
       const entry = assets.resolve(`/assets/${target.path}`);
       // دارایی ناموجود: پاسخ متنی ساده، بدون رندر صفحه (این درخواست‌ها ماشینی‌اند).
       if (!entry) return plain(404, 'asset not found', input.requestId);
+      /*
+       * بایت‌ها، نه رشته. نسخهٔ نخست `assets.body(entry).toString('utf8')` می‌داد؛ برای CSS و
+       * SVG بی‌اثر بود، ولی **فونت woff2 را خراب می‌کرد**: بایت‌های نامعتبر UTF-8 با U+FFFD
+       * (سه بایت) جایگزین می‌شدند و فایلِ ۸۳٬۰۴۸ بایتی، ۱۵۰٬۶۱۰ بایتِ ناهمسان می‌رسید.
+       * مرورگر چنین فونتی را رد می‌کند و سایت بی‌صدا با فونت جایگزین دیده می‌شد — همان چیزی که
+       * «اندازه‌گیری بایتِ سروشده» می‌گیرد و «اندازهٔ فایل روی دیسک» نمی‌گیرد.
+       */
       return {
         status: 200,
         headers: {
@@ -243,12 +311,13 @@ export function createWebServer(options: WebServerOptions): WebServer {
           'content-type': entry.contentType,
           etag: `"${entry.hash}"`,
         },
-        body: assets.body(entry).toString('utf8'),
+        body: '',
+        bytes: assets.body(entry),
       };
     }
 
     if (target.type === 'media') {
-      return mediaResponse(target.id, input.requestId);
+      return mediaResponse(target.id, input.requestId, input.url.searchParams);
     }
 
     /*
@@ -330,7 +399,7 @@ export function createWebServer(options: WebServerOptions): WebServer {
    * یکنواخت. تفکیک «نیست» از «هست ولی خصوصی است» یک اوراکل می‌سازد و RLS هم
    * همین را تضمین می‌کند: بی‌نام فقط دارایی `is_public` و `ready` را می‌بیند.
    */
-  async function mediaResponse(id: string, requestId: string): Promise<RenderResult> {
+  async function mediaResponse(id: string, requestId: string, query: URLSearchParams): Promise<RenderResult> {
     const asset = (await data.mediaAsset(id, requestId)) as MediaAssetRow | null;
     if (!asset) return plain(404, 'media not found', requestId);
 
@@ -339,6 +408,12 @@ export function createWebServer(options: WebServerOptions): WebServer {
       logger.warn('نشانی رسانه ساخته نشد؛ دارایی بی‌نشانی است', { requestId, assetId: asset.id, driver: asset.driver });
       return plain(404, 'media not found', requestId);
     }
+
+    // نسخهٔ AVIF/WebP؟ پارامترها سخت‌گیرانه سنجیده می‌شوند؛ «تقریباً درست» وجود ندارد.
+    const images = await getImages();
+    const variant = parseVariantQuery(query, { width: asset.width, version: versionOf(asset.checksum_sha256) }, images.config);
+    if (variant === 'invalid') return plain(404, 'media not found', requestId);
+    if (variant) return variantResponse(asset, variant.width, variant.format, images, requestId);
 
     // دارایی بیرونی: هدایت. فایل دست ما نیست و نباید از دامنهٔ ما سرو شود.
     if (source.redirect) return redirect(302, source.url, requestId);
@@ -369,6 +444,81 @@ export function createWebServer(options: WebServerOptions): WebServer {
       body: '',
       bytes: file.body,
     };
+  }
+
+  /**
+   * نسخهٔ AVIF/WebP یک تصویر. هر ناکامی (موتور نیست، فایل نیست، رمزگشایی نشد) همان ۴۰۴ یکنواخت
+   * است؛ علت فقط در لاگ می‌رود. تبدیل هم‌زمان برای یک کلید یک‌بار انجام می‌شود (`inflight`)،
+   * و کل تبدیل‌ها سقف دارند (پردازنده منبع محدود است).
+   */
+  async function variantResponse(
+    asset: MediaAssetRow,
+    width: number,
+    format: 'avif' | 'webp',
+    images: { config: ImagePipelineConfig; engine: ImageEngine },
+    requestId: string,
+  ): Promise<RenderResult> {
+    const eligible =
+      images.engine.status().status === 'configured' &&
+      asset.driver === 'local' &&
+      asset.kind === 'image' &&
+      images.config.acceptedMime.includes(asset.detected_mime) &&
+      typeof asset.checksum_sha256 === 'string';
+    if (!eligible) return plain(404, 'media not found', requestId);
+
+    const key = variantKey(asset.checksum_sha256 as string, width, format, images.config.quality[format]);
+    try {
+      let bytes = await variantCache.get(key, format);
+      if (!bytes) {
+        let pending = inflightVariants.get(key);
+        if (!pending) {
+          pending = limitTranscode(async () => {
+            const file = await readLocalMedia(options.env.storage.localDir, asset.storage_key, {
+              contentType: asset.detected_mime,
+              maxBytes: images.config.maxBytes,
+            });
+            if (!file) throw new Error('فایل اصلی در انبار نیست');
+            const out = await images.engine.transcode(file.body, {
+              width,
+              format,
+              quality: images.config.quality[format],
+              maxPixels: images.config.maxPixels,
+            });
+            await variantCache.put(key, format, out);
+            return out;
+          }).finally(() => inflightVariants.delete(key));
+          inflightVariants.set(key, pending);
+        }
+        bytes = await pending;
+      }
+
+      const stem = (asset.original_name ?? 'image').replace(/\.[^.]+$/, '');
+      return {
+        status: 200,
+        headers: {
+          ...securityHeaders({ env: options.env, kind: 'asset', cdnCacheable: true, requestId }),
+          ...mediaHeaders({
+            sizeBytes: bytes.byteLength,
+            contentType: `image/${format}`,
+            disposition: 'inline',
+            // `v` در نشانی است و کلید، درهم محتواست؛ پس `immutable` همیشه امن است.
+            etag: `"${key}"`,
+            fileName: `${stem}.${format}`,
+          }),
+        },
+        body: '',
+        bytes,
+      };
+    } catch (error) {
+      logger.warn('نسخهٔ تصویر ساخته نشد', {
+        requestId,
+        assetId: asset.id,
+        width,
+        format,
+        error: error instanceof Error ? error.message.slice(0, 200) : String(error),
+      });
+      return plain(404, 'media not found', requestId);
+    }
   }
 
   function finalize(response: PageResponse, requestId: string): RenderResult {
@@ -459,6 +609,31 @@ export function createWebServer(options: WebServerOptions): WebServer {
       (request.headers['content-length'] !== undefined && request.headers['content-length'] !== '0') ||
       request.headers['transfer-encoding'] !== undefined;
 
+    /*
+     * رلهٔ فهرست‌سفید به API (فقط متدهای تغییردهنده؛ GET/HEAD همیشه از مسیر رندر می‌گذرند).
+     * مسیر، میزبان و متد باید **هر سه** با یک قاعدهٔ ثبت‌شده بخوانند؛ وگرنه همان ۴۰۵ همیشگی.
+     */
+    const method = (request.method ?? 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD') {
+      const site = resolveSite(config, host);
+      const pathname = decodePath(new URL(request.url ?? '/', 'http://placeholder').pathname);
+      const rule = site && pathname ? matchProxyRule(PROXY_RULES, site.kind, method, pathname) : null;
+      if (rule) {
+        const requestId = pickRequestId(typeof request.headers['x-request-id'] === 'string' ? request.headers['x-request-id'] : undefined);
+        await forwardToApi(request, response, rule, requestId, {
+          apiOrigin,
+          logger,
+          proto: options.env.origins.public.startsWith('https:') ? 'https' : 'http',
+          baseHeaders: (id) => securityHeaders({ env: options.env, kind: 'json', cdnCacheable: false, requestId: id, cacheable: false }),
+        });
+        const record = { requestId, method, url: request.url, status: response.statusCode, durationMs: Math.round(Number(process.hrtime.bigint() - started) / 10_000) / 100, host };
+        if (response.statusCode >= 500) logger.error('رلهٔ وب', record);
+        else if (response.statusCode >= 400) logger.warn('رلهٔ وب', record);
+        else logger.debug('رلهٔ وب', record);
+        return;
+      }
+    }
+
     const result = await render({
       method: request.method ?? 'GET',
       url: request.url ?? '/',
@@ -484,7 +659,9 @@ export function createWebServer(options: WebServerOptions): WebServer {
     const acceptEncoding = String(request.headers['accept-encoding'] ?? '');
     let body: Buffer = result.bytes ?? Buffer.from(result.body, 'utf8');
 
-    if (result.bytes === undefined && body.byteLength >= COMPRESS_THRESHOLD && isCompressible(headers['content-type'])) {
+    // فشرده‌سازی به «نوع محتوا» وابسته است، نه به رشته‌بودنِ بدنه: CSS دارایی هم بایت است ولی فشرده می‌شود؛
+    // فونت و تصویر (که خودشان فشرده‌اند) نه.
+    if (body.byteLength >= COMPRESS_THRESHOLD && isCompressible(headers['content-type'])) {
       const compressed = acceptEncoding.includes('br')
         ? brotliCompressSync(body)
         : acceptEncoding.includes('gzip')
@@ -560,6 +737,10 @@ export function createWebServer(options: WebServerOptions): WebServer {
 
     componentRegistry: () => registryCache.get(),
 
+    async imagePipelineStatus() {
+      return (await getEngine()).status();
+    },
+
     async stylesheet() {
       return assets.body(await getCssAsset()).toString('utf8');
     },
@@ -598,5 +779,5 @@ function contentTypeFor(kind: PageResponse['kind']): string {
 
 function isCompressible(contentType: string | undefined): boolean {
   if (!contentType) return false;
-  return /text\/|application\/(xml|json|javascript)/.test(contentType);
+  return /text\/|application\/(xml|json|javascript)|image\/svg\+xml/.test(contentType);
 }

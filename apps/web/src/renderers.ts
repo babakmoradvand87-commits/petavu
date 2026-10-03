@@ -35,6 +35,21 @@ export interface MediaView {
   readonly alt: string | null;
   readonly kind: 'image' | 'video' | 'other';
   readonly posterUrl?: string | null;
+  /** شناسهٔ دارایی؛ نشانی نسخه‌ها (`?w=…&f=…`) از آن ساخته می‌شود. */
+  readonly assetId?: string;
+  /** نوع MIME اصلی؛ فقط تصویر رستری شایستهٔ AVIF/WebP است (نه GIF متحرک، نه SVG). */
+  readonly mime?: string;
+  /** پیشوند درهم محتوا؛ بدون آن، `immutable` امن نیست و نسخه‌ای ساخته نمی‌شود. */
+  readonly version?: string | null;
+}
+
+/** گزینه‌های چاپ یک تصویر؛ `priority` فقط برای تصویر LCP. */
+export interface ImageOptions {
+  readonly alt: string;
+  readonly className: string;
+  readonly loading: 'lazy' | 'eager';
+  readonly priority?: boolean;
+  readonly sizes?: string;
 }
 
 export interface ContactView {
@@ -97,6 +112,11 @@ export interface RenderHelpers {
   readonly slotNodes: (node: TreeNode, slot?: string) => readonly TreeNode[];
   /** دارایی رسانه؛ اگر قابل‌استفاده نباشد `null`. */
   readonly media: (assetId: string) => MediaView | null;
+  /**
+   * چاپ یک تصویر: `<picture>` با AVIF/WebP و `srcset` اگر خط لولهٔ تصویر آماده باشد، وگرنه
+   * `<img>` ساده. بُعد همیشه چاپ می‌شود (CLS)، و `priority` فقط برای LCP.
+   */
+  readonly image: (media: MediaView, options: ImageOptions) => string;
   /** فهرست عنوان‌های صفحه، از پیش‌اسکن‌شده (برای `navigation.toc`). */
   readonly outline: readonly OutlineEntry[];
   /** آیا صفحه تا این لحظه `h1` گرفته است؟ */
@@ -291,35 +311,16 @@ const heroRenderer: ComponentRenderer = (node, h) => {
         actions ? tag('div', { class: 'ds-hero__actions cluster' }, actions) : '',
       ].join('')),
       media
-        ? tag('div', { class: 'ds-hero__media' }, imageTag(media, {
+        ? tag('div', { class: 'ds-hero__media' }, h.image(media, {
           alt: media.alt ?? title,
           className: classes('ds-figure__img', 'ds-ratio--16-9'),
           loading: 'eager',
           priority: true,
+          sizes: '(min-width: 1024px) 50vw, 100vw',
         }))
         : '',
     ].join(''),
   );
-}
-
-function imageTag(
-  media: MediaView,
-  options: { alt: string; className: string; loading: 'lazy' | 'eager'; priority?: boolean },
-): string {
-  /*
-   * بُعد اجباری است: بدون آن، مرورگر جعبهٔ خالی می‌سازد و CLS می‌پرد.
-   * `fetchpriority` فقط برای تصویر LCP و فقط یکی‌بار در صفحه معنا دارد.
-   */
-  return tag('img', {
-    class: options.className,
-    src: media.url,
-    alt: options.alt === '' ? '' : options.alt,
-    width: media.width,
-    height: media.height,
-    loading: options.loading,
-    decoding: 'async',
-    fetchpriority: options.priority ? 'high' : null,
-  });
 }
 
 const cardRenderer: ComponentRenderer = (node, h) => {
@@ -334,7 +335,14 @@ const cardRenderer: ComponentRenderer = (node, h) => {
 
   const tone = str(node, 'tone') ?? 'surface';
   const body = [
-    media ? imageTag(media, { alt: media.alt ?? title, className: classes('ds-figure__img', 'ds-ratio--3-2'), loading: 'lazy' }) : '',
+    media
+      ? h.image(media, {
+          alt: media.alt ?? title,
+          className: classes('ds-figure__img', 'ds-ratio--3-2'),
+          loading: 'lazy',
+          sizes: '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw',
+        })
+      : '',
     tag('h3', { class: 'card__title' }, escapeText(title)),
     description ? tag('p', { class: 'ds-text' }, escapeText(h.text(description))) : '',
     h.children(node, 'footer'),
@@ -611,11 +619,12 @@ const imageRenderer: ComponentRenderer = (node, h) => {
   const priority = bool(node, 'priority') || str(node, 'loading') === 'eager';
 
   return tag('figure', { class: 'ds-figure' }, [
-    imageTag(media, {
+    h.image(media, {
       alt: h.text(alt),
       className: classes('ds-figure__img', aspectClass(str(node, 'ratio')), bool(node, 'rounded', true) ? 'ds-figure__img--rounded' : null),
       loading: priority ? 'eager' : 'lazy',
       priority,
+      sizes: '(min-width: 1024px) 720px, 100vw',
     }),
     caption ? tag('figcaption', { class: 'ds-figure__caption' }, escapeText(h.text(caption))) : '',
   ].join(''));
@@ -635,11 +644,12 @@ const galleryRenderer: ComponentRenderer = (node, h) => {
     const caption = typeof item['caption'] === 'string' ? item['caption'] : null;
     rendered.push(
       tag('figure', { class: 'ds-figure' }, [
-        imageTag(media, {
+        h.image(media, {
           alt: h.text(alt),
           className: classes('ds-figure__img', 'ds-ratio--4-3', 'ds-figure__img--rounded'),
           // تصویر نخست eager است، بقیه تنبل (Registry: weight_kb 4 و یادداشت آن).
           loading: index === 0 ? 'eager' : 'lazy',
+          sizes: '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw',
         }),
         caption ? tag('figcaption', { class: 'ds-figure__caption' }, escapeText(h.text(caption))) : '',
       ].join('')),
@@ -663,11 +673,12 @@ const logoRenderer: ComponentRenderer = (node, h) => {
     return '';
   }
 
-  const image = imageTag(media, {
+  const image = h.image(media, {
     alt: h.text(str(node, 'alt') ?? ''),
     className: classes('ds-logo', `ds-logo--${str(node, 'size') ?? 'md'}`),
     loading: 'eager',
     priority: true,
+    sizes: '(min-width: 768px) 160px, 120px',
   });
 
   const href = str(node, 'href');

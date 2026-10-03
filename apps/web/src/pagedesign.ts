@@ -89,6 +89,7 @@ export async function renderDesignPage(input: DesignPageInput): Promise<DesignPa
     pageUrl: input.pageUrl,
     locale: context.settings?.default_locale ?? 'fa-IR',
     media: media.size === 0 ? null : (assetId) => media.get(assetId) ?? null,
+    images: context.images,
   });
 
   logFindings(context.logger, input.key, requestId, rendered.findings, {

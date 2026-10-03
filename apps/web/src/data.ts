@@ -325,6 +325,8 @@ export interface WebData {
   sitemapTaxonomy(family: SitemapTaxonomyFamily, requestId: string): Promise<SitemapTaxonomyRow[]>;
   /** کدام مسیرها فرادادهٔ `noindex` دارند؟ (یک پرس‌وجو برای کل فهرست.) */
   noindexRoutes(routes: readonly string[], requestId: string): Promise<Set<string>>;
+  /** نرخ نمونه‌گیری RUM برای یک مسیر، از بودجهٔ همان مسیر؛ بی‌بودجه ⇒ ۰. */
+  rumSampleRate(path: string, requestId: string): Promise<number>;
   /** پیوندهای داخلیِ سراسری و فعال از یک صفحه (`seo.internal_link`). */
   internalLinks(sourcePath: string, requestId: string): Promise<InternalLinkRow[]>;
   /** کسب‌وکارهای مشابه: هم‌نوع، هم‌شهرها اول، با چرخش پایدار برای پخش پیوند. */
@@ -1078,6 +1080,16 @@ export function createWebData(options: WebDataOptions): WebData {
             select r as route from seo.noindex_routes(${JSON.stringify(routes)}::jsonb) r
           `);
           return new Set(rows.map((row) => row.route));
+        }),
+      );
+    },
+
+    rumSampleRate(path, requestId) {
+      return degrade(`rum.rate:${path}`, 0, () =>
+        read(requestId, async ({ dal }) => {
+          const row = await dal.maybeOne<{ rate: string | number }>(sql`select b.rum_sample_rate as rate from ops.budget_for_route(${path}) b limit 1`);
+          const rate = Number(row?.rate ?? 0);
+          return Number.isFinite(rate) && rate > 0 && rate <= 1 ? rate : 0;
         }),
       );
     },

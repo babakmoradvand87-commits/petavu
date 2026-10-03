@@ -49,17 +49,26 @@ export const performanceRoutes: RouteDefinition[] = [
         if (path === '') {
           throw new AppError('validation_failed', { details: { issues: [{ path: `samples.${index}.path`, code: 'expected_path' }] } });
         }
+        /*
+         * کلیدها همان‌هایی‌اند که `VitalsRecord` (Repository) می‌شناسد: `pagePath`، `deviceClass`،
+         * `navigationType`. نسخهٔ نخست `path`/`navigation_type` می‌فرستاد و با `as never` از
+         * بازبینی نوع می‌گذشت؛ Repository `pagePath` می‌خواند، پس **هر نمونه** به‌عنوان
+         * `path_invalid` رد می‌شد، در حالی که پاسخ ۲۰۲ بود. شش گام، هیچ نمونه‌ای ثبت نشد.
+         *
+         * مقدارهای شمارشی را اینجا اعتبارسنجی نمی‌کنیم: مرز اعتماد، تابع دامنه است و ناشناخته را
+         * «unknown» می‌کند (مهاجرت ۰۰۲۲)؛ تکرار فهرست در دو جا، دیر یا زود از هم عقب می‌ماند.
+         */
         return {
           metric,
           value,
-          path,
-          rating: typeof sample.rating === 'string' ? sample.rating : null,
-          navigation_type: typeof sample.navigation_type === 'string' ? sample.navigation_type : null,
+          pagePath: path,
+          deviceClass: typeof sample.device_class === 'string' ? sample.device_class : null,
           connection: typeof sample.connection === 'string' ? sample.connection : null,
+          navigationType: typeof sample.navigation_type === 'string' ? sample.navigation_type : null,
         };
       });
 
-      const result = await scope.repos.performance.record(samples as never, request.businessId);
+      const result = await scope.repos.performance.record(samples, request.businessId);
       return { status: 202, body: { recorded: result } };
     },
   },

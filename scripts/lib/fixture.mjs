@@ -12,6 +12,9 @@
  * پیش‌شرط» که صریحاً `sudo` نام دارد.
  */
 
+import { createHash } from 'node:crypto';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -55,7 +58,7 @@ export function testEnv(overrides = {}) {
 export const PRODUCTION_HOST = 'petavu.example';
 
 /** محیط تولید برای آزمودن دروازه‌های نمایه‌شدن (دامنه‌ها و رازها ساختگی‌اند؛ فقط در حافظه). */
-export function productionEnv(host = PRODUCTION_HOST) {
+export function productionEnv(overrides = {}, host = PRODUCTION_HOST) {
   return loadEnv({
     PETAVU_ENV: 'production',
     AUTH_PEPPER: 'production-pepper-value-0123456789abcdef',
@@ -65,6 +68,7 @@ export function productionEnv(host = PRODUCTION_HOST) {
     PETAVU_ADMIN_ORIGIN: `https://adminpanel.${host}`,
     PETAVU_SHOP_ORIGIN: `https://shop.${host}`,
     PETAVU_ADMIN_SHOP_ORIGIN: `https://adminshop.${host}`,
+    ...overrides,
   });
 }
 
@@ -103,7 +107,14 @@ export const html = {
  * `api: true` سرور API را هم بالا می‌آورد (برای پنل‌ها که کلاینتِ همان API‌اند).
  */
 export async function createFixture(options = {}) {
-  const env = options.env ?? testEnv();
+  /*
+   * `storage: true` ⇒ پوشهٔ موقتِ واقعی برای رسانهٔ محلی (و نسخه‌های تصویر کنارش). بی‌آن،
+   * مسیر پیش‌فرض `./.data/media` نسبت به cwd است و آزمون‌ها در مخزن می‌نویسند.
+   */
+  const storageRoot = options.storage ? await mkdtemp(join(tmpdir(), 'petavu-storage-')) : null;
+  const storageDir = storageRoot ? join(storageRoot, 'media') : null;
+  if (storageDir) await mkdir(storageDir, { recursive: true });
+  const env = options.env ?? testEnv(storageDir ? { STORAGE_LOCAL_DIR: storageDir } : {});
   const logger = options.logger ?? silentLogger();
   const engine = await openDatabase();
   await migrate(engine, { dir: join(projectRoot, 'migrations') });
@@ -222,12 +233,54 @@ export async function createFixture(options = {}) {
     return contentId;
   }
 
+  /**
+   * دارایی تصویر **واقعی**: فایل روی دیسک انبار، ردیف `media.asset` با درهم و بُعد درست.
+   * (چیدن پیش‌شرط؛ مسیر آپلود امن در گام‌های بعد است.)
+   */
+  async function createImageAsset({ bytes, mime, width, height, name = 'photo', alt = null, businessId = null }) {
+    if (!storageDir) throw new Error('createFixture({ storage: true }) لازم است');
+    const checksum = createHash('sha256').update(bytes).digest('hex');
+    const key = `img/${checksum.slice(0, 2)}/${checksum}`;
+    await mkdir(join(storageDir, 'img', checksum.slice(0, 2)), { recursive: true });
+    await writeFile(join(storageDir, key), bytes);
+    const rows = await sudo(
+      `insert into media.asset (business_id, storage_key, driver, original_name, declared_mime, detected_mime, kind, size_bytes, checksum_sha256, width, height, alt_text, is_public, status, scan_status)
+       values ($1, $2, 'local', $3, $4, $4, 'image', $5, $6, $7, $8, $9, true, 'ready', 'clean')
+       returning id`,
+      [businessId, key, `${name}.${mime === 'image/png' ? 'png' : 'jpg'}`, mime, bytes.length, checksum, width, height, alt],
+    );
+    return { id: rows[0].id, checksum, key, version: checksum.slice(0, 12) };
+  }
+
+  /** صفحهٔ طراحیِ منتشرشده (چیدن پیش‌شرط؛ چرخهٔ انتشار در `design` آزموده می‌شود). */
+  async function publishDesignPage({ key, tree, businessId = null }) {
+    await sudo(`delete from design.page where key = $1 and business_id is not distinct from $2::uuid`, [key, businessId]);
+    const rows = await sudo(
+      `insert into design.page (key, title, scope, is_system, business_id, status, draft_tree, published_tree, published_at)
+       values ($1, $2, $3, $4, $5, 'published', $6::jsonb, $6::jsonb, now())
+       returning id`,
+      [key, `صفحهٔ ${key}`, businessId ? 'business' : 'platform', businessId === null, businessId, JSON.stringify(tree)],
+    );
+    return rows[0].id;
+  }
+
+  // اگر API می‌خواهیم، **اول** آن را بالا می‌آوریم: رلهٔ وب (بیکن عملکرد) به همین مبدأ می‌رود.
+  let api = null;
+  if (options.api) {
+    const server = createApiServer({ client, env, logger, lightweightPasswords: true, rateLimit: false });
+    const listening = await server.listen(0, '127.0.0.1');
+    api = { server, url: listening.url, port: listening.port };
+  }
+
   const web = createWebServer({
     client,
     env,
     logger,
     assetsDirectory,
     now: () => new Date('2026-10-03T09:00:00Z'),
+    ...(api ? { apiOrigin: api.url } : {}),
+    imageConfigTtlMs: 0,
+    ...(options.imageEngine ? { imageEngine: options.imageEngine } : {}),
   });
   await web.listen(0, '127.0.0.1');
 
@@ -237,13 +290,6 @@ export async function createFixture(options = {}) {
     return { ...result, get: (name) => result.headers[name.toLowerCase()] ?? null };
   };
 
-  let api = null;
-  if (options.api) {
-    const server = createApiServer({ client, env, logger, lightweightPasswords: true, rateLimit: false });
-    const listening = await server.listen(0, '127.0.0.1');
-    api = { server, url: listening.url, port: listening.port };
-  }
-
   /**
    * سرور وب در «تولید با ایندکس روشن» — تنظیمات پایگاه‌داده، محیط اجرا و سیاست
    * صفحه، سه‌تایی با هم. `restore()` تنظیمات را برمی‌گرداند و سرور را می‌بندد.
@@ -251,7 +297,16 @@ export async function createFixture(options = {}) {
   async function production() {
     const previous = await sudo(`select indexing_enabled, environment from seo.settings where business_id is null`);
     await sudo(`update seo.settings set indexing_enabled = true, environment = 'production' where business_id is null`);
-    const server = createWebServer({ client, env: productionEnv(), logger, assetsDirectory, now: () => new Date('2026-10-03T09:00:00Z') });
+    const server = createWebServer({
+      client,
+      env: productionEnv(storageDir ? { STORAGE_LOCAL_DIR: storageDir } : {}),
+      logger,
+      assetsDirectory,
+      now: () => new Date('2026-10-03T09:00:00Z'),
+      ...(api ? { apiOrigin: api.url } : {}),
+      imageConfigTtlMs: 0,
+      ...(options.imageEngine ? { imageEngine: options.imageEngine } : {}),
+    });
     await server.listen(0, '127.0.0.1');
     return {
       server,
@@ -279,7 +334,10 @@ export async function createFixture(options = {}) {
     registerUser,
     createBusiness,
     createContent,
+    createImageAsset,
+    publishDesignPage,
     addMember,
+    storageDir,
     web,
     api,
     page,
@@ -287,6 +345,7 @@ export async function createFixture(options = {}) {
       await web.close().catch(() => {});
       await api?.server.close().catch(() => {});
       await engine.close().catch(() => {});
+      if (storageRoot) await rm(storageRoot, { recursive: true, force: true });
     },
   };
 }

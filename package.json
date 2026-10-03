@@ -22,7 +22,8 @@
     "seed:list": "node scripts/seed.mjs --list",
     "status": "node scripts/status.mjs",
     "audit:security": "node scripts/audit-security.mjs",
-    "seo:crawl": "node scripts/seo-crawl.mjs"
+    "seo:crawl": "node scripts/seo-crawl.mjs",
+    "perf:budget": "node scripts/perf-budget.mjs"
   },
   "devDependencies": {
     "@types/node": "22.18.9",

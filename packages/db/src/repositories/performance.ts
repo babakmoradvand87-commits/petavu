@@ -15,7 +15,8 @@ import { type RepoDeps, assertPlatformPermission } from './support.js';
 export interface VitalsRecord {
   metric: 'LCP' | 'INP' | 'CLS' | 'TTFB' | 'FCP' | 'navigation' | string;
   value: number;
-  routePattern: string;
+  /** الگوی مسیر را پایگاه‌داده از `pagePath` و بودجه‌ها می‌سازد؛ اینجا اختیاری و نادیده گرفته می‌شود. */
+  routePattern?: string | null;
   pagePath: string;
   deviceClass?: string | null;
   connection?: string | null;
@@ -51,7 +52,7 @@ export function performanceRepository(deps: RepoDeps) {
          * فقط رعایت می‌شوند. مسیر، در خود تابع از رشتهٔ پرس‌وجو پاک می‌شود.
          */
         path: record.pagePath,
-        route_pattern: record.routePattern,
+        route_pattern: record.routePattern ?? null,
         device_class: record.deviceClass ?? null,
         connection: record.connection ?? null,
         navigation_type: record.navigationType ?? null,

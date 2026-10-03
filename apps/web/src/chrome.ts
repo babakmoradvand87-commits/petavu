@@ -80,6 +80,10 @@ export function renderShell(input: DocumentShellInput): string {
       note: PLATFORM_TAGLINE,
     }),
     skip: '<a class="skip-link" href="#main">پرش به محتوای اصلی</a>',
+    // بیکن سنجش میدانی فقط روی سایت عمومی و فقط وقتی بودجهٔ همین مسیر نمونه‌گیری می‌خواهد.
+    ...(input.site.kind === 'public' && input.chrome.rumSampleRate > 0
+      ? { scripts: [input.assets.url('vitals.js')], rumSampleRate: input.chrome.rumSampleRate }
+      : {}),
   });
 }
 

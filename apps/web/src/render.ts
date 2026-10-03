@@ -17,7 +17,7 @@
 
 import { serializeHeadTags, type HeadTag } from '@petavu/seo';
 
-import { voidTag } from './html.js';
+import { tag, voidTag } from './html.js';
 import type { ThemeBundle } from './theme.js';
 
 export interface DocumentInput {
@@ -52,7 +52,16 @@ export interface DocumentInput {
   readonly main: string;
   readonly footer: string;
   readonly skip?: string;
-  /** برای حالت `noindex`: هیچ‌چیز اضافه‌ای لازم نیست؛ هد سئو مسئول است. */
+  /**
+   * اسکریپت‌های **هم‌مبدأ** (`defer`). هیچ اسکریپت درون‌خطی نداریم (CSP: `script-src 'self'`)؛
+   * هر ورودی این‌جا نشانیِ دارایی درهم‌دار است که خودِ ما ثبت کرده.
+   */
+  readonly scripts?: readonly string[];
+  /**
+   * نرخ نمونه‌گیری سنجش میدانی (۰ تا ۱). مثبت ⇒ `<meta name="pv-rum">`؛ بیکن همین را می‌خواند.
+   * ۰ ⇒ هیچ‌چیز چاپ نمی‌شود: مسیرِ خارج از دامنهٔ RUM (مثل ورود) هیچ نشانه‌ای ندارد.
+   */
+  readonly rumSampleRate?: number;
 }
 
 export function renderDocument(input: DocumentInput): string {
@@ -79,6 +88,8 @@ export function renderDocument(input: DocumentInput): string {
     ),
     serializeHeadTags(input.headTags),
     ...input.stylesheets.map((href) => voidTag('link', { rel: 'stylesheet', href })),
+    (input.rumSampleRate ?? 0) > 0 ? voidTag('meta', { name: 'pv-rum', content: (input.rumSampleRate as number).toFixed(3) }) : '',
+    ...(input.scripts ?? []).map((src) => tag('script', { src, defer: true }, '')),
   ]
     .filter((part) => part !== '')
     .join('\n    ');

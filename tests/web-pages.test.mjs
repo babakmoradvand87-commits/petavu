@@ -504,7 +504,8 @@ describe('جست‌وجو (§57–۶۳)', () => {
     assert.match(response.body, /<form class="search-form" role="search" method="get" action="\/search">/);
     assert.match(response.body, /<label class="field__label" for="q">/);
     assert.match(response.body, /<input class="input" id="q" name="q" type="search"/);
-    assert.doesNotMatch(response.body, /<script(?! type="application\/ld\+json")/);
+    // فقط اسکریپت هم‌مبدأِ خارجی (بیکن سنجش)؛ هیچ اسکریپت درون‌خطی‌ای نیست.
+    assert.doesNotMatch(response.body, /<script(?![^>]*\ssrc="\/assets\/)(?! type="application\/ld\+json")/);
   });
 
   test('جست‌وجو همیشه `noindex` است، حتی بدون عبارت', async () => {
@@ -685,7 +686,8 @@ describe('صفحهٔ اصلی اسکرولی/سینماتیک (§25، §45–۴�
       const { body } = await f.page(path);
       assert.doesNotMatch(body, /\sstyle="/, `${path}: style درون‌خطی`);
       assert.doesNotMatch(body, /<style/, `${path}: <style>`);
-      assert.doesNotMatch(body, /<script(?! type="application\/ld\+json")/, `${path}: اسکریپت درون‌خطی`);
+      // اسکریپتِ خارجیِ هم‌مبدأ (بیکن سنجش) مجاز است؛ درون‌خطی نه.
+      assert.doesNotMatch(body, /<script(?![^>]*\ssrc="\/assets\/)(?! type="application\/ld\+json")/, `${path}: اسکریپت درون‌خطی`);
       assert.doesNotMatch(body, /\son[a-z]+="/, `${path}: رویداد درون‌خطی`);
     }
   });
@@ -829,7 +831,7 @@ describe('seed: بودجه و قالب‌های سئوی گام ۲۵', () => {
   test('هر مسیر تازه بودجه دارد (بی‌بودجه، «قبول» نیست)', async () => {
     const rows = await f.sudo(`select route_pattern from ops.page_budget`);
     const patterns = rows.map((row) => row.route_pattern);
-    for (const pattern of ['/businesses', '/t', '/t/:slug', '/i', '/i/:path', '/l', '/l/:path', '/k', '/k/:path', '/:slug', '/search']) {
+    for (const pattern of ['/businesses', '/t', '/t/:slug', '/i', '/i/:path*', '/l', '/l/:path*', '/k', '/k/:path*', '/:slug', '/search']) {
       assert.ok(patterns.includes(pattern), pattern);
     }
   });
