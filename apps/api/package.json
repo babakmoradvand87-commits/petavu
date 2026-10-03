@@ -1,0 +1,17 @@
+{
+  "name": "@petavu/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PETAVU API — /api/v1",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "dependencies": {
+    "@petavu/shared": "*",
+    "@petavu/security": "*",
+    "@petavu/db": "*",
+    "@petavu/seo": "*"
+  }
+}

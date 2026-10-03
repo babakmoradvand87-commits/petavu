@@ -827,7 +827,16 @@ begin
     ),
     coalesce((p_values ->> 'is_indexable')::boolean, true),
     p_values ->> 'non_indexable_reason',
-    false,
+    /*
+     * `is_manual` از خودِ فراخوان می‌آید، نه از یک ثابت.
+     *
+     * معنایش این است: «این متن را انسان نوشته و تولیدکنندهٔ خودکار نباید
+     * بازنویسی‌اش کند». اگر اینجا `false` ثابت باشد، ویرایش دستیِ ادمین هم
+     * مُهر «تولیدشده» می‌خورد و بار بعد، بازتولید فراداده آن را با متن
+     * ماشینی بازنویسی می‌کند — یعنی کار کاربر بی‌صدا پاک می‌شود. پیش‌فرض
+     * `false` می‌ماند تا مسیرهای خودکار تغییری نکنند.
+     */
+    coalesce((p_values ->> 'is_manual')::boolean, false),
     p_source_hash,
     p_values ->> 'share_title',
     p_values ->> 'share_caption'
@@ -850,6 +859,9 @@ begin
         robots_directives = excluded.robots_directives,
         is_indexable = excluded.is_indexable,
         non_indexable_reason = excluded.non_indexable_reason,
+        -- دستی‌شدن یک ردیف، یک واقعیت است که ثبت می‌شود؛ برگشتن از دستی به
+        -- خودکار هم فقط با `is_manual = false` صریح ممکن است.
+        is_manual = excluded.is_manual,
         source_hash = excluded.source_hash,
         share_title = excluded.share_title,
         share_caption = excluded.share_caption

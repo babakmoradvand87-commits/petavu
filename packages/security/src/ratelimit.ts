@@ -228,6 +228,17 @@ export const RATE_LIMITS = {
   apiKey: { name: 'api_key', limit: 1_000, windowMs: 60_000 },
   /** کارهای سنگین مثل تولید سایتمپ یا اجرای تحلیل. */
   heavyJob: { name: 'heavy_job', limit: 10, windowMs: 60 * 60_000 },
+  /*
+   * سقف پیش‌فرض مسیرهای احرازشده.
+   *
+   * چرا جدا از `publicForm`: آن یکی برای فرم بی‌نام پشت اینترنت است (۵ در
+   * ساعت)، این یکی برای پنل یک کسب‌وکار که چند نفر هم‌زمان روی یک شبکهٔ
+   * اداری کار می‌کنند. اگر یک سقف داشتند، یا پنل با ۵ نوشتن در ساعت فلج
+   * می‌شد یا فرم عمومی بی‌دفاع. کلید هر مسیر جداست، پس انفجار یک مسیر،
+   * بقیه را نمی‌بندد.
+   */
+  writeGeneral: { name: 'write_general', limit: 120, windowMs: 60_000 },
+  readGeneral: { name: 'read_general', limit: 600, windowMs: 60_000 },
 } as const satisfies Record<string, RateLimitRule>;
 
 /** ضریب ریسک: هرچه بزرگ‌تر، سقف تنگ‌تر. */

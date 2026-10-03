@@ -161,15 +161,25 @@ export function seoRepository(deps: RepoDeps) {
       const target = statusCode === 410 ? null : input.targetPath;
       if (statusCode !== 410 && !target) invalid('missing_target', 'کد ۴۱۰ مقصد ندارد؛ بقیه باید مقصد داشته باشند');
 
-      const issue = await this.redirectIssue(input.sourcePath);
-      if (String(issue?.issue ?? '') === 'loop') {
-        invalid('redirect_loop', 'این مسیر، حلقهٔ ریدایرکت می‌سازد');
-      }
-
       const duplicate = await dal.maybeOne<{ id: string }>(
         sql`select r.id from seo.redirect r where r.source_path = ${input.sourcePath} and r.business_id is not distinct from ${input.businessId ?? null}`,
       );
       if (duplicate) invalid('duplicate_source', 'برای این مسیر از قبل ریدایرکت هست', { id: duplicate.id });
+
+      /*
+       * حلقه را *پیش از نوشتن* می‌سنجیم، و درست همان حلقه‌ای که این یال
+       * می‌سازد — نه وضعیت زنجیره‌های موجود.
+       *
+       * بررسی «آیا زنجیرهٔ این مبدأ مشکل دارد؟» برای قاعدهٔ تازه کافی نیست:
+       * حلقه وقتی بسته می‌شود که *مقصد* تازه، با زنجیرهٔ موجود به همین مبدأ
+       * برگردد. `seo.would_create_loop` (مهاجرت ۰۰۱۷) همین را می‌پیماید.
+       */
+      if (target) {
+        const loop = await dal.maybeOne<{ loop: boolean }>(
+          sql`select seo.would_create_loop(${input.sourcePath}, ${target}, ${input.businessId ?? null}) as loop`,
+        );
+        if (loop?.loop === true) invalid('redirect_loop', 'این مسیر، حلقهٔ ریدایرکت می‌سازد');
+      }
 
       return dal.one(
         sql`insert into seo.redirect (business_id, source_path, target_path, status_code, reason, created_by)

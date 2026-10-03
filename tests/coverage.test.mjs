@@ -365,7 +365,19 @@ describe('جدول‌های مستأجردار: ایندکس و سیاستِ م�
       'user_id',
       'user_in_transfer',
     ];
+    /*
+     * سیاست «بستهٔ صریح» (`using (false) with check (false)`) از همهٔ
+     * قیدهای مستأجری سخت‌گیرتر است: هیچ ردیفی را نه می‌خواند و نه می‌نویسد.
+     * چنین سیاستی روی جدول‌هایی می‌نشیند که فقط از راه توابع `security
+     * definer` دیده می‌شوند (`app.api_key`, `auth.login_ticket`). ردکردنش
+     * به‌بهانهٔ «بی‌قید بودن»، آزمون را از هدفش دور می‌کند.
+     */
+    // `pg_policies` بدنه را نرمال می‌کند: `using (false) with check (false)`
+    // اینجا به `false false` تبدیل می‌شود.
+    const isClosed = (body) => /^(false\s*)+$/i.test(String(body).trim());
+
     const unanchored = rows
+      .filter((row) => !isClosed(String(row.body)))
       .filter((row) => !ANCHORS.some((anchor) => String(row.body).includes(anchor)))
       .map((row) => `${row.schemaname}.${row.tablename}:${row.policyname}`)
       .filter((name) => !DOCUMENTED.includes(name));
