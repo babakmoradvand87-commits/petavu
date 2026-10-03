@@ -3,10 +3,10 @@
 این پرونده با `npm run status -- --write` ساخته می‌شود؛ دستی ویرایش نشود.
 عددها از پایگاه‌داده‌ای خوانده می‌شوند که همین حالا از صفر ساخته، مهاجرت و seed شده است.
 
-- **زمان اندازه‌گیری (UTC):** 2026-10-02 13:14
+- **زمان اندازه‌گیری (UTC):** 2026-10-03 06:22
 - **مهاجرت‌ها:** 14 فایل، 14 اجراشده روی پایگاه‌دادهٔ تازه
 - **Seed:** 5 فایل — 0001_reference.sql, 0002_design_system.sql, 0003_platform_defaults.sql, 0004_automation_rules.sql, 0005_reference_completeness.sql
-- **تست‌ها:** 438 مورد در 13 پرونده (وضعیت سبز/سرخ تنها با «npm test» تأیید می‌شود)
+- **تست‌ها:** 504 مورد در 14 پرونده (وضعیت سبز/سرخ تنها با «npm test» تأیید می‌شود)
 
 ## شمارش‌های پایگاه‌داده
 
@@ -46,4 +46,5 @@
 | `tests/performance.test.mjs` | 23 |
 | `tests/security.test.mjs` | 54 |
 | `tests/seed.test.mjs` | 25 |
+| `tests/seo.test.mjs` | 66 |
 | `tests/shared.test.mjs` | 43 |
