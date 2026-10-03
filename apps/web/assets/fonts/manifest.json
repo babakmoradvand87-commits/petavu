@@ -1,0 +1,31 @@
+{
+  "family": "Vazirmatn",
+  "source": "Vazirmatn v33.003 (variable, wght 100–900) — github.com/rastikerdar/vazirmatn",
+  "license": "SIL OFL 1.1 — assets/fonts/OFL.txt",
+  "file": "vazirmatn-var.woff2",
+  "bytes": 83048,
+  "sha256": "98dc1bb3b97dbf543c930aafce9ddfda765675101b1aea3d67c30697d92b5a08",
+  "unicode_ranges": [
+    "U+0020-007E",
+    "U+00A0-00FF",
+    "U+0600-06FF",
+    "U+0750-077F",
+    "U+08A0-08FF",
+    "U+FB50-FDFF",
+    "U+FE70-FEFF",
+    "U+200C-200F",
+    "U+2010-2015",
+    "U+2018-201E",
+    "U+2020-2022,U+2026",
+    "U+2030,U+2039-203A,U+2044",
+    "U+20AC,U+2190-2193,U+2212,U+2260"
+  ],
+  "axes": {
+    "wght": [
+      100,
+      900
+    ]
+  },
+  "built_at": "2026-10-03T00:00:00.000Z",
+  "note": "زیرمجموعهٔ فارسی/لاتین؛ بازتولید با apps/web/scripts/subset-fonts.mjs"
+}

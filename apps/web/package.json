@@ -1,0 +1,20 @@
+{
+  "name": "@petavu/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PETAVU Web — رندر سمت سرور، بدون فریم‌ورک بیرونی",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "start": "node dist/index.js",
+    "subset-fonts": "node scripts/subset-fonts.mjs"
+  },
+  "dependencies": {
+    "@petavu/shared": "*",
+    "@petavu/db": "*",
+    "@petavu/seo": "*"
+  }
+}
