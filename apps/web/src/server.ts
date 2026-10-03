@@ -37,9 +37,11 @@ import { mediaHeaders, readLocalMedia, resolveAssetSource, type MediaAssetRow } 
 import { notModifiedHeaders, securityHeaders } from './headers.js';
 import { businessPage } from './pages/business.js';
 import { businessesPage } from './pages/businesses.js';
-import { llmsPage, robotsPage, sitemapPage } from './pages/feeds.js';
+import { llmsPage, robotsPage, sitemapPage, sitemapPartPage } from './pages/feeds.js';
 import { homePage } from './pages/home.js';
+import { indexNowStatus } from './indexnow.js';
 import { platformContentPage } from './pages/content.js';
+import { textPageResponse } from './chrome.js';
 import { searchPage } from './pages/search.js';
 import { businessTypePage, categoryPage, industryPage, locationPage, taxonomyIndexPage } from './pages/taxonomy.js';
 import { gonePage, healthResponse, notFoundPage, readinessResponse } from './pages/system.js';
@@ -265,11 +267,28 @@ export function createWebServer(options: WebServerOptions): WebServer {
       case 'ready':
         return finalize(await readinessResponse(context), input.requestId);
       case 'robots':
-        return finalize(robotsPage(context, { indexingEnabled: await data.indexingEnabled(input.requestId) }), input.requestId);
+        return finalize(await robotsPage(context, { indexingEnabled: await data.indexingEnabled(input.requestId) }), input.requestId);
       case 'llms':
-        return finalize(llmsPage(context), input.requestId);
+        return finalize(await llmsPage(context), input.requestId);
       case 'sitemap':
         return finalize(await sitemapPage(context), input.requestId);
+      case 'indexnow_key': {
+        /*
+         * فایل مالکیت IndexNow. فقط وقتی کلید در تنظیمات هست، معتبر است و **با همین
+         * مسیر برابر** است، ۲۰۰ می‌شود. هر حالت دیگر همان ۴۰۴ همیشگی است — وجود یا
+         * نبودِ تنظیم، اوراکل نمی‌سازد.
+         */
+        const status = indexNowStatus(await data.platformSetting('seo.indexnow', input.requestId));
+        if (status.status === 'configured' && status.key === target.key) {
+          return finalize(textPageResponse(200, 'text', status.key), input.requestId);
+        }
+        return finalize(notFoundPage(context, { reason: 'route:indexnow_key' }), input.requestId);
+      }
+      case 'sitemap_part': {
+        const part = await sitemapPartPage(context, target.ref);
+        // بخشِ ناموجود (بیرون از بازه یا بی‌عضو): پاسخ ماشینیِ ساده، نه صفحهٔ ۴۰۴ HTML.
+        return part ? finalize(part, input.requestId) : plain(404, 'sitemap not found', input.requestId);
+      }
       case 'home':
         return finalize(await homePage(context), input.requestId);
       case 'businesses':

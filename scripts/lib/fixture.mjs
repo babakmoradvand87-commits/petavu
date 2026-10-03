@@ -15,6 +15,7 @@
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { createEmbeddedClient } from './embedded-client.mjs';
 import { openDatabase } from './engine.mjs';
 import { migrate } from './migrate.mjs';
 import { applySeeds } from './seed.mjs';
@@ -67,34 +68,7 @@ export function productionEnv(host = PRODUCTION_HOST) {
   });
 }
 
-/** آداپتور موتور تعبیه‌شده به قرارداد `SqlClient` (همان الگوی همهٔ آزمون‌ها). */
-export function createEmbeddedClient(handle) {
-  const make = (runner) => {
-    const scoped = {
-      engine: 'embedded',
-      async query(text, params = []) {
-        const rows = await runner.query(text, params);
-        return { rows, affected: rows.length };
-      },
-      async exec(text) {
-        await runner.exec(text);
-      },
-      withTransaction: (fn) =>
-        typeof runner.withTransaction === 'function' ? runner.withTransaction(async (tx) => fn(make(tx))) : fn(scoped),
-      async asRole(role, fn) {
-        await runner.exec(`set role "${role}"`);
-        try {
-          return await fn(scoped);
-        } finally {
-          await runner.exec('reset role').catch(() => {});
-        }
-      },
-      close: () => handle.close(),
-    };
-    return scoped;
-  };
-  return make(handle);
-}
+export { createEmbeddedClient };
 
 /** ابزارهای خواندن HTML در آزمون (بدون DOM؛ فقط الگوهایی که معنا دارند). */
 export const html = {
@@ -217,6 +191,18 @@ export async function createFixture(options = {}) {
     return businessId;
   }
 
+  /** عضویت فعال با نقش سیستمی (`owner`، `admin`، `editor`، `viewer`، …)؛ چیدن پیش‌شرط. */
+  async function addMember({ businessId, userId, roleKey }) {
+    const rows = await sudo(
+      `insert into app.membership (business_id, user_id, role_id, status, joined_at)
+       select $1, $2, r.id, 'active', now() from app.role r where r.business_id is null and r.key = $3
+       on conflict do nothing
+       returning id`,
+      [businessId, userId, roleKey],
+    );
+    return rows[0]?.id ?? null;
+  }
+
   /** محتوای منتشرشده (پلتفرم یا کسب‌وکار) با دسته‌ها؛ چیدن پیش‌شرط، نه آزمون چرخهٔ عمر. */
   async function createContent({ businessId = null, kind = 'article', slug, title, summary = null, categoryPaths = [] }) {
     const rows = await sudo(
@@ -293,6 +279,7 @@ export async function createFixture(options = {}) {
     registerUser,
     createBusiness,
     createContent,
+    addMember,
     web,
     api,
     page,

@@ -6,7 +6,7 @@
  * هدرها، همان CSP، همان ETag و همان رندری اجرا می‌شود که در تولید اجرا
  * می‌شود. هیچ‌کدام شبیه‌سازی نیست (§102).
  *
- * چرا روی موتور تعبیه‌شده: همان PostgreSQL ۱۸ (PGlite)، همان مهاجرت‌ها، همان
+ * چرا روی موتور تعبیه‌شده: همان PostgreSQL ۱۷ (PGlite)، همان مهاجرت‌ها، همان
  * سیاست‌های RLS و همان توکن‌های seed. تنها درایور شبکه عوض می‌شود.
  */
 
@@ -472,20 +472,25 @@ describe('خروجی‌های ماشینی: robots، sitemap، llms (Addendum §
     }
   });
 
-  test('نقشهٔ سایت، XML معتبر با نشانی‌های واقعی است', async () => {
-    const response = await request('/sitemap.xml');
-    assert.equal(response.status, 200);
-    assert.match(response.get('content-type'), /^application\/xml/);
-    assert.match(response.text, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
-    assert.match(response.text, /<urlset/);
-    assert.match(response.text, /http:\/\/localhost:3000\/b\/pet-shop-tehran/);
-    assert.match(response.text, /http:\/\/localhost:3000\/b\/equine-feed-karaj/);
+  test('نقشهٔ سایت، ایندکس است و بخش‌ها XML معتبر با نشانی‌های واقعی‌اند (گام ۲۶)', async () => {
+    const index = await request('/sitemap.xml');
+    assert.equal(index.status, 200);
+    assert.match(index.get('content-type'), /^application\/xml/);
+    assert.match(index.text, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
+    assert.match(index.text, /<sitemapindex/);
+    assert.match(index.text, /http:\/\/localhost:3000\/sitemaps\/businesses-1\.xml/);
+
+    const part = await request('/sitemaps/businesses-1.xml');
+    assert.equal(part.status, 200);
+    assert.match(part.text, /<urlset/);
+    assert.match(part.text, /http:\/\/localhost:3000\/b\/pet-shop-tehran/);
+    assert.match(part.text, /http:\/\/localhost:3000\/b\/equine-feed-karaj/);
   });
 
   test('‏XML خروجی escape شده است (بدون نشت تگ خام)', async () => {
-    const response = await request('/sitemap.xml');
+    const response = await request('/sitemaps/businesses-1.xml');
     assert.doesNotMatch(response.text, /<img /);
-    assert.match(response.text, /&lt;\/script&gt;|%3C%2Fscript%3E|xss-probe/);
+    assert.match(response.text, /\/b\/xss-probe/);
   });
 
   test('‏llms.txt فهرست منابع است، نه بازتولید محتوا', async () => {

@@ -181,11 +181,10 @@ describe('گرنت و سیاست، دست‌به‌دست هم (§14)', () => {
       ['auth.login_attempt|login_attempt_staff_select', 'مصرف‌کننده‌ای هنوز نیست؛ بازنگری در گام ۲۹'],
       // حسابرسی هرگز عمومی نیست؛ سیاست، دفاع در عمق است.
       ['ops.audit_log|audit_log_select_staff', 'حسابرسی عمومی نیست'],
-      // گراف دانش و پیوند داخلی: گرنت تا مصرف‌کنندهٔ وب (گام ۲۶) بسته مانده است.
-      ['seo.entity|entity_read', 'بازنگری در گام ۲۶'],
-      ['seo.entity_link|entity_link_read', 'بازنگری در گام ۲۶'],
+      // گراف دانش: گرنت تا مصرف‌کنندهٔ وب (گام ۳۳: GEO) بسته مانده است.
+      ['seo.entity|entity_read', 'بازنگری در گام ۳۳'],
+      ['seo.entity_link|entity_link_read', 'بازنگری در گام ۳۳'],
       ['seo.entity_mention|entity_mention_read', 'جدول خصوصی در تست پوشش؛ سیاست باید اصلاح شود'],
-      ['seo.internal_link|internal_link_read_public', 'بازنگری در گام ۲۶'],
     ]);
     const needs = { SELECT: ['select'], INSERT: ['insert'], UPDATE: ['update'], DELETE: ['delete'], ALL: ['select', 'insert', 'update', 'delete'] };
 

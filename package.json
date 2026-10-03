@@ -21,7 +21,8 @@
     "seed": "node scripts/seed.mjs",
     "seed:list": "node scripts/seed.mjs --list",
     "status": "node scripts/status.mjs",
-    "audit:security": "node scripts/audit-security.mjs"
+    "audit:security": "node scripts/audit-security.mjs",
+    "seo:crawl": "node scripts/seo-crawl.mjs"
   },
   "devDependencies": {
     "@types/node": "22.18.9",

@@ -3,18 +3,18 @@
 این پرونده با `npm run status -- --write` ساخته می‌شود؛ دستی ویرایش نشود.
 عددها از پایگاه‌داده‌ای خوانده می‌شوند که همین حالا از صفر ساخته، مهاجرت و seed شده است.
 
-- **زمان اندازه‌گیری (UTC):** 2026-10-03 11:27
-- **مهاجرت‌ها:** 19 فایل، 19 اجراشده روی پایگاه‌دادهٔ تازه
+- **زمان اندازه‌گیری (UTC):** 2026-10-03 11:58
+- **مهاجرت‌ها:** 21 فایل، 21 اجراشده روی پایگاه‌دادهٔ تازه
 - **Seed:** 6 فایل — 0001_reference.sql, 0002_design_system.sql, 0003_platform_defaults.sql, 0004_automation_rules.sql, 0005_reference_completeness.sql, 0006_site_pages.sql
-- **تست‌ها:** 804 مورد در 19 پرونده (وضعیت سبز/سرخ تنها با «npm test» تأیید می‌شود)
+- **تست‌ها:** 881 مورد در 21 پرونده (وضعیت سبز/سرخ تنها با «npm test» تأیید می‌شود)
 
 ## شمارش‌های پایگاه‌داده
 
 | سنجه | شمار |
 | --- | --- |
 | جدول‌ها | ۹۱ |
-| توابع دامنه | ۱۰۴ |
-| سیاست RLS | ۲۷۵ |
+| توابع دامنه | ۱۰۹ |
+| سیاست RLS | ۲۸۴ |
 | قید یکپارچگی | ۳۴۶ |
 | ماشه | ۵۸ |
 | مجوز | ۶۱ |
@@ -45,9 +45,11 @@
 | `tests/migrations.test.mjs` | 33 |
 | `tests/ops.test.mjs` | 31 |
 | `tests/performance.test.mjs` | 23 |
+| `tests/rls-null-fences.test.mjs` | 20 |
 | `tests/security.test.mjs` | 54 |
 | `tests/seed.test.mjs` | 25 |
-| `tests/seo.test.mjs` | 66 |
+| `tests/seo-technical.test.mjs` | 56 |
+| `tests/seo.test.mjs` | 67 |
 | `tests/shared.test.mjs` | 43 |
 | `tests/web-design.test.mjs` | 51 |
 | `tests/web-pages.test.mjs` | 78 |

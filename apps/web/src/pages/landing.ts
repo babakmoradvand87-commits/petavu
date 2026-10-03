@@ -66,6 +66,9 @@ export async function renderLanding(input: LandingInput): Promise<PageResponse> 
   const locale = settings?.default_locale ?? 'fa-IR';
   const isFirstPage = input.isFirstPage ?? true;
 
+  // پیوندهای دستیِ همین صفحه، موازی با هد (هر دو فقط خواندن‌اند).
+  const editorialLinks = await context.data.internalLinks(input.path, context.requestId);
+
   const head = await buildPageHead({
     context,
     site,
@@ -103,7 +106,7 @@ export async function renderLanding(input: LandingInput): Promise<PageResponse> 
       children: container(breadcrumb([{ label: 'خانه', href: '/' }, ...input.crumbs])),
     }),
     section({
-      children: container(heading(1, input.h1) + lead + input.body),
+      children: container(heading(1, input.h1) + lead + input.body + editorialSection(editorialLinks)),
     }),
   ].join('\n');
 
@@ -183,4 +186,20 @@ export function facetSection(title: string, items: readonly Facet[], id?: string
 
 export function emptyListing(text: string): string {
   return emptyState(text);
+}
+
+/**
+ * پیوندهای دستیِ سراسری (`seo.internal_link`) برای یک صفحه (§۳۹–۴۷: Internal Linking).
+ *
+ * مقدار پایگاه‌داده **اعتماد نمی‌شود**: فقط مسیر داخلی (`/…` و نه `//…`)، بی‌فاصله. نشانی
+ * مطلق، `javascript:` و هر چیز دیگر دور ریخته می‌شود؛ پیوند داخلی قرار است داخل بماند.
+ */
+export function editorialChips(links: ReadonlyArray<{ target_path: string; anchor_text: string | null }>): Facet[] {
+  return links
+    .filter((link) => link.target_path === '/' || /^\/[^\s/][^\s]*$/.test(link.target_path))
+    .map((link) => ({ label: link.anchor_text ?? link.target_path, href: link.target_path }));
+}
+
+export function editorialSection(links: ReadonlyArray<{ target_path: string; anchor_text: string | null }>): string {
+  return facetSection('پیوندهای مرتبط', editorialChips(links), 'links');
 }

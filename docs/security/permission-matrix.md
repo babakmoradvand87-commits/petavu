@@ -3,9 +3,9 @@
 این پرونده **تولیدشده** است (`npm run audit:security`). منبع حقیقت، پایگاه‌داده است؛
 ویرایش دستی این پرونده بی‌اثر است و در اجرای بعدی بازنویسی می‌شود (§103).
 
-- زمان تولید (UTC): 2026-10-03 10:17
+- زمان تولید (UTC): 2026-10-03 11:58
 - جدول‌های دامنه: 91 — همه با RLS فعال: بله
-- سیاست‌ها: 275
+- سیاست‌ها: 284
 - مجوزها: 61 — دامنه‌ای: 41، پلتفرمی: 20
 
 ## نقش‌های کسب‌وکار
@@ -152,7 +152,7 @@
 | `ops.event` | روشن | 3 |
 | `ops.feature` | روشن | 2 |
 | `ops.feature_dependency` | روشن | 2 |
-| `ops.idempotency_key` | روشن | 2 |
+| `ops.idempotency_key` | روشن | 5 |
 | `ops.job` | روشن | 2 |
 | `ops.job_attempt` | روشن | 3 |
 | `ops.migration` | روشن | 0 |
@@ -165,7 +165,7 @@
 | `ops.retention_policy` | روشن | 3 |
 | `ops.retention_run` | روشن | 3 |
 | `ops.security_event` | روشن | 2 |
-| `ops.setting` | روشن | 3 |
+| `ops.setting` | روشن | 9 |
 | `ops.vitals_rollup` | روشن | 3 |
 | `ops.vitals_sample` | روشن | 6 |
 | `ops.webhook_delivery` | روشن | 4 |
@@ -360,7 +360,10 @@
 | `ops.feature` | `feature_write_staff` | ALL | pv_app, pv_worker |
 | `ops.feature_dependency` | `feature_dependency_read` | SELECT | pv_app, pv_public, pv_reader, pv_worker |
 | `ops.feature_dependency` | `feature_dependency_write` | ALL | pv_app, pv_worker |
-| `ops.idempotency_key` | `idempotency_app_all` | ALL | pv_app |
+| `ops.idempotency_key` | `idempotency_app_delete` | DELETE | pv_app |
+| `ops.idempotency_key` | `idempotency_app_insert` | INSERT | pv_app |
+| `ops.idempotency_key` | `idempotency_app_select` | SELECT | pv_app |
+| `ops.idempotency_key` | `idempotency_app_update` | UPDATE | pv_app |
 | `ops.idempotency_key` | `idempotency_staff_select` | SELECT | pv_reader, pv_worker |
 | `ops.job` | `job_staff_select` | SELECT | pv_app, pv_reader |
 | `ops.job` | `job_worker_all` | ALL | pv_worker |
@@ -392,9 +395,15 @@
 | `ops.retention_run` | `retention_run_worker_all` | ALL | pv_worker |
 | `ops.security_event` | `security_event_insert` | INSERT | pv_app, pv_public, pv_worker |
 | `ops.security_event` | `security_event_staff_all` | ALL | pv_app, pv_worker |
-| `ops.setting` | `setting_business_all` | ALL | pv_app |
+| `ops.setting` | `setting_business_delete` | DELETE | pv_app |
+| `ops.setting` | `setting_business_insert` | INSERT | pv_app |
+| `ops.setting` | `setting_business_select` | SELECT | pv_app |
+| `ops.setting` | `setting_business_update` | UPDATE | pv_app |
 | `ops.setting` | `setting_global_read` | SELECT | pv_app, pv_public |
-| `ops.setting` | `setting_staff_all` | ALL | pv_app, pv_worker |
+| `ops.setting` | `setting_staff_delete` | DELETE | pv_app |
+| `ops.setting` | `setting_staff_insert` | INSERT | pv_app, pv_worker |
+| `ops.setting` | `setting_staff_select` | SELECT | pv_app, pv_worker |
+| `ops.setting` | `setting_staff_update` | UPDATE | pv_app, pv_worker |
 | `ops.vitals_rollup` | `vitals_rollup_read` | SELECT | pv_app, pv_reader |
 | `ops.vitals_rollup` | `vitals_rollup_worker_all` | ALL | pv_worker |
 | `ops.vitals_rollup` | `vitals_rollup_write` | ALL | pv_app, pv_worker |

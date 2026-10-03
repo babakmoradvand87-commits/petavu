@@ -16,6 +16,7 @@
  */
 
 import type { SiteKind } from './config.js';
+import { parseSitemapPart, type SitemapPartRef } from './sitemaps.js';
 import {
   parseCategorySegments,
   parseIndustrySegments,
@@ -45,6 +46,8 @@ export const RESERVED_SLUGS = new Set([
   'i',
   'l',
   'k',
+  // گام ۲۶: بخش‌های نقشهٔ سایت.
+  'sitemaps',
 ]);
 
 export type RouteTarget =
@@ -64,6 +67,10 @@ export type RouteTarget =
   | { readonly type: 'media'; readonly id: string }
   | { readonly type: 'robots' }
   | { readonly type: 'sitemap' }
+  /** فایل کلید IndexNow: `/{کلید}.txt`؛ درستیِ کلید را تنظیمات می‌گوید، نه مسیریاب. */
+  | { readonly type: 'indexnow_key'; readonly key: string }
+  /** یک بخش از نقشهٔ سایت: `/sitemaps/businesses-2.xml`. */
+  | { readonly type: 'sitemap_part'; readonly ref: SitemapPartRef }
   | { readonly type: 'llms' }
   | { readonly type: 'health' }
   | { readonly type: 'ready' }
@@ -124,6 +131,13 @@ export function resolveTarget(pathname: string, siteKind: SiteKind): RouteTarget
 
   const segments = pathname.split('/').filter((segment) => segment !== '');
 
+  // بخش‌های نقشهٔ سایت (گام ۲۶): نام، سخت‌گیرانه از فهرست بسته؛ هر چیز دیگر ۴۰۴.
+  if (segments.length === 2 && segments[0] === 'sitemaps') {
+    const file = segments[1] as string;
+    const ref = file.endsWith('.xml') ? parseSitemapPart(file.slice(0, -4)) : null;
+    return ref ? { type: 'sitemap_part', ref } : { type: 'not_found' };
+  }
+
   /*
    * تاکسونومی (گام ۲۵): هر بخش نشانی **پیش از هر کوئری** با قالب سخت‌گیر
    * سنجیده می‌شود. رمزگشا `null` بدهد، همان ۴۰۴ است؛ پس نشانی‌ای که یک شکل
@@ -157,6 +171,10 @@ export function resolveTarget(pathname: string, siteKind: SiteKind): RouteTarget
     if (prefix === 'b') {
       return SLUG_PATTERN.test(slug) ? { type: 'business', slug } : { type: 'not_found' };
     }
+  }
+  if (segments.length === 1 && /^[A-Za-z0-9-]{8,128}\.txt$/.test(segments[0] as string)) {
+    // نامک محتوا نقطه ندارد (`SLUG_PATTERN`)؛ پس این الگو هرگز محتوا را نمی‌پوشاند.
+    return { type: 'indexnow_key', key: (segments[0] as string).slice(0, -4) };
   }
   if (segments.length === 1) {
     const slug = segments[0] as string;

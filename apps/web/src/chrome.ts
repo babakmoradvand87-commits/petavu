@@ -12,6 +12,8 @@
  * دستی نوشته نشده و هیچ ادعایی دربارهٔ کسب‌وکارها ساخته نمی‌شود.
  */
 
+import { createHash } from 'node:crypto';
+
 import type { AssetRegistry } from './assets.js';
 import { badge, siteFooter, siteHeader, type NavItem, type FooterColumn } from './components.js';
 import type { SitePolicy, WebConfig } from './config.js';
@@ -149,9 +151,16 @@ export function verificationBadge(level: string) {
   return null;
 }
 
-/** پاسخ متنی (robots/sitemap/llms) — بدون پوستهٔ HTML. */
+/**
+ * پاسخ متنی (robots/sitemap/llms) — بدون پوستهٔ HTML.
+ *
+ * `ETag` از محتوا ساخته می‌شود: خزنده‌ها (و CDN) با `If-None-Match` می‌پرسند «تغییر
+ * کرده؟» و نقشهٔ سایتِ بدون تغییر، صفر بایت (۳۰۴) می‌شود.
+ */
 export function textPageResponse(status: number, kind: PageResponse['kind'], body: string, cacheable = true): PageResponse {
-  return { status, kind, body: textResponse(body), cacheable, seo: false };
+  const text = textResponse(body);
+  const etag = `"${createHash('sha256').update(text).digest('hex').slice(0, 24)}"`;
+  return { status, kind, body: text, cacheable, seo: false, headers: { etag } };
 }
 
 /** پاسخ JSON — برای نقاط بررسی سلامت. */

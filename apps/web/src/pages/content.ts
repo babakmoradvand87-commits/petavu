@@ -17,6 +17,7 @@ import { PLATFORM_NAME, renderShell } from '../chrome.js';
 import { escapeText, type RawHtml } from '../html.js';
 import { breadcrumbList, faqNode, jsonLdBlocks } from '../structured.js';
 import { buildPageHead } from '../seohead.js';
+import { editorialSection } from './landing.js';
 import { notFoundPage } from './system.js';
 import type { PageContext, PageResponse } from './types.js';
 
@@ -149,6 +150,7 @@ export async function platformContentPage(context: PageContext, slug: string): P
   });
 
   const faqItems = extractFaqItems(page.body);
+  const editorialLinks = await context.data.internalLinks(`/${page.slug}`, requestId);
 
   const body = [
     section({ tight: true, children: container(breadcrumb([{ label: 'خانه', href: '/' }, { label: page.title }])) }),
@@ -156,7 +158,8 @@ export async function platformContentPage(context: PageContext, slug: string): P
       children: container(
         heading(1, page.title) +
           (page.subtitle ? paragraph(page.subtitle, 'card__meta') : '') +
-          `<div class="prose section--tight">${renderBlocks(page.body).__html}</div>`,
+          `<div class="prose section--tight">${renderBlocks(page.body).__html}</div>` +
+          editorialSection(editorialLinks),
       ),
     }),
   ].join('\n');

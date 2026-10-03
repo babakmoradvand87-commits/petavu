@@ -26,6 +26,12 @@ export const AI_CRAWLERS = [
   'CCBot',
 ] as const;
 
+/**
+ * خزنده‌هایی که برای **آموزش** مدل می‌خزند. اجازهٔ آموزش با اجازهٔ «پاسخ‌دهی و
+ * جست‌وجو» یکی نیست؛ سیاست `search-only` همین تفاوت را می‌سازد.
+ */
+export const AI_TRAINING_CRAWLERS: readonly string[] = ['GPTBot', 'Google-Extended', 'Applebot-Extended', 'CCBot', 'Bytespider', 'ClaudeBot'];
+
 export interface RobotsInput {
   environment: Environment;
   /** نشانی پایهٔ سایت، برای سایتمپ‌ها. */
@@ -73,15 +79,25 @@ export function buildRobots(input: RobotsInput): string {
   if (input.crawlDelaySeconds) lines.push(`Crawl-delay: ${input.crawlDelaySeconds}`);
   lines.push('');
 
-  // سیاست هوش مصنوعی: صریح، نه با سکوت.
+  /*
+   * سیاست هوش مصنوعی: صریح، نه با سکوت.
+   *
+   * نکتهٔ معنایی robots.txt که یک‌بار این‌جا اشتباه شد: خزنده‌ای که گروهِ نام‌دار
+   * خودش را دارد (`User-agent: GPTBot`)، گروه `*` را **کاملاً نادیده می‌گیرد**.
+   * پس «Allow: /» برای ربات هوش مصنوعی، پنل، API و جست‌وجو را هم برایش باز
+   * می‌کرد — همان مسیرهایی که برای همه بسته‌اند. هر گروهِ نام‌دار باید فهرست
+   * ممنوعه را **خودش** تکرار کند.
+   */
   const aiPolicy = input.aiPolicy ?? 'allow';
+  const training = new Set<string>(AI_TRAINING_CRAWLERS);
   for (const crawler of AI_CRAWLERS) {
     lines.push(`User-agent: ${crawler}`);
-    if (aiPolicy === 'allow') lines.push('Allow: /');
-    else if (aiPolicy === 'disallow') lines.push('Disallow: /');
-    else {
-      // «فقط جست‌وجو»: صفحات عمومی مجاز، اما مسیرهای ممنوع همچنان بسته‌اند.
+    const blockAll = aiPolicy === 'disallow' || (aiPolicy === 'search-only' && training.has(crawler));
+    if (blockAll) {
+      lines.push('Disallow: /');
+    } else {
       for (const route of disallow) lines.push(`Disallow: ${route}`);
+      for (const route of input.allow ?? []) lines.push(`Allow: ${route}`);
     }
     lines.push('');
   }

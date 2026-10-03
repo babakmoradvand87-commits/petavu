@@ -334,18 +334,23 @@ describe('تنظیمات و رجیستری', () => {
     assert.ok(new Date(updated[0].updated_at) >= new Date(updated[0].created_at));
   });
 
-  test('تنظیمات هر کسب‌وکار از دیگری جدا است', async () => {
+  test('زمینهٔ کسب‌وکار به‌تنهایی تنظیمات را باز نمی‌کند: عضویت هم لازم است (گام ۲۶)', async () => {
     await engine.query(`insert into ops.setting (business_id, key, value) values ($1, 'brand.color', '{"primary":"#000"}'::jsonb)`, [
       TENANT_B,
     ]);
 
+    /*
+     * پیش‌تر سیاست فقط «زمینه = کسب‌وکار ردیف» را می‌سنجید؛ هر کسی که زمینه را
+     * (مثلاً با هدر جعلی) روی کسب‌وکاری می‌گذاشت، تنظیماتش را می‌دید و — چون سیاست
+     * `for all` بود — می‌نوشت. حالا حصار دوم، **عضویت** است. جداسازی مثبتِ دو
+     * کسب‌وکارِ واقعی (عضو A فقط A را می‌بیند) در `rls-null-fences.test.mjs` است.
+     */
     await engine.setContext({ businessId: TENANT_A });
     try {
       const rows = await engine.asRole('pv_app', () =>
         engine.query('select business_id, value from ops.setting where key = $1', ['brand.color']),
       );
-      assert.equal(rows.length, 1);
-      assert.equal(String(rows[0].business_id), TENANT_A);
+      assert.equal(rows.length, 0, 'زمینه بدون عضویت نباید تنظیمات کسب‌وکار را باز کند');
     } finally {
       await engine.query("select set_config('app.business_id', '', false)");
     }

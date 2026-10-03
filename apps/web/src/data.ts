@@ -63,6 +63,39 @@ export interface PublicBusinessRow extends Row {
   city_slug: string | null;
   /** نام فارسی نوع کسب‌وکار؛ کلید خام (`pet_shop`) هرگز به کاربر نشان داده نمی‌شود. */
   type_name: string | null;
+  primary_location_id: string | null;
+  /** مسیر شهر (`iran.alborz.karaj`)؛ مبنای پیوند داخلی از پروفایل به صفحهٔ شهر. */
+  city_path: string | null;
+  industry_name: string | null;
+  industry_path: string | null;
+}
+
+/* ------------------------------------------------------------------ سئوی فنی (گام ۲۶) */
+
+export interface SitemapBusinessRow extends Row {
+  slug: string;
+  last_modified: string;
+  verification_level: string;
+}
+
+export interface SitemapContentRow extends Row {
+  slug: string;
+  last_modified: string;
+  kind: string;
+}
+
+/** یک صفحهٔ تاکسونومی با دست‌کم یک عضو، و تازه‌ترین تغییر اعضایش. */
+export interface SitemapTaxonomyRow extends Row {
+  path: string;
+  last_modified: string | null;
+}
+
+export type SitemapTaxonomyFamily = 'type' | 'industry' | 'location' | 'category';
+
+export interface InternalLinkRow extends Row {
+  target_path: string;
+  anchor_text: string | null;
+  link_kind: string;
 }
 
 /**
@@ -283,6 +316,19 @@ export interface WebData {
   facetTypes(filter: TaxonomyFilter, limit: number, requestId: string): Promise<TypeFacetRow[]>;
   /** جست‌وجوی متنی در کسب‌وکارهای عمومی (`app.search_businesses`). */
   searchBusinesses(query: string, limit: number, requestId: string): Promise<SearchHit[]>;
+  /** تنظیم سراسریِ غیرسرّی (`ops.setting`)؛ تنظیم سرّی هرگز برنمی‌گردد (RLS). */
+  platformSetting(key: string, requestId: string): Promise<unknown | null>;
+  sitemapBusinessCount(requestId: string): Promise<number>;
+  sitemapBusinesses(limit: number, offset: number, requestId: string): Promise<SitemapBusinessRow[]>;
+  sitemapContentCount(requestId: string): Promise<number>;
+  sitemapContent(limit: number, offset: number, requestId: string): Promise<SitemapContentRow[]>;
+  sitemapTaxonomy(family: SitemapTaxonomyFamily, requestId: string): Promise<SitemapTaxonomyRow[]>;
+  /** کدام مسیرها فرادادهٔ `noindex` دارند؟ (یک پرس‌وجو برای کل فهرست.) */
+  noindexRoutes(routes: readonly string[], requestId: string): Promise<Set<string>>;
+  /** پیوندهای داخلیِ سراسری و فعال از یک صفحه (`seo.internal_link`). */
+  internalLinks(sourcePath: string, requestId: string): Promise<InternalLinkRow[]>;
+  /** کسب‌وکارهای مشابه: هم‌نوع، هم‌شهرها اول، با چرخش پایدار برای پخش پیوند. */
+  relatedBusinesses(business: PublicBusinessRow, limit: number, requestId: string): Promise<PublicBusinessRow[]>;
   contentIndex(limit: number, requestId: string): Promise<ContentIndexRow[]>;
   redirectFor(pathname: string, requestId: string): Promise<RedirectRow | null>;
   readiness(requestId: string): Promise<Row | null>;
@@ -368,9 +414,11 @@ export interface WebDataOptions {
 const BUSINESS_COLUMNS = raw(`
   b.id, b.slug, b.name, b.name_latin, b.business_type_key, b.industry_key,
   b.verification_level, b.listing_count, b.member_count, b.published_at, b.updated_at,
+  b.primary_location_id,
   p.tagline, p.summary, p.founded_year,
-  l.slug as city_slug, l.name_fa as city_name,
-  bt.name_fa as type_name
+  l.slug as city_slug, l.name_fa as city_name, l.path as city_path,
+  bt.name_fa as type_name,
+  ind.name_fa as industry_name, ind.path as industry_path
 `);
 
 const BUSINESS_SOURCE = raw(`
@@ -378,6 +426,7 @@ const BUSINESS_SOURCE = raw(`
   left join app.business_profile p on p.business_id = b.id
   left join ref.location l on l.id = b.primary_location_id
   left join ref.business_type bt on bt.key = b.business_type_key
+  left join ref.industry ind on ind.key = b.industry_key
 `);
 
 /*
@@ -901,6 +950,198 @@ export function createWebData(options: WebDataOptions): WebData {
 
     searchBusinesses(query, limit, requestId) {
       return degrade('search.businesses', [], () => read(requestId, ({ repos }) => repos.catalog.searchBusinesses(query, limit)));
+    },
+
+    /* -------------------------------------------------------------- سئوی فنی (گام ۲۶) */
+
+    platformSetting(key, requestId) {
+      return degrade(`setting:${key}`, null, () =>
+        read(requestId, async ({ dal }) => {
+          // `not is_secret` تکرار سیاست است (RLS هم تنظیم سرّی را برای بی‌نام پنهان می‌کند).
+          const row = await dal.maybeOne<{ value: unknown }>(sql`
+            select s.value from ops.setting s
+            where s.business_id is null and s.key = ${key} and not s.is_secret
+            limit 1
+          `);
+          return row ? row.value : null;
+        }),
+      );
+    },
+
+    sitemapBusinessCount(requestId) {
+      return degrade('sitemap.business.count', 0, () =>
+        read(requestId, async ({ dal }) => {
+          const row = await dal.maybeOne<{ n: number }>(sql`select seo.sitemap_business_count() as n`);
+          return Number(row?.n ?? 0);
+        }),
+      );
+    },
+
+    sitemapBusinesses(limit, offset, requestId) {
+      return degrade('sitemap.business.page', [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<SitemapBusinessRow>(sql`
+            select s.slug, s.last_modified, s.verification_level
+            from seo.sitemap_businesses(${limit}, ${offset}) s
+          `),
+        ),
+      );
+    },
+
+    sitemapContentCount(requestId) {
+      return degrade('sitemap.content.count', 0, () =>
+        read(requestId, async ({ dal }) => {
+          const row = await dal.maybeOne<{ n: number }>(sql`select seo.sitemap_content_count() as n`);
+          return Number(row?.n ?? 0);
+        }),
+      );
+    },
+
+    sitemapContent(limit, offset, requestId) {
+      return degrade('sitemap.content.page', [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<SitemapContentRow>(sql`
+            select s.slug, s.last_modified, s.kind
+            from seo.sitemap_content(${limit}, ${offset}) s
+          `),
+        ),
+      );
+    },
+
+    sitemapTaxonomy(family, requestId) {
+      return degrade(`sitemap.taxonomy:${family}`, [], () =>
+        read(requestId, ({ dal }) => {
+          switch (family) {
+            case 'type':
+              return dal.query<SitemapTaxonomyRow>(sql`
+                select t.key as path, greatest(t.updated_at, max(b.updated_at)) as last_modified
+                from ref.business_type t
+                join app.business b on b.business_type_key = t.key
+                where t.is_active and ${VISIBLE_BUSINESS}
+                group by t.key, t.updated_at
+                order by t.key
+              `);
+            case 'industry':
+              return dal.query<SitemapTaxonomyRow>(sql`
+                select i.path, greatest(i.updated_at, s.last_modified) as last_modified
+                from ref.industry i
+                join lateral (
+                  select count(*) as members, max(b.updated_at) as last_modified
+                  from app.business b
+                  join ref.industry x on x.key = b.industry_key
+                  where ${VISIBLE_BUSINESS} and (x.path = i.path or starts_with(x.path, i.path || '.'))
+                ) s on s.members > 0
+                where i.is_active
+                order by i.path
+              `);
+            case 'location':
+              return dal.query<SitemapTaxonomyRow>(sql`
+                select l.path, greatest(l.updated_at, s.last_modified) as last_modified
+                from ref.location l
+                join lateral (
+                  select count(*) as members, max(b.updated_at) as last_modified
+                  from app.business b
+                  join ref.location x on x.id = b.primary_location_id
+                  where ${VISIBLE_BUSINESS} and (x.path = l.path or starts_with(x.path, l.path || '.'))
+                ) s on s.members > 0
+                where l.is_active and l.kind in ('province', 'city')
+                order by l.path
+              `);
+            case 'category':
+              return dal.query<SitemapTaxonomyRow>(sql`
+                select c.path, greatest(c.updated_at, s.last_modified) as last_modified
+                from ref.category c
+                join lateral (
+                  select count(distinct ct.id) as members, max(ct.updated_at) as last_modified
+                  from app.content ct
+                  join app.content_category cc on cc.content_id = ct.id
+                  join ref.category x on x.id = cc.category_id
+                  left join app.business b on b.id = ct.business_id and ${VISIBLE_BUSINESS}
+                  where ct.status = 'published' and ct.visibility = 'public' and ct.deleted_at is null
+                    and (ct.published_at is null or ct.published_at <= now())
+                    and (ct.business_id is null or b.id is not null)
+                    and (x.path = c.path or starts_with(x.path, c.path || '.'))
+                ) s on s.members > 0
+                where c.scope = 'content' and c.business_id is null and c.is_active
+                order by c.path
+              `);
+          }
+        }),
+      );
+    },
+
+    noindexRoutes(routes, requestId) {
+      if (routes.length === 0) return Promise.resolve(new Set<string>());
+      return degrade('seo.noindex_routes', new Set<string>(), () =>
+        read(requestId, async ({ dal }) => {
+          const rows = await dal.query<{ route: string }>(sql`
+            select r as route from seo.noindex_routes(${JSON.stringify(routes)}::jsonb) r
+          `);
+          return new Set(rows.map((row) => row.route));
+        }),
+      );
+    },
+
+    internalLinks(sourcePath, requestId) {
+      return degrade(`seo.internal_links:${sourcePath}`, [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<InternalLinkRow>(sql`
+            select l.target_path, l.anchor_text, l.link_kind
+            from seo.internal_link l
+            where l.source_path = ${sourcePath} and l.is_active and l.business_id is null
+            order by l.link_kind asc, l.target_path asc
+            limit 12
+          `),
+        ),
+      );
+    },
+
+    relatedBusinesses(business, limit, requestId) {
+      return degrade(`business.related:${business.slug}`, [], () =>
+        read(requestId, async ({ dal }) => {
+          /*
+           * همسایه‌های **چرخشی** به ترتیب شناسه: «n نفرِ بعدی، و بعد از آخر، از اول».
+           *
+           * چرا چرخه و نه «برترین‌ها»: اگر همه به یک دستهٔ ثابت پیوند بدهند، بقیه یتیم
+           * می‌مانند. در چرخه، هر پروفایل دقیقاً از n پروفایل قبلی‌اش پیوند ورودی
+           * می‌گیرد — **قطعی**، بی‌یتیم (برای گروه بزرگ‌تر از n)، و بی‌تصادف.
+           * نسخهٔ نخست چرخش را با `md5` می‌ساخت و پوشش، احتمالاتی بود: آزمون در
+           * ۲٪ اجراها می‌شکست. «قطعی» همان چیزی است که می‌شود تضمین‌ش کرد.
+           *
+           * چرا کوتاه‌هزینه: هر شاخه با ایندکس `(نوع، شناسه)` و `limit` کار می‌کند؛
+           * هزینهٔ هر صفحه به تعداد کسب‌وکارهای آن نوع بستگی ندارد (§98).
+           */
+          const cycle = async (scope: ReturnType<typeof sql>, take: number): Promise<PublicBusinessRow[]> => {
+            const after = await dal.query<PublicBusinessRow>(sql`
+              select ${BUSINESS_COLUMNS} ${BUSINESS_SOURCE}
+              where ${VISIBLE_BUSINESS} and ${scope} and b.id > ${business.id}
+              order by b.id asc limit ${take}
+            `);
+            if (after.length >= take) return after;
+            const before = await dal.query<PublicBusinessRow>(sql`
+              select ${BUSINESS_COLUMNS} ${BUSINESS_SOURCE}
+              where ${VISIBLE_BUSINESS} and ${scope} and b.id < ${business.id}
+              order by b.id asc limit ${take - after.length}
+            `);
+            return [...after, ...before];
+          };
+
+          const sameType = sql`b.business_type_key = ${business.business_type_key}`;
+          // هم‌شهری‌ها اول (حداکثر نیمی از فهرست)، بعد چرخهٔ هم‌نوع‌ها تا پر شدن.
+          const local =
+            business.primary_location_id !== null
+              ? await cycle(sql`${sameType} and b.primary_location_id = ${business.primary_location_id}`, Math.ceil(limit / 2))
+              : [];
+          const global = await cycle(sameType, limit);
+
+          const picked = new Map<string, PublicBusinessRow>();
+          for (const row of [...local, ...global]) {
+            if (picked.size >= limit) break;
+            if (row.id !== business.id && !picked.has(row.id)) picked.set(row.id, row);
+          }
+          return [...picked.values()];
+        }),
+      );
     },
 
     contentIndex(limit, requestId) {

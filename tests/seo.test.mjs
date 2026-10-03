@@ -338,7 +338,20 @@ describe('robots و llms.txt: تصمیم صریح، نه سکوت (§45)', () =>
     assert.ok(robots.includes('Disallow: /api/'));
     assert.ok(robots.includes(`Sitemap: ${BASE}/sitemap.xml`));
     assert.ok(robots.includes('User-agent: GPTBot'));
-    assert.ok(robots.includes('Allow: /'));
+  });
+
+  test('هر گروهِ نام‌دار، فهرست ممنوعه را خودش تکرار می‌کند (خزندهٔ نام‌دار گروه * را نمی‌خواند)', () => {
+    const disallow = ['/panel', '/api/', '/search'];
+    const robots = buildRobots({ environment: 'production', baseUrl: BASE, disallow, aiPolicy: 'allow' });
+    const groups = robots.split('\n\n').filter((block) => block.startsWith('User-agent: '));
+    const named = groups.filter((block) => !block.startsWith('User-agent: *'));
+    assert.equal(named.length, AI_CRAWLERS.length);
+    for (const block of named) {
+      for (const route of disallow) {
+        assert.ok(block.includes(`Disallow: ${route}`), `${block.split('\n')[0]} بی «Disallow: ${route}» است`);
+      }
+      assert.ok(!block.includes('Allow: /\n'), 'Allow: / بی‌قید، همهٔ مسیرهای ممنوعه را باز می‌کند');
+    }
   });
 
   test('غیرتولید: همه‌چیز بسته و سایتمپ معرفی نمی‌شود', () => {
@@ -354,9 +367,12 @@ describe('robots و llms.txt: تصمیم صریح، نه سکوت (§45)', () =>
     assert.equal(blocks.length, AI_CRAWLERS.length + 1, 'هر ربات، یک بلوک');
     assert.ok(disallow.includes('User-agent: ClaudeBot\nDisallow: /'));
 
-    const searchOnly = buildRobots({ environment: 'production', baseUrl: BASE, aiPolicy: 'search-only' });
-    assert.ok(searchOnly.includes('User-agent: GPTBot'));
-    assert.ok(!/User-agent: GPTBot\nDisallow: \/$/.test(searchOnly.replace(/\n\n/g, '\n')));
+    // «فقط جست‌وجو»: خزندهٔ آموزش بسته، خزندهٔ پاسخ‌دهی باز (با همان فهرست ممنوعه).
+    const searchOnly = buildRobots({ environment: 'production', baseUrl: BASE, disallow: ['/panel'], aiPolicy: 'search-only' });
+    assert.ok(searchOnly.includes('User-agent: GPTBot\nDisallow: /'));
+    assert.ok(searchOnly.includes('User-agent: CCBot\nDisallow: /'));
+    assert.ok(searchOnly.includes('User-agent: OAI-SearchBot\nDisallow: /panel'));
+    assert.ok(!searchOnly.includes('User-agent: PerplexityBot\nDisallow: /\n'));
   });
 
   test('llms.txt، منبع را معرفی می‌کند نه محتوا را', () => {

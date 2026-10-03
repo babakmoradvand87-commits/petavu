@@ -18,6 +18,8 @@ import { escapeText } from '../html.js';
 import { breadcrumbList, businessNode, jsonLdBlocks } from '../structured.js';
 import { renderDesignPage } from '../pagedesign.js';
 import { buildPageHead } from '../seohead.js';
+import { industryUrl, locationUrl, typeUrl } from '../taxonomy.js';
+import { businessGrid, editorialSection, facetSection, type Facet } from './landing.js';
 import { notFoundPage } from './system.js';
 import type { PageContext, PageResponse } from './types.js';
 
@@ -31,6 +33,19 @@ export async function businessPage(context: PageContext, slug: string): Promise<
 
   const { business } = found;
   const canonical = `${origin}/b/${business.slug}`;
+  const typeLabel = business.type_name ?? business.business_type_key;
+  const typePath = typeUrl(business.business_type_key);
+
+  /*
+   * پیوند داخلی (گام ۲۶): پروفایلی که فقط از فهرست به آن می‌رسند، یتیمِ ضعیف
+   * است. دو منبع: «مشابه‌ها» (هم‌نوع، با چرخش پایدار) و پیوندهای سراسریِ
+   * ثبت‌شده در `seo.internal_link`. هر دو در پایین صفحه می‌آیند — چه صفحه از
+   * درخت طراحی بیاید چه از چیدمان پایه، پیوند ورودی/خروجی باید ثابت بماند.
+   */
+  const [related, editorialLinks] = await Promise.all([
+    context.data.relatedBusinesses(business, 6, requestId),
+    context.data.internalLinks(`/b/${business.slug}`, requestId),
+  ]);
 
   /*
    * این دو، **پیش‌فرض کد** هستند؛ زنجیرهٔ واقعی (متادیتای دستی → قالب سئو)
@@ -61,7 +76,7 @@ export async function businessPage(context: PageContext, slug: string): Promise<
         name_latin: business.name_latin,
         city: business.city_name,
         city_name: business.city_name,
-        type: business.business_type_key,
+        type: typeLabel,
         summary: business.summary,
         tagline: business.tagline,
         slug: business.slug,
@@ -82,14 +97,18 @@ export async function businessPage(context: PageContext, slug: string): Promise<
     section({
       tight: true,
       children: container(
-        breadcrumb([{ label: 'خانه', href: '/' }, { label: 'کسب‌وکارها', href: '/businesses' }, { label: business.name }]),
+        breadcrumb([
+          { label: 'خانه', href: '/' },
+          ...(typePath ? [{ label: typeLabel, href: typePath }] : [{ label: 'کسب‌وکارها', href: '/businesses' }]),
+          { label: business.name },
+        ]),
       ),
     }),
     section({
       children: container(
         heading(1, business.name) +
           (business.name_latin ? paragraph(business.name_latin, 'card__meta') : '') +
-          `<div class="cluster section--tight">${verificationBadge(business.verification_level) ?? ''}${badge(business.business_type_key)}</div>` +
+          `<div class="cluster section--tight">${verificationBadge(business.verification_level) ?? ''}${badge(typeLabel)}</div>` +
           (facts.length > 0
             ? `<dl class="grid grid--2 section--tight">` +
               facts
@@ -119,12 +138,30 @@ export async function businessPage(context: PageContext, slug: string): Promise<
     strings: {
       business_name: business.name,
       tagline: business.tagline ?? '',
-      type_name: business.business_type_key,
+      type_name: typeLabel,
       city: business.city_name ?? '',
     },
   });
 
-  const body = design.used ? design.html ?? baseline : baseline;
+  // مسیرهای «بیشتر»: نوع، صنف و شهر همین کسب‌وکار — هر کدام صفحهٔ واقعی دارند.
+  const exploreChips: Facet[] = [
+    ...(typePath ? [{ label: typeLabel, href: typePath }] : []),
+    ...(business.industry_path && business.industry_name && industryUrl(business.industry_path)
+      ? [{ label: business.industry_name, href: industryUrl(business.industry_path) as string }]
+      : []),
+    ...(business.city_path && business.city_name && locationUrl(business.city_path) && locationUrl(business.city_path) !== '/l'
+      ? [{ label: `کسب‌وکارها در ${business.city_name}`, href: locationUrl(business.city_path) as string }]
+      : []),
+  ];
+
+  const extras = [
+    facetSection('کاوش بیشتر', exploreChips, 'explore'),
+    related.length > 0 ? `<div class="section--tight stack" id="related">${heading(2, 'کسب‌وکارهای مشابه', { class: 'ds-heading ds-heading--sm' })}${businessGrid(related)}</div>` : '',
+    editorialSection(editorialLinks),
+  ].join('');
+
+  const main = design.used ? design.html ?? baseline : baseline;
+  const body = extras.trim() === '' ? main : `${main}\n<section class="section section--tight">${container(extras)}</section>`;
 
   const nodes = [
     businessNode({
@@ -142,7 +179,7 @@ export async function businessPage(context: PageContext, slug: string): Promise<
     breadcrumbList(
       [
         { name: 'خانه', url: '/' },
-        { name: 'کسب‌وکارها', url: '/businesses' },
+        ...(typePath ? [{ name: typeLabel, url: typePath }] : [{ name: 'کسب‌وکارها', url: '/businesses' }]),
         { name: business.name, url: `/b/${business.slug}` },
       ],
       { baseUrl: origin, brandName: PLATFORM_NAME },
