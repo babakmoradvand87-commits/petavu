@@ -705,28 +705,28 @@ on conflict (key) do update
 
 -- ================================================================== قالب‌های سئو
 insert into seo.template (business_id, key, entity_kind, subtype, title_template, description_template, slug_template, priority) values
-  (null, 'home.platform', 'home', null, 'PETAVU {sep} شبکهٔ کسب‌وکار حیوانات خانگی و اسب',
+  (null, 'home.platform', 'home', null, '{site} {sep} شبکهٔ کسب‌وکار حیوانات خانگی و اسب',
    'پروفایل کسب‌وکارهای صنف حیوانات خانگی و اسب: کلینیک، پت‌شاپ، آموزش، دامداری و خدمات تخصصی.', null, 100),
-  (null, 'business.default', 'business', null, '{name} {sep} {city} {sep} PETAVU',
+  (null, 'business.default', 'business', null, '{name} {sep} {city} {sep} {site}',
    '{summary}', '/b/{slug}', 100),
-  (null, 'business.type', 'business_type', null, '{type_plural} در {city} {sep} PETAVU',
+  (null, 'business.type', 'business_type', null, '{type_plural} در {city} {sep} {site}',
    'فهرست {type_plural} فعال در {city} با اطلاعات تماس، آدرس و خدمات.', '/t/{type_slug}', 90),
-  (null, 'business.industry', 'industry', null, '{industry_name} {sep} کسب‌وکارهای صنف {sep} PETAVU',
+  (null, 'business.industry', 'industry', null, '{industry_name} {sep} کسب‌وکارهای صنف {sep} {site}',
    'کسب‌وکارهای فعال در حوزهٔ {industry_name}؛ پروفایل، تماس و خدمات.', '/i/{industry_slug}', 90),
-  (null, 'business.city', 'location', null, 'کسب‌وکارهای صنف حیوانات در {city_name} {sep} PETAVU',
+  (null, 'business.city', 'location', null, 'کسب‌وکارهای صنف حیوانات در {city_name} {sep} {site}',
    'فهرست کسب‌وکارهای فعال صنف حیوانات خانگی و اسب در {city_name}.', '/l/{location_slug}', 90),
-  (null, 'content.article', 'content', 'article', '{title} {sep} PETAVU',
+  (null, 'content.article', 'content', 'article', '{title} {sep} {site}',
    '{summary}', '/c/{slug}', 100),
-  (null, 'content.guide', 'content', 'guide', '{title} {sep} راهنمای PETAVU',
+  (null, 'content.guide', 'content', 'guide', '{title} {sep} راهنمای {site}',
    '{summary}', '/g/{slug}', 100),
   (null, 'content.service', 'content', 'service', '{title} {sep} {business_name}',
    '{summary}', '/s/{slug}', 100),
   (null, 'content.faq', 'content', 'faq', 'پرسش‌های متداول {sep} {business_name}',
    '{summary}', '/faq/{slug}', 100),
-  (null, 'category.content', 'category', null, '{category_name} {sep} PETAVU',
+  (null, 'category.content', 'category', null, '{category_name} {sep} {site}',
    'مقالات و راهنماهای دستهٔ {category_name}.', '/k/{category_slug}', 80),
-  (null, 'search.query', 'search', null, 'جست‌وجوی «{query}» {sep} PETAVU',
-   'نتایج جست‌وجوی «{query}» در کسب‌وکارها و محتوای PETAVU.', null, 60)
+  (null, 'search.query', 'search', null, 'جست‌وجوی «{query}» {sep} {site}',
+   'نتایج جست‌وجوی «{query}» در کسب‌وکارها و محتوای {site}.', null, 60)
 on conflict (coalesce(business_id, '00000000-0000-0000-0000-000000000000'::uuid), key) do update
   set entity_kind = excluded.entity_kind,
       subtype = excluded.subtype,

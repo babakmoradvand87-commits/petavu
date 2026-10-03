@@ -74,6 +74,13 @@ export interface SeoMetadataRow extends Row {
   description: string | null;
   canonical_url: string | null;
   share_title: string | null;
+  /** دارایی تصویر اشتراک‌گذاری (og:image) — اگر ثبت شده باشد. */
+  share_asset_id: string | null;
+  /**
+   * تگ‌های هد اضافه، از سرویس‌های ثالث ثبت‌شده. `jsonb` است و **آرایه‌ای از
+   * توصیف‌گرهای ساختاری** (نه رشتهٔ HTML)؛ وب آن را با فهرست مجاز می‌خواند.
+   */
+  extra_head: unknown;
   is_indexable: boolean;
   robots_directives: string[];
   non_indexable_reason: string | null;
@@ -101,6 +108,10 @@ export interface SeoSettingsRow extends Row {
   description_fallback: string | null;
   default_locale: string;
   default_region: string;
+  /** حساب توییتر/ایکس سایت — برای کارت اشتراک‌گذاری. */
+  twitter_handle: string | null;
+  /** کلیدهای افزودنی: کدهای بازرسی موتورها، تنظیمات سرویس ثالث و… */
+  extra: unknown;
   indexing_enabled: boolean;
   environment: 'production' | 'staging' | 'development';
 }
@@ -110,6 +121,35 @@ export interface SeoSettingsRow extends Row {
  * دسترسی مستقیم صفحه‌ها به پایگاه‌داده. دلیلش قاعدهٔ گام ۲۲ است: صفحه فقط
  * «چه می‌خواهد» را می‌گوید؛ اینکه چگونه و با کدام نقش خوانده می‌شود، اینجاست.
  */
+/** ردیف قالب سئو (گام ۲۴) — مرجع ساخت عنوان/توضیح/کانونیکال. */
+export interface SeoTemplateRow extends Row {
+  key: string;
+  entity_kind: string;
+  subtype: string | null;
+  title_template: string;
+  description_template: string | null;
+  canonical_template: string | null;
+  og_title_template: string | null;
+  og_description_template: string | null;
+  priority: number;
+}
+
+/** قاعدهٔ کانونیکال — تنها جایی که «کدام نشانی مرجع است» تصمیم گرفته می‌شود. */
+export interface CanonicalRuleRow extends Row {
+  source_path: string;
+  canonical_path: string;
+  match_kind: string;
+  reason: string;
+}
+
+/** ردیف دادهٔ ساخت‌یافتهٔ دستی/موتوری. */
+export interface SeoStructuredRow extends Row {
+  schema_type: string;
+  subtype: string | null;
+  payload: unknown;
+  source: string;
+}
+
 export interface BusinessContactRow extends Row {
   kind: string;
   value_display: string;
@@ -163,6 +203,33 @@ export interface WebData {
   mediaAsset(id: string, requestId: string): Promise<MediaAssetRow | null>;
   /** مکان‌ها و راه‌های تماس **عمومی** یک کسب‌وکار (زمینهٔ بلوک تماس و نقشه). */
   businessContext(businessId: string, requestId: string): Promise<{ locations: BusinessLocationRow[]; contacts: BusinessContactRow[] }>;
+
+  /* ---------------------------------------------------------- سئو (گام ۲۴) */
+
+  /** قالب‌های فعال سئو برای یک نوع موجودیت، به ترتیب اولویت. */
+  seoTemplates(entityKind: string, subtype: string | null, requestId: string): Promise<SeoTemplateRow[]>;
+  /** سیاست نمایه‌شدن صفحه (شامل صفحه‌های `noindex`). */
+  indexPolicy(
+    target: { kind: string; id: string | null; routeKey: string | null; locale: string },
+    requestId: string,
+  ): Promise<{ is_indexable: boolean; robots_directives: string[]; non_indexable_reason: string | null } | null>;
+  /** متادیتای مؤثر یک صفحه — از تابع سخت‌گیرانهٔ دامنه، نه از جدول خام. */
+  pageMetadata(
+    target: { kind: string; id: string | null; routeKey: string | null; locale: string },
+    requestId: string,
+  ): Promise<SeoMetadataRow | null>;
+  /** قواعد کانونیکال فعال پلتفرم. */
+  canonicalRules(requestId: string): Promise<CanonicalRuleRow[]>;
+  /** نسخه‌های زبانی دیگر همان موجودیت (مبنای hreflang). */
+  pageAlternates(
+    target: { kind: string; id: string; locale: string },
+    requestId: string,
+  ): Promise<{ locale: string; canonical_url: string | null; canonical_path: string | null }[]>;
+  /** ردیف‌های دادهٔ ساخت‌یافتهٔ فعال برای یک صفحه. */
+  structuredDataRows(
+    target: { kind: string; id: string | null; routeKey: string | null; locale: string },
+    requestId: string,
+  ): Promise<SeoStructuredRow[]>;
 }
 
 export interface PlatformStats extends Row {
@@ -207,7 +274,18 @@ const BUSINESS_SOURCE = raw(`
 `);
 
 const METADATA_COLUMNS = raw(
-  'm.title, m.description, m.canonical_url, m.share_title, m.is_indexable, m.robots_directives, m.non_indexable_reason, m.updated_at',
+  'm.title, m.description, m.canonical_url, m.share_title, m.share_asset_id, m.extra_head, m.is_indexable, m.robots_directives, m.non_indexable_reason, m.updated_at',
+);
+
+/*
+ * همان ستون‌ها با نام‌مستعار `x` — برای زیرپرس‌وجوی `union all`.
+ *
+ * چرا `select *` نه: نگهبان DAL آن را رد می‌کند (§64) و درست هم می‌کند: `*`
+ * با هر ستون تازه‌ای در جدول، قرارداد را بی‌سروصدا عوض می‌کند. همین نگهبان،
+ * اولین اجرای این کوئری را گرفت.
+ */
+const METADATA_UNION_COLUMNS = raw(
+  'x.title, x.description, x.canonical_url, x.share_title, x.share_asset_id, x.extra_head, x.is_indexable, x.robots_directives, x.non_indexable_reason, x.updated_at',
 );
 
 export function createWebData(options: WebDataOptions): WebData {
@@ -286,7 +364,7 @@ export function createWebData(options: WebDataOptions): WebData {
         read(requestId, ({ dal }) =>
           dal.maybeOne<SeoSettingsRow>(sql`
             select s.title_separator, s.title_template, s.description_fallback, s.default_locale,
-                   s.default_region, s.indexing_enabled, s.environment
+                   s.default_region, s.indexing_enabled, s.environment, s.twitter_handle, s.extra
             from seo.settings s
             where s.business_id is null
             limit 1
@@ -491,7 +569,11 @@ export function createWebData(options: WebDataOptions): WebData {
             select a.id, a.driver, a.storage_key, a.bucket, a.detected_mime, a.kind, a.size_bytes,
                    a.width, a.height, a.alt_text, a.original_name, a.checksum_sha256
             from media.asset a
-            where a.id = any(${ids}::uuid[])
+            -- DAL آرایه را به فهرست پارامتر گسترده می‌کند (برای in)، پس
+            -- «= any» با قالب uuid[] این‌جا به «any با چند آرگومان» تبدیل می‌شد
+            -- و خطای malformed array literal می‌داد. شکل درست با این لایه،
+            -- فهرست in است.
+            where a.id in (${ids})
           `),
         ),
       );
@@ -537,6 +619,119 @@ export function createWebData(options: WebDataOptions): WebData {
 
           return { locations, contacts };
         }),
+      );
+    },
+
+    seoTemplates(entityKind, subtype, requestId) {
+      return degrade(`seo.templates:${entityKind}`, [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<SeoTemplateRow>(sql`
+            select t.key, t.entity_kind, t.subtype, t.title_template, t.description_template,
+                   t.canonical_template, t.og_title_template, t.og_description_template, t.priority
+            from seo.template t
+            where t.business_id is null and t.is_active
+              and t.entity_kind = ${entityKind}
+              and (t.subtype is null or t.subtype = ${subtype})
+            order by t.priority desc, t.key asc
+            limit 20
+          `),
+        ),
+      );
+    },
+
+    indexPolicy(target, requestId) {
+      return degrade(`seo.policy:${target.kind}`, null, () =>
+        read(requestId, ({ dal }) =>
+          dal.maybeOne<{ is_indexable: boolean; robots_directives: string[]; non_indexable_reason: string | null }>(sql`
+            select p.is_indexable, p.robots_directives, p.non_indexable_reason
+            from seo.index_policy_for_public(${target.kind}, ${target.id}::uuid, ${target.routeKey}, ${target.locale}) p
+          `),
+        ),
+      );
+    },
+
+    pageMetadata(target, requestId) {
+      /*
+       * دو منبع، یک شکل: موجودیت‌دار از تابع سخت‌گیرانهٔ موجودیت، مسیرمحور از
+       * تابع مسیر. هیچ‌کدام جدول خام را نمی‌خوانند، چون نگهبان «منتشرشده بودن»
+       * در همان توابع است.
+       *
+       * دو نکتهٔ ریز که هر دو یک‌بار ما را زمین زدند:
+       *
+       *   • ریشهٔ تله در مهاجرت ۰۰۱۸ بسته شد (تابع‌ها setof شدند، پس ردیف تهی
+       *     نمی‌دهند). نگهبان «لیترال «x.entity_kind is not null»» هم می‌ماند:
+       *     اگر روزی تابعی دوباره نوع مرکب بدهد، این‌جا بی‌صدا «فراداده هست»
+       *     نتیجه نمی‌گیریم.
+       *   • ترتیب اهمیت دارد: متادیتای موجودیت بر متادیتای مسیر مقدم است، پس با
+       *     source_rank مرتب می‌کنیم (وگرنه ترتیب union all تعیین می‌کرد، که
+       *     تصادفی است).
+       *
+       * ⚠️ هیچ کامنتی داخل قالب SQL نمی‌نویسیم: بک‌تیک در متن کامنت، قالب را
+       * می‌بندد و خطای نحوی می‌دهد (همین‌جا یک‌بار اتفاق افتاد).
+       */
+      return degrade(`seo.metadata:${target.kind}`, null, () =>
+        read(requestId, ({ dal }) =>
+          dal.maybeOne<SeoMetadataRow>(sql`
+            select ${METADATA_COLUMNS}
+            from (
+              select ${METADATA_UNION_COLUMNS}, 0 as source_rank from seo.metadata_for_public(${target.kind}, ${target.id}::uuid, ${target.locale}) x
+               where x.entity_kind is not null
+              union all
+              select ${METADATA_UNION_COLUMNS}, 1 as source_rank from seo.metadata_for_route(${target.kind}, ${target.routeKey}, ${target.locale}) x
+               where x.entity_kind is not null
+            ) m
+            order by m.source_rank
+            limit 1
+          `),
+        ),
+      );
+    },
+
+    canonicalRules(requestId) {
+      return degrade('seo.canonical', [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<CanonicalRuleRow>(sql`
+            select c.source_path, c.canonical_path, c.match_kind, c.reason
+            from seo.canonical c
+            where c.is_active and c.business_id is null
+            order by length(c.source_path) desc
+            limit 200
+          `),
+        ),
+      );
+    },
+
+    pageAlternates(target, requestId) {
+      /*
+       * از تابع `security definer` می‌خوانیم، نه از جدول: نقش بی‌نام روی
+       * `seo.metadata` سیاست خواندن ندارد و RLS بی‌صدا ردیف‌ها را پنهان می‌کند.
+       */
+      return degrade(`seo.alternates:${target.kind}`, [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<{ locale: string; canonical_url: string | null; canonical_path: string | null }>(sql`
+            select a.locale, a.canonical_url, a.canonical_path
+            from seo.public_alternates(${target.kind}, ${target.id}::uuid, ${target.locale}) a
+          `),
+        ),
+      );
+    },
+
+    structuredDataRows(target, requestId) {
+      return degrade(`seo.structured:${target.kind}`, [], () =>
+        read(requestId, ({ dal }) =>
+          dal.query<SeoStructuredRow>(sql`
+            select d.schema_type, d.subtype, d.payload, d.source
+            from seo.structured_data d
+            where d.is_active
+              and d.locale = ${target.locale}
+              and (
+                (d.entity_id is not null and d.entity_id = ${target.id}::uuid)
+                or (d.route_key is not null and d.route_key = ${target.routeKey})
+              )
+            order by d.created_at asc
+            limit 20
+          `),
+        ),
       );
     },
 

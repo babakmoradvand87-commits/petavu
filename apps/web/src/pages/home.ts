@@ -10,13 +10,14 @@
  * فهرست کسب‌وکارها و مسیر راهنما.
  */
 
-import { buildHead, clampDescription } from '@petavu/seo';
+import { clampDescription } from '@petavu/seo';
 
 import { card, container, emptyState, formatNumber, heading, metric, paragraph, section } from '../components.js';
 import { PLATFORM_NAME, PLATFORM_TAGLINE, renderShell } from '../chrome.js';
 import { escapeText } from '../html.js';
 import { breadcrumbList, itemListNode, jsonLdBlocks } from '../structured.js';
 import { renderDesignPage } from '../pagedesign.js';
+import { buildPageHead } from '../seohead.js';
 import type { PageContext, PageResponse } from './types.js';
 
 /**
@@ -38,15 +39,27 @@ export async function homePage(context: PageContext): Promise<PageResponse> {
       `${PLATFORM_NAME}، شبکهٔ کسب‌وکارهای صنعت حیوانات خانگی و اسب: ${formatNumber(chrome.stats.businesses)} کسب‌وکار، ${formatNumber(chrome.stats.cities)} شهر و ${formatNumber(chrome.stats.industries)} صنعت در یک مرجع زنده.`,
   );
 
-  const headTags = buildHead({
-    url: `${origin}/`,
-    title,
-    description,
-    locale,
+  /*
+   * هد از موتور سئو می‌آید: قالب `home.platform` اگر در `seo.template` باشد،
+   * بر عنوان پیش‌فرض کد مقدم است — «داده، منبع حقیقت است» (§103).
+   */
+  const head = await buildPageHead({
+    context,
+    site,
+    path: '/',
+    entity: {
+      kind: 'home',
+      id: null,
+      routeKey: '/',
+      values: { name: PLATFORM_NAME, tagline: PLATFORM_TAGLINE, type: 'کسب‌وکار' },
+    },
+    fallbackTitle: title,
+    fallbackDescription: description,
     indexable: site.indexable,
-    environment: config.environment,
-    og: { type: 'website', siteName: PLATFORM_NAME, locale },
+    og: { type: 'website' },
   });
+
+  void locale;
 
   const hero =
     `<section class="hero" id="hero"><div class="container hero__inner">` +
@@ -174,14 +187,20 @@ export async function homePage(context: PageContext): Promise<PageResponse> {
     site,
     url,
     siteName: PLATFORM_NAME,
-    headTags,
+    headTags: head.tags,
     theme: context.theme,
     fonts: context.fonts,
     assets: context.assets,
     chrome,
     now: context.now,
     content: body,
-    jsonLd: jsonLdBlocks({ baseUrl: origin, brandName: PLATFORM_NAME, locale, nodes }),
+    jsonLd: jsonLdBlocks({
+      baseUrl: origin,
+      brandName: PLATFORM_NAME,
+      locale,
+      // نودهای سئوی داده‌محور، در همان گراف صفحه ادغام می‌شوند.
+      nodes: [...nodes, ...head.structuredNodes],
+    }),
     bodyClass: 'page-home',
   });
 

@@ -10,13 +10,14 @@
  * کسب‌وکار تلفن منتشر نکرده، `telephone` هم در گراف نیست.
  */
 
-import { buildHead, clampDescription } from '@petavu/seo';
+import { clampDescription } from '@petavu/seo';
 
 import { breadcrumb, badge, container, heading, paragraph, section } from '../components.js';
 import { PLATFORM_NAME, renderShell, verificationBadge } from '../chrome.js';
 import { escapeText } from '../html.js';
 import { breadcrumbList, businessNode, jsonLdBlocks } from '../structured.js';
 import { renderDesignPage } from '../pagedesign.js';
+import { buildPageHead } from '../seohead.js';
 import { notFoundPage } from './system.js';
 import type { PageContext, PageResponse } from './types.js';
 
@@ -28,38 +29,48 @@ export async function businessPage(context: PageContext, slug: string): Promise<
   const found = await context.data.businessBySlug(slug, requestId);
   if (!found) return notFoundPage(context, { reason: 'business_not_found' });
 
-  const { business, metadata } = found;
+  const { business } = found;
   const canonical = `${origin}/b/${business.slug}`;
 
-  const title = metadata?.title ?? `${business.name} | ${PLATFORM_NAME}`;
+  /*
+   * این دو، **پیش‌فرض کد** هستند؛ زنجیرهٔ واقعی (متادیتای دستی → قالب سئو)
+   * در `buildPageHead` اجرا می‌شود. سیاست نمایه‌شدن هم از همان‌جا و از
+   * `seo.metadata` می‌آید — «سئو به‌عنوان داده» (Addendum §۴۱).
+   */
+  const title = `${business.name} | ${PLATFORM_NAME}`;
   const description = clampDescription(
-    metadata?.description ?? business.summary ?? business.tagline ?? `${business.name} — پروفایل عمومی در ${PLATFORM_NAME}.`,
+    business.summary ?? business.tagline ?? `${business.name} — پروفایل عمومی در ${PLATFORM_NAME}.`,
   );
 
   /*
-   * سیاست ایندکس، **داده‌محور** است: اگر فرادادهٔ صفحه بگوید نمایه‌شدنی نیست
-   * (`is_indexable = false`)، حتی در محیط تولید هم `noindex` می‌خورد. این همان
-   * جایی است که «سئو به‌عنوان داده» به خروجی تبدیل می‌شود (Addendum §۴۱).
+   * زنجیرهٔ عنوان داده‌محور است: متادیتای دستی → قالب `business.default`
+   * (اگر ثبت شده باشد) → عنوان پیش‌فرض. کانونیکال هم از قاعدهٔ `seo.canonical`
+   * عبور می‌کند و پارامترهای ردیابی هرگز در آن نمی‌مانند.
    */
-  const indexable = site.indexable && (metadata?.is_indexable ?? true);
-
-  const headTags = buildHead({
-    url: canonical,
-    title,
-    description,
-    canonical: metadata?.canonical_url ?? canonical,
-    indexable,
-    nonIndexableReason: metadata?.non_indexable_reason ?? null,
-    robots: (metadata?.robots_directives ?? []) as never,
-    locale,
-    environment: config.environment,
-    og: {
-      type: 'website',
-      title: metadata?.share_title ?? business.name,
-      description,
-      siteName: PLATFORM_NAME,
-      locale,
+  const head = await buildPageHead({
+    context,
+    site,
+    path: `/b/${business.slug}`,
+    search: url.searchParams,
+    entity: {
+      kind: 'business',
+      id: business.id,
+      routeKey: null,
+      values: {
+        name: business.name,
+        name_latin: business.name_latin,
+        city: business.city_name,
+        city_name: business.city_name,
+        type: business.business_type_key,
+        summary: business.summary,
+        tagline: business.tagline,
+        slug: business.slug,
+      },
     },
+    fallbackTitle: title,
+    fallbackDescription: description,
+    indexable: site.indexable,
+    og: { type: 'website', image: null },
   });
 
   const facts: string[] = [];
@@ -143,14 +154,20 @@ export async function businessPage(context: PageContext, slug: string): Promise<
     site,
     url,
     siteName: PLATFORM_NAME,
-    headTags,
+    headTags: head.tags,
     theme: context.theme,
     fonts: context.fonts,
     assets: context.assets,
     chrome: context.chrome,
     now: context.now,
     content: body,
-    jsonLd: jsonLdBlocks({ baseUrl: origin, brandName: PLATFORM_NAME, locale, nodes }),
+    jsonLd: jsonLdBlocks({
+      baseUrl: origin,
+      brandName: PLATFORM_NAME,
+      locale,
+      // نودهای سئوی داده‌محور، در همان گراف صفحه ادغام می‌شوند.
+      nodes: [...nodes, ...head.structuredNodes],
+    }),
     bodyClass: 'page-business',
   });
 

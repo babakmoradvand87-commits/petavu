@@ -10,12 +10,13 @@
  * داده.
  */
 
-import { buildHead, clampDescription } from '@petavu/seo';
+import { clampDescription } from '@petavu/seo';
 
 import { breadcrumb, container, heading, paragraph, section } from '../components.js';
 import { PLATFORM_NAME, renderShell } from '../chrome.js';
 import { escapeText, type RawHtml } from '../html.js';
 import { breadcrumbList, faqNode, jsonLdBlocks } from '../structured.js';
+import { buildPageHead } from '../seohead.js';
 import { notFoundPage } from './system.js';
 import type { PageContext, PageResponse } from './types.js';
 
@@ -122,17 +123,29 @@ export async function platformContentPage(context: PageContext, slug: string): P
   const page = await context.data.platformPage(slug, requestId);
   if (!page) return notFoundPage(context, { reason: 'content_not_found' });
 
-  const canonical = `${origin}/${page.slug}`;
   const description = clampDescription(page.summary ?? page.subtitle ?? `${page.title} — ${PLATFORM_NAME}`);
 
-  const headTags = buildHead({
-    url: canonical,
-    title: `${page.title} | ${PLATFORM_NAME}`,
-    description,
-    locale,
+  /*
+   * صفحهٔ محتوا، موجودیتِ `app.content` است؛ پس فرادادهٔ سئو از همان شناسه
+   * خوانده می‌شود. قالب `content.*` (اگر در `seo.template` باشد) بر عنوان
+   * پیش‌فرض کد مقدم است.
+   */
+  const head = await buildPageHead({
+    context,
+    site,
+    path: `/${page.slug}`,
+    search: url.searchParams,
+    entity: {
+      kind: 'content',
+      id: null,
+      routeKey: `/${page.slug}`,
+      subtype: page.kind,
+      values: { name: page.title, title: page.title, type: page.kind, summary: page.summary },
+    },
+    fallbackTitle: `${page.title} | ${PLATFORM_NAME}`,
+    fallbackDescription: description,
     indexable: site.indexable,
-    environment: config.environment,
-    og: { type: 'article', siteName: PLATFORM_NAME, locale },
+    og: { type: 'article' },
   });
 
   const faqItems = extractFaqItems(page.body);
@@ -164,14 +177,20 @@ export async function platformContentPage(context: PageContext, slug: string): P
     site,
     url,
     siteName: PLATFORM_NAME,
-    headTags,
+    headTags: head.tags,
     theme: context.theme,
     fonts: context.fonts,
     assets: context.assets,
     chrome: context.chrome,
     now: context.now,
     content: body,
-    jsonLd: jsonLdBlocks({ baseUrl: origin, brandName: PLATFORM_NAME, locale, nodes }),
+    jsonLd: jsonLdBlocks({
+      baseUrl: origin,
+      brandName: PLATFORM_NAME,
+      locale,
+      // نودهای سئوی داده‌محور، در همان گراف صفحه ادغام می‌شوند.
+      nodes: [...nodes, ...head.structuredNodes],
+    }),
     bodyClass: 'page-content',
   });
 
