@@ -20,15 +20,14 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDatabase } from './lib/engine.mjs';
 import { migrate } from './lib/migrate.mjs';
+import { applySeeds } from './lib/seed.mjs';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SCHEMAS = ['ref', 'auth', 'app', 'media', 'design', 'seo', 'ops'];
 
 const engine = await openDatabase();
 await migrate(engine, { dir: join(projectRoot, 'migrations') });
-for (const file of ['0001_reference.sql']) {
-  await engine.exec(await readFile(join(projectRoot, 'seeds', file), 'utf8'));
-}
+await applySeeds(engine, { dir: join(projectRoot, 'seeds') });
 
 const rows = async (sql, params) => engine.query(sql, params);
 

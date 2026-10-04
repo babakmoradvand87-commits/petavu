@@ -387,14 +387,14 @@ export const authRoutes: RouteDefinition[] = [
     auth: 'session',
     role: 'pv_app',
     permission: 'business.integration.manage',
-    handler: async (request, scope) => {
+    handler: async (_request, scope) => {
+      /*
+       * از تابع دامنه، نه از جدول: `app.api_key` عمداً برای همهٔ نقش‌های برنامه بسته است (هش کلید نباید
+       * به هیچ‌کدام برسد). خواندن مستقیم، همیشه «ممنوع» می‌داد — فهرست از ابتدا خراب بود و هیچ آزمونی
+       * آن را نگرفته بود. تابع، مجوز را خودش می‌سنجد و `key_hash` برنمی‌گرداند.
+       */
       const rows = await scope.query<Record<string, unknown>>(
-        `select k.id, k.name, k.key_prefix, k.scopes, k.created_at, k.last_used_at, k.expires_at,
-                k.revoked_at, k.revoked_reason, k.request_count
-           from app.api_key k
-          where k.business_id = $1
-          order by k.created_at desc`,
-        [request.businessId],
+        'select id, name, key_prefix, scopes, created_at, last_used_at, expires_at, revoked_at, revoked_reason, request_count from app.list_api_keys()',
       );
       // هش کلید، حتی در فهرست ادمین هم بیرون نمی‌آید.
       return { body: { keys: rows } };

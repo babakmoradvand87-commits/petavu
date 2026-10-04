@@ -133,6 +133,31 @@ export const businessRoutes: RouteDefinition[] = [
   },
 
   {
+    method: 'GET',
+    path: '/api/v1/businesses/:businessId/invitations',
+    name: 'business.listInvitations',
+    summary: 'دعوت‌نامه‌های باز کسب‌وکار',
+    tags: ['businesses', 'team'],
+    auth: 'session',
+    role: 'pv_app',
+    permission: 'business.member.manage',
+    handler: async (request, scope) => {
+      const businessId = requireBusinessParam(request, scope);
+      // «باز»: نه پذیرفته، نه رد، نه باطل، و نه منقضی. هش و توکن دعوت هرگز بیرون نمی‌آید.
+      const invitations = await scope.query(
+        `select i.id, i.invitee_kind, i.invitee_display, r.key as role_key, i.created_at, i.expires_at
+           from app.invitation i
+           left join app.role r on r.id = i.role_id
+          where i.business_id = $1 and i.accepted_at is null and i.rejected_at is null and i.revoked_at is null and i.expires_at > now()
+          order by i.created_at desc
+          limit 100`,
+        [businessId],
+      );
+      return { body: { invitations } };
+    },
+  },
+
+  {
     method: 'POST',
     path: '/api/v1/businesses/:businessId/invitations',
     name: 'business.invite',
@@ -264,6 +289,12 @@ export const businessRoutes: RouteDefinition[] = [
   },
 
   {
+    method: 'GET', path: '/api/v1/businesses/:businessId/profile/edit', name: 'business.editProfile',
+    summary: 'پروفایل داخلی کسب‌وکار برای عضو مجاز', tags: ['businesses'], auth: 'session', role: 'pv_app', permission: 'profile.view',
+    handler: async (request, scope) => { const id = requireBusinessParam(request, scope); const profile = await scope.repos.business.profile(id); return { body: { profile } }; },
+  },
+
+  {
     method: 'PUT',
     path: '/api/v1/businesses/:businessId/profile',
     name: 'business.upsertProfile',
@@ -275,6 +306,7 @@ export const businessRoutes: RouteDefinition[] = [
     handler: async (request, scope) => {
       const businessId = requireBusinessParam(request, scope);
       const body = validator(request.body);
+      const expectedVersion = body.integer('expected_version', { min: 0 });
       const values: Record<string, unknown> = {};
       for (const field of ['tagline', 'summary', 'description'] as const) {
         const value = body.optionalString(field, { max: 4000 });
@@ -284,15 +316,17 @@ export const businessRoutes: RouteDefinition[] = [
       if (foundedYear !== null) values.founded_year = foundedYear;
       const employeeRange = body.optionalString('employee_range', { max: 40 });
       if (employeeRange !== null) values.employee_range = employeeRange;
-      const links = body.optionalObject('links');
-      if (links !== null) values.links = links;
+      if (body.raw('links') !== undefined) values.links = body.array('links', { max: 20 });
       const attributes = body.optionalObject('attributes');
       if (attributes !== null) values.attributes = attributes;
-      const keywords = body.array<string>('keywords', { max: 30 });
-      if (keywords.length > 0) values.keywords = keywords;
+      if (body.raw('keywords') !== undefined) {
+        const keywords = body.array<string>('keywords', { max: 30 });
+        if (keywords.some(k => typeof k !== 'string' || k.length > 80)) throw new AppError('validation_failed');
+        values.keywords = keywords;
+      }
       body.done();
 
-      const profile = await scope.repos.business.upsertProfile(businessId, values);
+      const profile = await scope.repos.business.upsertProfile(businessId, values, expectedVersion);
       return { status: 200, body: { profile } };
     },
   },

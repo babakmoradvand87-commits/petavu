@@ -15,6 +15,7 @@ import { contentRoutes } from './content.js';
 import { designRoutes } from './design.js';
 import { healthRoutes } from './health.js';
 import { opsRoutes } from './ops.js';
+import { panelRoutes } from './panel.js';
 import { performanceRoutes } from './performance.js';
 import { seoRoutes } from './seo.js';
 
@@ -31,6 +32,7 @@ export const routes: readonly RouteDefinition[] = [
   ...performanceRoutes,
   ...catalogRoutes,
   ...opsRoutes,
+  ...panelRoutes,
 ];
 
 export {
@@ -42,6 +44,7 @@ export {
   designRoutes,
   healthRoutes,
   opsRoutes,
+  panelRoutes,
   performanceRoutes,
   seoRoutes,
 };

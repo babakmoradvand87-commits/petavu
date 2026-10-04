@@ -178,19 +178,11 @@ export function businessRepository(deps: RepoDeps) {
       );
     },
 
-    async upsertProfile(businessId: string, values: Record<string, unknown>): Promise<Row> {
+    async upsertProfile(businessId: string, values: Record<string, unknown>, expectedVersion = 0): Promise<Row> {
       await assertPermission(deps, businessId, 'business.update');
-      const allowed = ['tagline', 'summary', 'description', 'founded_year', 'employee_range', 'logo_asset_id', 'cover_asset_id', 'links', 'attributes', 'keywords'];
-      const entries = Object.entries(values).filter(([key]) => allowed.includes(key));
-      if (entries.length === 0) invalid('no_values', 'هیچ فیلد قابل‌ویرایشی فرستاده نشده');
-
-      const assignments = entries.map(([key, value]) => sql`${raw(`"${key}"`)} = ${value}`);
-      const merged = assignments.reduce((acc, assignment) => sql`${acc}, ${assignment}`);
-      return dal.one(
-        sql`insert into app.business_profile (business_id) values (${businessId})
-            on conflict (business_id) do update set ${merged}, updated_at = now()
-            returning business_id, tagline, summary, description, links, attributes, keywords, updated_at, version`,
-      );
+      return dal.one(sql`select p.business_id, p.tagline, p.summary, p.description, p.founded_year, p.employee_range,
+        p.logo_asset_id, p.cover_asset_id, p.links, p.attributes, p.keywords, p.updated_at, p.version
+        from app.save_business_profile(${businessId}, ${expectedVersion}, ${JSON.stringify(values)}::jsonb) p`);
     },
 
     /**

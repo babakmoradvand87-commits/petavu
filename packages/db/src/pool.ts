@@ -181,6 +181,8 @@ export function mapDatabaseError(error: unknown, options: { statementTimeoutMs?:
   const message = error instanceof Error ? error.message : String(error);
 
   switch (code) {
+    case 'P0409':
+      return new AppError('conflict', { details: { reason: 'version_mismatch' }, cause: error });
     case '23505':
       return new AppError('conflict', { details: { reason: 'unique_violation' }, cause: error });
     case '23503':

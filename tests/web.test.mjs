@@ -319,7 +319,8 @@ describe('هدرها و امنیت پاسخ (§64–۷۸)', () => {
     assert.equal(publicPage.status, 200);
 
     const panel = await rawRequest({ host: PANEL_HOST });
-    assert.equal(panel.status, 404, 'روی میزبان پنل، صفحهٔ عمومی وجود ندارد (۴۰۴، نه ۴۰۳)');
+    assert.equal(panel.status, 303, 'ریشهٔ پنل به ورود می‌رود؛ صفحهٔ عمومی روی پنل رندر نمی‌شود');
+    assert.equal(panel.headers.get('location'), '/login');
   });
 });
 

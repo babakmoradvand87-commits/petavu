@@ -3,9 +3,9 @@
 این پرونده **تولیدشده** است (`npm run audit:security`). منبع حقیقت، پایگاه‌داده است؛
 ویرایش دستی این پرونده بی‌اثر است و در اجرای بعدی بازنویسی می‌شود (§103).
 
-- زمان تولید (UTC): 2026-10-03 11:58
-- جدول‌های دامنه: 91 — همه با RLS فعال: بله
-- سیاست‌ها: 284
+- زمان تولید (UTC): 2026-10-04 07:31
+- جدول‌های دامنه: 94 — همه با RLS فعال: بله
+- سیاست‌ها: 294
 - مجوزها: 61 — دامنه‌ای: 41، پلتفرمی: 20
 
 ## نقش‌های کسب‌وکار
@@ -13,9 +13,9 @@
 | نقش | نام | رتبه | شمار مجوز |
 | --- | --- | --- | --- |
 | `owner` | مالک | 10 | 41 |
-| `admin` | مدیر | 20 | 32 |
+| `admin` | مدیر | 20 | 33 |
 | `editor` | ویرایشگر محتوا | 40 | 9 |
-| `marketer` | بازاریاب | 45 | 13 |
+| `marketer` | بازاریاب | 45 | 14 |
 | `member` | عضو | 60 | 6 |
 | `viewer` | ناظر | 80 | 2 |
 
@@ -35,7 +35,7 @@
 
 | مجوز | دسته | حساس | owner | admin | editor | marketer | member | viewer | superadmin | admin | moderator | support | analyst |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `automation.manage` | automation | بله | ● | — | — | — | — | — | ● | — | — | — | — |
+| `automation.manage` | automation | بله | ● | ● | — | ● | — | — | ● | — | — | — | — |
 | `business.billing.manage` | billing | بله | ● | — | — | — | — | — | ● | — | — | — | — |
 | `business.analytics.view` | business | — | ● | ● | ● | ● | ● | ● | ● | — | — | — | — |
 | `business.archive` | business | بله | ● | ● | — | — | — | — | ● | — | — | — | — |
@@ -155,6 +155,7 @@
 | `ops.idempotency_key` | روشن | 5 |
 | `ops.job` | روشن | 2 |
 | `ops.job_attempt` | روشن | 3 |
+| `ops.menu_item` | روشن | 4 |
 | `ops.migration` | روشن | 0 |
 | `ops.notification` | روشن | 5 |
 | `ops.page_budget` | روشن | 2 |
@@ -165,6 +166,7 @@
 | `ops.retention_policy` | روشن | 3 |
 | `ops.retention_run` | روشن | 3 |
 | `ops.security_event` | روشن | 2 |
+| `ops.seed` | روشن | 2 |
 | `ops.setting` | روشن | 9 |
 | `ops.vitals_rollup` | روشن | 3 |
 | `ops.vitals_sample` | روشن | 6 |
@@ -172,6 +174,7 @@
 | `ops.webhook_endpoint` | روشن | 3 |
 | `ref.business_type` | روشن | 2 |
 | `ref.category` | روشن | 6 |
+| `ref.dashboard_widget` | روشن | 4 |
 | `ref.industry` | روشن | 2 |
 | `ref.location` | روشن | 2 |
 | `seo.audit` | روشن | 2 |
@@ -370,6 +373,10 @@
 | `ops.job_attempt` | `job_attempt_reader` | SELECT | pv_reader |
 | `ops.job_attempt` | `job_attempt_staff_select` | SELECT | pv_app |
 | `ops.job_attempt` | `job_attempt_worker_all` | ALL | pv_worker |
+| `ops.menu_item` | `menu_item_delete` | DELETE | pv_app |
+| `ops.menu_item` | `menu_item_insert` | INSERT | pv_app |
+| `ops.menu_item` | `menu_item_read` | SELECT | pv_app, pv_reader, pv_worker |
+| `ops.menu_item` | `menu_item_update` | UPDATE | pv_app |
 | `ops.notification` | `notification_reader` | SELECT | pv_reader |
 | `ops.notification` | `notification_self_select` | SELECT | pv_app |
 | `ops.notification` | `notification_self_update` | UPDATE | pv_app |
@@ -395,6 +402,8 @@
 | `ops.retention_run` | `retention_run_worker_all` | ALL | pv_worker |
 | `ops.security_event` | `security_event_insert` | INSERT | pv_app, pv_public, pv_worker |
 | `ops.security_event` | `security_event_staff_all` | ALL | pv_app, pv_worker |
+| `ops.seed` | `seed_reader` | SELECT | pv_reader |
+| `ops.seed` | `seed_staff_read` | SELECT | pv_app |
 | `ops.setting` | `setting_business_delete` | DELETE | pv_app |
 | `ops.setting` | `setting_business_insert` | INSERT | pv_app |
 | `ops.setting` | `setting_business_select` | SELECT | pv_app |
@@ -428,6 +437,10 @@
 | `ref.category` | `category_select_business` | SELECT | pv_app |
 | `ref.category` | `category_write` | ALL | pv_app, pv_worker |
 | `ref.category` | `category_write_business` | ALL | pv_app |
+| `ref.dashboard_widget` | `dashboard_widget_delete` | DELETE | pv_app |
+| `ref.dashboard_widget` | `dashboard_widget_insert` | INSERT | pv_app |
+| `ref.dashboard_widget` | `dashboard_widget_read` | SELECT | pv_app, pv_reader, pv_worker |
+| `ref.dashboard_widget` | `dashboard_widget_update` | UPDATE | pv_app |
 | `ref.industry` | `industry_read` | SELECT | pv_app, pv_public, pv_reader, pv_worker |
 | `ref.industry` | `industry_write` | ALL | pv_app, pv_worker |
 | `ref.location` | `location_read` | SELECT | pv_app, pv_public, pv_reader, pv_worker |

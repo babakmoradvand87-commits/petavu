@@ -49,6 +49,10 @@ import {
   type ImagePipelineConfig,
 } from './imagepipeline.js';
 import { notModifiedHeaders, securityHeaders } from './headers.js';
+import { createApiClient } from './panel/api.js';
+import { createPanel } from './panel/core.js';
+import { MAX_FORM_BYTES } from './panel/forms.js';
+import { MEMBER_SECTIONS } from './panel/sections.js';
 import { PROXY_RULES, forwardToApi, matchProxyRule } from './proxy.js';
 import { businessPage } from './pages/business.js';
 import { businessesPage } from './pages/businesses.js';
@@ -96,6 +100,8 @@ export interface RenderRequest {
   readonly url: string;
   readonly host: string;
   readonly headers?: Record<string, string | undefined>;
+  readonly body?: string;
+  readonly ip?: string;
 }
 
 export interface RenderResult {
@@ -110,6 +116,7 @@ export interface RenderResult {
    * را خراب می‌کند. جدایی این دو مسیر، جلوی همان خرابی را می‌گیرد.
    */
   readonly bytes?: Buffer;
+  readonly cookies?: readonly string[];
 }
 
 export interface WebServer {
@@ -566,6 +573,18 @@ export function createWebServer(options: WebServerOptions): WebServer {
     const method = input.method.toUpperCase();
     const requestId = pickRequestId(input.headers?.['x-request-id']);
 
+    const site = resolveSite(config, input.host);
+    let privatePath: string | null = null;
+    try { privatePath = decodePath(new URL(input.url, 'http://placeholder').pathname); } catch { return plain(400, 'bad request', requestId); }
+    const isPanel = site && (site.kind === 'panel' || site.kind === 'admin') && privatePath !== null && !privatePath.startsWith('/api/') && !privatePath.startsWith('/assets/') && !['/healthz','/readyz'].includes(privatePath);
+    if (isPanel && ['GET','HEAD','POST'].includes(method)) {
+      if (Buffer.byteLength(input.body ?? '') > MAX_FORM_BYTES) return plain(413, 'payload too large', requestId);
+      await getCssAsset();
+      const panel = createPanel({ api: createApiClient({ origin: apiOrigin, logger }), config, assets, theme: await getTheme(), logger, sections: { panel: MEMBER_SECTIONS, admin: {} } });
+      const url = new URL(input.url, site.origin);
+      const result = await panel.handle({ surface: site.kind as 'panel' | 'admin', method: method === 'POST' ? 'POST' : 'GET', pathname: privatePath as string, search: url.searchParams, cookie: input.headers?.cookie ?? null, origin: input.headers?.origin ?? null, ip: input.ip ?? '127.0.0.1', userAgent: input.headers?.['user-agent'] ?? null, body: input.body ?? null, contentType: input.headers?.['content-type'] ?? null, requestId });
+      return { ...result, cookies: result.cookies };
+    }
     if (method !== 'GET' && method !== 'HEAD') {
       const result = plain(405, 'method not allowed', requestId);
       return { ...result, headers: { ...result.headers, allow: ALLOWED_METHODS } };
@@ -634,15 +653,29 @@ export function createWebServer(options: WebServerOptions): WebServer {
       }
     }
 
+    let formBody: string | undefined;
+    const surface = resolveSite(config, host);
+    if (method === 'POST' && surface && ['panel','admin'].includes(surface.kind)) {
+      if (Number(request.headers['content-length'] ?? 0) > MAX_FORM_BYTES) { response.writeHead(413, { 'content-type': 'text/plain', 'cache-control': 'no-store', connection: 'close' }); response.end('payload too large'); request.resume(); return; }
+      const chunks: Buffer[] = []; let size = 0;
+      for await (const chunk of request) { size += chunk.length; if (size > MAX_FORM_BYTES) { response.writeHead(413, {'cache-control': 'no-store', connection: 'close'}); response.end('payload too large'); return; } chunks.push(chunk); }
+      formBody = Buffer.concat(chunks).toString('utf8');
+    }
     const result = await render({
+      body: formBody, ip: request.socket.remoteAddress ?? '',
       method: request.method ?? 'GET',
       url: request.url ?? '/',
       host,
       headers: {
         'x-request-id': typeof request.headers['x-request-id'] === 'string' ? request.headers['x-request-id'] : undefined,
+        cookie: typeof request.headers.cookie === 'string' ? request.headers.cookie : undefined,
+        origin: typeof request.headers.origin === 'string' ? request.headers.origin : undefined,
+        'content-type': typeof request.headers['content-type'] === 'string' ? request.headers['content-type'] : undefined,
+        'user-agent': typeof request.headers['user-agent'] === 'string' ? request.headers['user-agent'] : undefined,
       },
     });
 
+    if (result.cookies?.length) response.setHeader('set-cookie', [...result.cookies]);
     const headers: Record<string, string> = { ...result.headers };
     const etag = headers.etag;
     const ifNoneMatch = request.headers['if-none-match'];
@@ -670,7 +703,7 @@ export function createWebServer(options: WebServerOptions): WebServer {
       if (compressed !== body) {
         body = compressed;
         headers['content-encoding'] = acceptEncoding.includes('br') ? 'br' : 'gzip';
-        headers.vary = 'accept-encoding';
+        headers.vary = [headers.vary, 'accept-encoding'].filter(Boolean).join(', ');
       }
     }
 

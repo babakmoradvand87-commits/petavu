@@ -790,6 +790,55 @@ th { font-weight: var(--font-weight-semibold, 600); color: var(--color-text-mute
   }
 }
 
+
+/* §26–28: پنج سطح مستقل؛ پنلْ چیدمان و توکن‌های معنایی خودش را دارد. */
+.panel-body { --panel-bg: var(--color-neutral-50, #F7F8F9); --panel-surface: var(--color-neutral-0, #FFFFFF); background: var(--panel-bg); }
+.panel-body--admin { --panel-bg: var(--color-neutral-1000, #0B0D0F); --panel-surface: var(--color-neutral-900, #14171A); --color-text: var(--color-neutral-100, #EDEFF2); --color-text-muted: var(--color-neutral-400, #9AA3AE); --color-border: var(--color-neutral-700, #343A42); --color-text-inverse: var(--color-neutral-0, #FFFFFF); }
+.panel-top { background: var(--panel-surface); border-block-end: 1px solid var(--color-border); }
+.panel-top__inner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3, 12px); padding: var(--space-4, 16px); }
+.panel-top__surface { font-size: var(--font-size-xs, 12px); color: var(--color-text-muted); }
+.panel-top__user { margin-inline-start: auto; font-size: var(--font-size-sm, 14px); }
+.panel-layout { display: grid; min-block-size: 80svh; grid-template-columns: minmax(0, 1fr); }
+.panel-nav { padding: var(--space-3, 12px); background: var(--panel-surface); border-block-end: 1px solid var(--color-border); }
+.panel-nav__toggle summary { min-block-size: 44px; display: flex; align-items: center; cursor: pointer; }
+.panel-nav__list { display: grid; gap: var(--space-1, 4px); padding: 0; list-style: none; }
+.panel-nav__link { display: flex; align-items: center; justify-content: space-between; min-block-size: 44px; padding-inline: var(--space-3, 12px); border-radius: var(--radius-sm, 4px); color: var(--color-text); text-decoration: none; }
+.panel-nav__link:hover, .panel-nav__link[aria-current="page"] { background: var(--color-brand-50, #EAF6F7); color: var(--color-brand-800, #053134); }
+.panel-nav__link--planned { color: var(--color-text-muted); }
+.panel-nav__link small { font-size: var(--font-size-xs, 12px); }
+.panel-content { padding: clamp(var(--space-4, 16px), 4vw, var(--space-10, 40px)); min-inline-size: 0; }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: var(--space-4, 16px); margin-block-end: var(--space-6, 24px); }
+.panel-head__title { font-size: clamp(var(--font-size-2xl, 24px), 4vw, var(--font-size-4xl, 36px)); line-height: var(--font-leading-heading, 1.4); }
+.panel-head__subtitle { color: var(--color-text-muted); max-inline-size: var(--font-measure-prose, 68ch); margin-block-start: var(--space-2, 8px); }
+.panel-card { background: var(--panel-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg, 12px); padding: var(--space-6, 24px); min-inline-size: 0; }
+.panel-card--quiet { border-style: dashed; }
+.panel-card__title { font-size: var(--font-size-xl, 20px); margin-block-end: var(--space-4, 16px); }
+.panel-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--space-4, 16px); }
+.panel-metric { padding: var(--space-5, 20px); border: 1px solid var(--color-border); border-radius: var(--radius-md, 8px); background: var(--panel-surface); display: grid; gap: var(--space-3, 12px); }
+.panel-metric__label, .panel-empty, .muted { color: var(--color-text-muted); }
+.panel-metric__value { font-variant-numeric: tabular-nums; font-size: var(--font-size-4xl, 36px); }
+.panel-breakdown { list-style: none; padding: 0; font-size: var(--font-size-sm, 14px); }
+.panel-breakdown li { display: flex; justify-content: space-between; gap: var(--space-3, 12px); }
+.panel-dl { display: grid; grid-template-columns: minmax(5rem, 1fr) minmax(0, 2fr); gap: var(--space-3, 12px); }
+.panel-dl dt { color: var(--color-text-muted); }
+.panel-dl dd { margin: 0; overflow-wrap: anywhere; }
+.panel-form .field { max-inline-size: none; }
+.panel-form { max-inline-size: 48rem; }
+.panel-table { inline-size: 100%; border-collapse: collapse; font-size: var(--font-size-sm, 14px); }
+.panel-table th, .panel-table td { padding: var(--space-3, 12px); border-block-end: 1px solid var(--color-border); text-align: start; vertical-align: top; overflow-wrap: anywhere; }
+.panel-table th { color: var(--color-text-muted); font-weight: var(--font-weight-semibold, 600); }
+.inline-form { display: inline-flex; align-items: center; flex-wrap: wrap; gap: var(--space-2, 8px); }
+.button--small { font-size: var(--font-size-sm, 14px); min-block-size: 44px; }
+.button--danger { background: var(--color-danger-600, #97291E); color: var(--color-neutral-0, #FFFFFF); }
+.input--compact { max-inline-size: 18rem; }
+.flash { padding: var(--space-4, 16px); border-radius: var(--radius-md, 8px); border: 1px solid var(--color-border); }
+.flash--error { border-color: var(--color-danger-500, #C0392B); }
+.flash--success { border-color: var(--color-success-500, #1F8A54); }
+.auth { max-inline-size: 32rem; margin-inline: auto; padding: clamp(var(--space-6, 24px), 6vw, var(--space-12, 48px)); margin-block: var(--space-12, 48px); background: var(--panel-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl, 16px); }
+.auth__title { font-size: var(--font-size-3xl, 30px); }
+.secret { padding: var(--space-4, 16px); border: 1px solid var(--color-border); overflow-wrap: anywhere; white-space: pre-wrap; }
+@media (min-width: 1024px) { .panel-layout { grid-template-columns: 15rem minmax(0, 1fr); } .panel-nav { border-block-end: none; border-inline-end: 1px solid var(--color-border); } .panel-nav__toggle summary { display: none; } }
+
 /* ============================================================ چاپ */
 @media print {
   .site-header, .site-footer, .skip-link { display: none; }
