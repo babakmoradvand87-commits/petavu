@@ -145,7 +145,7 @@ export async function platformContentPage(context: PageContext, slug: string, bu
     },
     fallbackTitle: `${page.title} | ${PLATFORM_NAME}`,
     fallbackDescription: description,
-    indexable: site.indexable&&JSON.stringify(page.body).length>=80,
+    indexable: site.indexable&&String(page.body_text??'').length>=80,
     og: { type: 'article' },
   });
 

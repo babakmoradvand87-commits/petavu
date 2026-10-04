@@ -75,6 +75,8 @@ export class Validator {
     return this.uuid(path);
   }
 
+  number(path:string,options:{min?:number;max?:number}={}):number{const value=this.raw(path);if(typeof value!=='number'||!Number.isFinite(value)||(options.min!==undefined&&value<options.min)||(options.max!==undefined&&value>options.max)){this.fail(path,'expected_number');return 0;}return value;}
+
   integer(path: string, options: { min?: number; max?: number; fallback?: number } = {}): number {
     const value = this.raw(path);
     const parsed = typeof value === 'number' ? value : typeof value === 'string' && value.trim() !== '' ? Number(value) : Number.NaN;

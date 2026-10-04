@@ -19,3 +19,5 @@ export * from './canonical.js';
 export * from './audit.js';
 export * from './indexing.js';
 export * from './gate.js';
+export * from './search-adapter.js';
+export * from './visibility-adapters.js';

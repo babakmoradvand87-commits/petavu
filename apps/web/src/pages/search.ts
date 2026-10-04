@@ -111,6 +111,7 @@ export async function searchPage(context: PageContext): Promise<PageResponse> {
       (await suggestions(context));
   }
 
+  if(searchable){const mixed=(await data.searchMixed(query,requestId)).filter(v=>v.entity_kind!=='business');if(mixed.length)body+='<section class="section"><h2>محتوا و صفحه‌های مرتبط</h2>'+ '<ul class="ds-list">'+mixed.map(v=>'<li><a href="'+escapeAttr(v.path)+'">'+escapeText(v.title)+'</a><p>'+escapeText(v.snippet)+'</p></li>').join('')+'</ul></section>';}
   return renderLanding({
     context,
     path: '/search',

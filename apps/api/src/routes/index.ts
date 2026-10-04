@@ -18,6 +18,7 @@ import { healthRoutes } from './health.js';
 import { opsRoutes } from './ops.js';
 import { panelRoutes } from './panel.js';
 import { performanceRoutes } from './performance.js';
+import {discoveryRoutes} from './discovery.js';
 import {nocodeRoutes} from './nocode.js';
 import { studioRoutes } from './studio.js';
 import { seoRoutes } from './seo.js';
@@ -39,6 +40,7 @@ export const routes: readonly RouteDefinition[] = [
   ...panelRoutes,
   ...studioRoutes,
   ...nocodeRoutes,
+  ...discoveryRoutes,
 ];
 
 export {

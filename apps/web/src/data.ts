@@ -269,6 +269,9 @@ export interface TaxonomyFilter {
 }
 
 export interface WebData {
+  searchMixed(query:string,requestId:string):Promise<Array<{id:string;entity_kind:string;title:string;snippet:string;path:string}>>;
+  sitemapBusinessContentCount(requestId:string):Promise<number>;
+  sitemapBusinessContent(limit:number,offset:number,requestId:string):Promise<Array<{path:string;last_modified:string}>>;
   publicForms(businessId:string|null,requestId:string):Promise<FormSchemaView[]>;
   publicRecords(definitionId:string,businessId:string|null,requestId:string):Promise<Array<{title:string;slug:string;business_slug:string|null}>>;
   /** توکن‌های سراسری پلتفرم — تنها چیزی که `pv_public` می‌بیند. */
@@ -541,6 +544,9 @@ export function createWebData(options: WebDataOptions): WebData {
   }
 
   return {
+    searchMixed(query,requestId){return degrade('search.mixed',[],()=>read(requestId,({dal})=>dal.query<{id:string;entity_kind:string;title:string;snippet:string;path:string}>(sql`select id,entity_kind,title,snippet,path from seo.search_public(${query},24,null,null)`)));},
+    sitemapBusinessContentCount(requestId){return degrade('sitemap.businessContentCount',0,()=>read(requestId,async({dal})=>{const row=await dal.maybeOne<{n:number}>(sql`select seo.sitemap_business_content_count()::int n`);return row?.n??0;}));},
+    sitemapBusinessContent(limit,offset,requestId){return degrade('sitemap.businessContent',[],()=>read(requestId,({dal})=>dal.query<{path:string;last_modified:string}>(sql`select path,last_modified from seo.sitemap_business_content(${limit},${offset})`)));},
     publicForms(businessId,requestId){return degrade('nocode.forms',[],()=>read(requestId,async({dal})=>{const row=await dal.maybeOne<{items:FormSchemaView[]}>(sql`select design.public_forms(${businessId}::uuid) items`);return row?.items??[];}));},
     publicRecords(definitionId,businessId,requestId){return degrade('nocode.records',[],()=>read(requestId,async({dal})=>{const row=await dal.maybeOne<{items:Array<{title:string;slug:string;business_slug:string|null}>}>(sql`select design.public_records(${definitionId}::uuid,${businessId}::uuid) items`);return row?.items??[];}));},
     themeTokens(requestId, businessId = null) {
@@ -1232,7 +1238,7 @@ export function createWebData(options: WebDataOptions): WebData {
       return degrade(`platform.page:${slug}`, null, () =>
         read(requestId, ({ dal }) =>
           dal.maybeOne<PlatformPageRow>(sql`
-            select c.id,c.slug, c.kind, c.title, c.subtitle, c.summary, c.body, c.updated_at, c.published_at
+            select c.id,c.slug, c.kind, c.title, c.subtitle, c.summary, c.body, c.body_text, c.updated_at, c.published_at
             from app.content c
             where c.business_id is not distinct from ${businessId}::uuid and c.slug = ${slug}
               and c.status = 'published' and c.visibility = 'public' and c.deleted_at is null
@@ -1247,7 +1253,7 @@ export function createWebData(options: WebDataOptions): WebData {
       return degrade('platform.pages', [], () =>
         read(requestId, ({ dal }) =>
           dal.query<PlatformPageRow>(sql`
-            select c.id,c.slug, c.kind, c.title, c.subtitle, c.summary, c.body, c.updated_at, c.published_at
+            select c.id,c.slug, c.kind, c.title, c.subtitle, c.summary, c.body, c.body_text, c.updated_at, c.published_at
             from app.content c
             where c.business_id is null and c.status = 'published' and c.visibility = 'public' and c.deleted_at is null
               and (c.published_at is null or c.published_at <= now())

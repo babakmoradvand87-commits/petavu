@@ -35,11 +35,11 @@ import type { SeoSettingsRow, SitemapTaxonomyFamily } from './data.js';
 import type { PageContext } from './pages/types.js';
 import { categoryUrl, industryUrl, locationUrl, typeUrl } from './taxonomy.js';
 
-export const SITEMAP_PARTS = ['pages', 'design', 'content', 'types', 'industries', 'locations', 'categories', 'businesses'] as const;
+export const SITEMAP_PARTS = ['pages', 'business_content','design', 'content', 'types', 'industries', 'locations', 'categories', 'businesses'] as const;
 export type SitemapPartName = (typeof SITEMAP_PARTS)[number];
 
 /** بخش‌هایی که به قطعه‌های شمارهٔ‌دار شکسته می‌شوند. */
-const CHUNKED: ReadonlySet<SitemapPartName> = new Set(['content', 'businesses','design']);
+const CHUNKED: ReadonlySet<SitemapPartName> = new Set(['content','business_content', 'businesses','design']);
 
 const DEFAULT_CHUNK = 45_000;
 const TAXONOMY_PARTS: ReadonlyArray<{
@@ -63,7 +63,7 @@ export interface SitemapPartRef {
 
 /** `businesses-2` → `{ name: 'businesses', page: 2 }`؛ هر چیز دیگر `null`. */
 export function parseSitemapPart(file: string): SitemapPartRef | null {
-  const match = /^(pages|design|content|types|industries|locations|categories|businesses)(?:-([1-9]\d{0,5}))?$/.exec(file);
+  const match = /^(pages|business_content|design|content|types|industries|locations|categories|businesses)(?:-([1-9]\d{0,5}))?$/.exec(file);
   if (!match) return null;
   const name = match[1] as SitemapPartName;
   const page = match[2] ? Number(match[2]) : 1;
@@ -107,9 +107,11 @@ export async function buildIndexXml(context: PageContext): Promise<string> {
     ...TAXONOMY_PARTS.map((part) => data.sitemapTaxonomy(part.family, requestId)),
   ]);
 
+  const businessContentCount=await data.sitemapBusinessContentCount(requestId);
   const designCount=await data.sitemapDesignCount(requestId);
   const files: Array<{ location: string; lastModified?: string | null }> = [{ location: sitemapPartPath('pages', 1) }];
 
+  for(let page=1;page<=Math.ceil(businessContentCount/size);page++)files.push({location:sitemapPartPath('business_content',page)});
   for(let page=1;page<=Math.ceil(designCount/size);page++)files.push({location:sitemapPartPath('design',page)});
 
   for (let page = 1; page <= Math.ceil(contentCount / size); page += 1) {
@@ -143,6 +145,7 @@ export async function buildPartEntries(context: PageContext, ref: SitemapPartRef
   switch (ref.name) {
     case 'pages':
       return pagesEntries(context);
+    case 'business_content': {const rows=await data.sitemapBusinessContent(size,(ref.page-1)*size,requestId);return rows.length?rows.map(v=>({url:origin+v.path,lastModified:v.last_modified,changeFrequency:'monthly' as const,priority:0.5})):null;}
     case 'design': {const rows=await data.sitemapDesignPages(size,(ref.page-1)*size,requestId);return rows.length?rows.map(v=>({url:origin+v.path,lastModified:v.last_modified,changeFrequency:'weekly' as const,priority:0.5})):null;}
 
     case 'businesses': {

@@ -3,9 +3,9 @@
 این پرونده **تولیدشده** است (`npm run audit:security`). منبع حقیقت، پایگاه‌داده است؛
 ویرایش دستی این پرونده بی‌اثر است و در اجرای بعدی بازنویسی می‌شود (§103).
 
-- زمان تولید (UTC): 2026-10-04 10:34
-- جدول‌های دامنه: 99 — همه با RLS فعال: بله
-- سیاست‌ها: 307
+- زمان تولید (UTC): 2026-10-04 15:20
+- جدول‌های دامنه: 102 — همه با RLS فعال: بله
+- سیاست‌ها: 317
 - مجوزها: 61 — دامنه‌ای: 41، پلتفرمی: 20
 
 ## نقش‌های کسب‌وکار
@@ -195,11 +195,14 @@
 | `seo.keyword_link` | روشن | 2 |
 | `seo.metadata` | روشن | 3 |
 | `seo.redirect` | روشن | 3 |
+| `seo.search_document` | روشن | 3 |
+| `seo.search_query` | روشن | 3 |
 | `seo.settings` | روشن | 4 |
 | `seo.sitemap` | روشن | 4 |
 | `seo.structured_data` | روشن | 2 |
 | `seo.template` | روشن | 4 |
 | `seo.topic` | روشن | 2 |
+| `seo.visibility_observation` | روشن | 4 |
 
 ## سیاست‌ها به تفکیک جدول
 
@@ -496,6 +499,12 @@
 | `seo.redirect` | `redirect_read_public` | SELECT | pv_app, pv_public, pv_worker |
 | `seo.redirect` | `redirect_read_reader` | SELECT | pv_reader |
 | `seo.redirect` | `redirect_write` | ALL | pv_app, pv_worker |
+| `seo.search_document` | `search_public` | SELECT | pv_app, pv_public |
+| `seo.search_document` | `search_reader` | SELECT | pv_reader |
+| `seo.search_document` | `search_worker` | ALL | pv_worker |
+| `seo.search_query` | `query_reader` | SELECT | pv_reader |
+| `seo.search_query` | `query_staff` | SELECT | pv_app |
+| `seo.search_query` | `query_worker` | ALL | pv_worker |
 | `seo.settings` | `seo_settings_read_app` | SELECT | pv_app, pv_worker |
 | `seo.settings` | `seo_settings_read_public` | SELECT | pv_public |
 | `seo.settings` | `seo_settings_read_reader` | SELECT | pv_reader |
@@ -512,3 +521,7 @@
 | `seo.template` | `seo_template_write` | ALL | pv_app, pv_worker |
 | `seo.topic` | `topic_read` | SELECT | pv_app, pv_reader |
 | `seo.topic` | `topic_write` | ALL | pv_app |
+| `seo.visibility_observation` | `visibility_read` | SELECT | pv_app |
+| `seo.visibility_observation` | `visibility_reader` | SELECT | pv_reader |
+| `seo.visibility_observation` | `visibility_worker` | ALL | pv_worker |
+| `seo.visibility_observation` | `visibility_write` | INSERT | pv_app |

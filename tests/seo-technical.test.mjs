@@ -62,7 +62,8 @@ before(async () => {
     await f.createBusiness({ slug: `equine-${n}`, name: `باشگاه ${n}`, ownerUserId: owner.userId, typeKey: 'equine_center' });
   }
 
-  await f.createContent({ slug: 'dog-vaccination', title: 'واکسیناسیون سگ', categoryPaths: ['health.vaccination'] });
+  const article=await f.createContent({ slug: 'dog-vaccination', title: 'واکسیناسیون سگ', categoryPaths: ['health.vaccination'] });
+  await f.sudo('update app.content set body=$1::jsonb,body_text=$2 where id=$3',[JSON.stringify({blocks:[{kind:'paragraph',text:'شرح مستند خدمات و اطلاعات عمومی '.repeat(20)}]}),'شرح مستند خدمات و اطلاعات عمومی '.repeat(20),article]);
   await f.createContent({ businessId: ids.vetKaraj, slug: 'clinic-content', title: 'محتوای کلینیک' });
 });
 
@@ -724,9 +725,9 @@ describe('خزش روی سایت واقعی و ثبت فرصت‌های سئو (
   test('صفحهٔ محتوای بی‌دسته که از صفحهٔ اصلی بیرون افتاده، یتیم است (پاورقی کافی نیست)', async () => {
     for (let index = 1; index <= 6; index += 1) {
       await f.sudo(
-        `insert into app.content (business_id, kind, slug, title, body, status, visibility, locale, published_at)
-         values (null, 'article', $1, $2, '{"blocks":[]}'::jsonb, 'published', 'public', 'fa-IR', now() - ($3 || ' days')::interval)`,
-        [`lonely-${index}`, `مقالهٔ ${index}`, String(index)],
+        `insert into app.content (business_id, kind, slug, title, body,body_text,status, visibility, locale, published_at)
+         values (null, 'article', $1, $2, $4::jsonb,$5, 'published', 'public', 'fa-IR', now() - ($3 || ' days')::interval)`,
+        [`lonely-${index}`, `مقالهٔ ${index}`, String(index),JSON.stringify({blocks:[{kind:'paragraph',text:'محتوای مستند واقعی برای آزمون یتیم بودن '.repeat(8)}]}),'محتوای مستند واقعی برای آزمون یتیم بودن '.repeat(8)],
       );
     }
     const { graph } = await crawl();
@@ -853,9 +854,9 @@ describe('ابزار خط فرمان `npm run seo:crawl`', () => {
       // ---- محتوایی که به صفحهٔ ناموجود پیوند می‌دهد: پیوند شکسته ⇒ کد خروج ۱ و ثبتِ فرصت.
       const again = await openDatabase({ dataDir: dir });
       await again.exec(
-        `insert into app.content (business_id, kind, slug, title, body, status, visibility, locale, published_at)
+        `insert into app.content (business_id, kind, slug, title, body,body_text,status, visibility, locale, published_at)
          values (null, 'page', 'bad-links', 'صفحهٔ دارای پیوند مرده',
-                 '{"blocks":[{"kind":"cta","href":"/gone-page","label":"مرده"}]}'::jsonb, 'published', 'public', 'fa-IR', now())`,
+                 '{"blocks":[{"kind":"paragraph","text":"این صفحه محتوای کافی و معنادار برای خزش آزمایشی دارد؛ لینک داده‌ای آن عمداً خراب است تا خروجی و ثبت واقعی فرصت سنجیده شود."},{"kind":"cta","href":"/gone-page","label":"مرده"}]}'::jsonb,repeat('محتوای معنادار برای آزمایش خزش ',8),'published', 'public', 'fa-IR', now())`,
       );
       await again.close();
 
