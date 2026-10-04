@@ -56,7 +56,7 @@ export interface ActionRedirect {
  * (الگوی PRG) نمی‌گذاریم؛ صفحه مستقیم ساخته می‌شود و هیچ‌جا نمی‌ماند.
  */
 export interface ActionPage {
-  readonly page: { readonly title: string; readonly html: string; readonly status?: number };
+  readonly page: { readonly title: string; readonly html: string; readonly themeCss?: string; readonly previewDoc?: string; readonly status?: number };
 }
 
 export type ActionOutcome = ActionRedirect | ActionPage;

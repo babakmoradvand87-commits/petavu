@@ -185,7 +185,7 @@ describe('تطبیق قطعه‌به‌قطعهٔ مسیر (مهاجرت ۰۰۲�
   });
 
   test('مسیر ناموجود هنوز «بی‌بودجه» است: نگهبان گام ۱۴ سالم مانده', async () => {
-    for (const path of ['/zzz/unknown/route', '/panel/anything/deep', '/b/x/y', '/api/v1/x']) {
+    for (const path of ['/zzz/unknown/route', '/panel/anything/deep', '/b/x/y/z', '/api/v1/x']) {
       const [{ v }] = await f.sudo(`select ops.check_budget($1, '{}'::jsonb) as v`, [path]);
       assert.equal(v.verdict, 'unbudgeted', path);
       assert.equal(v.matched, false);

@@ -60,6 +60,7 @@ import { businessesPage } from './pages/businesses.js';
 import { llmsPage, robotsPage, sitemapPage, sitemapPartPage } from './pages/feeds.js';
 import { homePage } from './pages/home.js';
 import { indexNowStatus } from './indexnow.js';
+import { publicDesignPage } from './pages/design.js';
 import { platformContentPage } from './pages/content.js';
 import { textPageResponse } from './chrome.js';
 import { searchPage } from './pages/search.js';
@@ -201,21 +202,18 @@ export function createWebServer(options: WebServerOptions): WebServer {
   let themePromise: Promise<ThemeBundle> | null = null;
   let cssPromise: Promise<AssetEntry> | null = null;
 
-  const getTheme = (): Promise<ThemeBundle> => (themePromise ??= loadTheme());
+  let themeKey = '';
+  const getTheme = async (): Promise<ThemeBundle> => { const key = await data.themeFingerprint('theme-fingerprint'); if (key !== themeKey) { themeKey=key; themePromise=null; cssPromise=null; } return themePromise ??= loadTheme(); };
 
   async function loadTheme(): Promise<ThemeBundle> {
-    return buildTheme(await awaitTokens());
+    return buildTheme(await awaitTokens(),await data.themeSettings('bootstrap'));
   }
 
   async function awaitTokens(): Promise<Parameters<typeof buildTheme>[0]> {
     return data.themeTokens('bootstrap');
   }
 
-  const getCssAsset = (): Promise<AssetEntry> =>
-    (cssPromise ??= (async () => {
-      const theme = await getTheme();
-      return assets.registerGenerated(CSS_ASSET, cssFor(theme), 'text/css; charset=utf-8');
-    })());
+  const getCssAsset = async (): Promise<AssetEntry> => { const theme = await getTheme(); return cssPromise ??= Promise.resolve(assets.registerGenerated(CSS_ASSET, cssFor(theme), 'text/css; charset=utf-8')); };
 
   /** راه‌اندازی گرم: تم، CSS و Registry — پیش از شنیدن روی پورت. */
   async function warmup(): Promise<void> {
@@ -370,8 +368,13 @@ export function createWebServer(options: WebServerOptions): WebServer {
         return finalize(await homePage(context), input.requestId);
       case 'businesses':
         return finalize(await businessesPage(context), input.requestId);
-      case 'business':
-        return finalize(await businessPage(context, target.slug), input.requestId);
+      case 'business': {
+        const found=await data.businessBySlug(target.slug,input.requestId);
+        const businessTheme=found?buildTheme(await data.themeTokens(input.requestId,found.business.id),await data.themeSettings(input.requestId,found.business.id)):context.theme;
+        const stylesheet=assets.registerGenerated(`business-${found?.business.id??'not-found'}.css`,cssFor(businessTheme),'text/css; charset=utf-8');
+        return finalize(await businessPage({...context,theme:businessTheme,stylesheetUrl:stylesheet.url}, target.slug), input.requestId);
+      }
+      case 'design_page': return finalize(await publicDesignPage(context,target.key,target.businessSlug??null),input.requestId);
       case 'search':
         return finalize(await searchPage(context), input.requestId);
       case 'taxonomy_index':
@@ -385,6 +388,7 @@ export function createWebServer(options: WebServerOptions): WebServer {
       case 'category':
         return finalize(await categoryPage(context, target.path), input.requestId);
       case 'content':
+        if (await data.designPage({businessId:null,key:target.slug},input.requestId)) return finalize(await publicDesignPage(context,target.slug,null),input.requestId);
         return finalize(await platformContentPage(context, target.slug), input.requestId);
       case 'forbidden':
       case 'method_not_allowed':
@@ -577,7 +581,7 @@ export function createWebServer(options: WebServerOptions): WebServer {
     const site = resolveSite(config, input.host);
     let privatePath: string | null = null;
     try { privatePath = decodePath(new URL(input.url, 'http://placeholder').pathname); } catch { return plain(400, 'bad request', requestId); }
-    const isPanel = site && (site.kind === 'panel' || site.kind === 'admin') && privatePath !== null && !privatePath.startsWith('/api/') && !privatePath.startsWith('/assets/') && !['/healthz','/readyz'].includes(privatePath);
+    const isPanel = site && (site.kind === 'panel' || site.kind === 'admin') && privatePath !== null && !privatePath.startsWith('/api/') && !privatePath.startsWith('/assets/') && !privatePath.startsWith('/media/') && !['/healthz','/readyz'].includes(privatePath);
     if (isPanel && ['GET','HEAD','POST'].includes(method)) {
       if (Buffer.byteLength(input.body ?? '') > MAX_FORM_BYTES) return plain(413, 'payload too large', requestId);
       await getCssAsset();
@@ -753,9 +757,10 @@ export function createWebServer(options: WebServerOptions): WebServer {
       });
 
       // سقف زمان: اتصال کند نباید ظرفیت سرور را ببلعد.
-      server.headersTimeout = 10_000;
+      server.headersTimeout = 15_000;
       server.requestTimeout = 15_000;
-      server.keepAliveTimeout = 5_000;
+      // بیش از idle timeout پنج‌ثانیه‌ای Agent کلاینت: بستن هم‌زمان، نخستین POST را reset نمی‌کند.
+      server.keepAliveTimeout = 10_000;
 
       const address = server.address();
       return { port: typeof address === 'object' && address !== null ? address.port : port };

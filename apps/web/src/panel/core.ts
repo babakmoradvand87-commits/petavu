@@ -21,7 +21,7 @@ import type { Logger } from '@petavu/shared';
 import type { AssetRegistry } from '../assets.js';
 import type { WebConfig } from '../config.js';
 import { securityHeaders } from '../headers.js';
-import { escapeText, tag, voidTag } from '../html.js';
+import { escapeText, escapeAttr, tag, voidTag } from '../html.js';
 import { renderDocument } from '../render.js';
 import type { ThemeBundle } from '../theme.js';
 import { ApiUnavailableError, type ApiClient, type ApiResponse } from './api.js';
@@ -139,7 +139,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
     return { status: 303, headers: { ...baseHeaders(requestId), location: safe, 'content-type': 'text/plain; charset=utf-8' }, cookies, body: '' };
   }
 
-  function document(request: PanelRequest, input: { title: string; main: string; header?: string; status?: number; cookies?: readonly string[] }): PanelResponse {
+  function document(request: PanelRequest, input: { title: string; main: string; themeCss?: string; previewDoc?:string; header?: string; status?: number; cookies?: readonly string[] }): PanelResponse {
     const origin = siteOrigin(request.surface);
     const headTags = buildHead({
       url: `${origin}${request.pathname}`,
@@ -149,6 +149,8 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
       nonIndexableReason: 'private_area',
       environment: config.environment,
     });
+    let main=input.main;
+    if(input.previewDoc&&input.themeCss){const stylesheet=assets.registerGenerated('studio-preview.css',input.themeCss,'text/css; charset=utf-8');const doc=input.previewDoc.replace(/\/assets\/preview\.[0-9a-f]+\.css/g,stylesheet.url).split(config.env.origins.public+'/assets/').join('/assets/');main+=`<iframe class="studio-preview__frame" title="پیش‌نمایش خصوصی و ایزولهٔ بسته" sandbox="allow-same-origin" srcdoc="${escapeAttr(doc)}"></iframe>`;}
     const html = renderDocument({
       lang: 'fa-IR',
       dir: 'rtl',
@@ -160,11 +162,12 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
       siteName: BRAND,
       bodyClass: `panel-body panel-body--${request.surface}`,
       header: input.header ?? '',
-      main: input.main,
+      main,
       footer: '',
       skip: '<a class="skip-link" href="#main">پرش به محتوای اصلی</a>',
     });
-    return { status: input.status ?? 200, headers: baseHeaders(request.requestId), cookies: input.cookies ?? [], body: html };
+    const headers=baseHeaders(request.requestId);if(input.previewDoc)headers['content-security-policy']=(headers['content-security-policy']??'').replace("frame-src 'none'","frame-src 'self'");
+    return { status: input.status ?? 200, headers, cookies: input.cookies ?? [], body: html };
   }
 
   /* ------------------------------------------------------------------ صفحه‌های بی‌نشست */
@@ -200,7 +203,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
 
   /* ------------------------------------------------------------------ چیدمان با نشست */
 
-  function shell(request: PanelRequest, session: PanelSession, menu: readonly MenuItem[], input: { title: string; main: string; flash?: Flash | null; status?: number; cookies?: readonly string[] }): PanelResponse {
+  function shell(request: PanelRequest, session: PanelSession, menu: readonly MenuItem[], input: { title: string; main: string; themeCss?: string; previewDoc?:string; flash?: Flash | null; status?: number; cookies?: readonly string[] }): PanelResponse {
     const current = request.pathname;
     const navItems = menu.map((item) => {
       if (item.availability === 'planned') {
@@ -234,7 +237,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
       tag('div', { class: 'panel-content stack' }, [flashBlock(input.flash ?? null), input.main].join('')),
     ].join(''));
 
-    return document(request, { title: input.title, main, header, status: input.status, cookies: input.cookies });
+    return document(request, { title: input.title, main, header, themeCss:input.themeCss,previewDoc:input.previewDoc,status: input.status, cookies: input.cookies });
   }
 
   /* ------------------------------------------------------------------ نشست */
@@ -426,7 +429,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
       const handler = action ? section.actions?.[action] : undefined;
       if (!handler || segments.length !== 3) return notFoundPage(request, session, menu);
       const outcome = await handler(ctx);
-      if ('page' in outcome) return shell(request, session, menu, { title: outcome.page.title, main: outcome.page.html, status: outcome.page.status, cookies });
+      if ('page' in outcome) return shell(request, session, menu, { title: outcome.page.title, main: outcome.page.html, themeCss:outcome.page.themeCss,previewDoc:outcome.page.previewDoc,status: outcome.page.status, cookies });
       return redirect(outcome.redirect, request.requestId, [...cookies, flashCookie(outcome.flash ?? null)]);
     }
 

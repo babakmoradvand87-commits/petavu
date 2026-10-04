@@ -18,6 +18,7 @@ import { healthRoutes } from './health.js';
 import { opsRoutes } from './ops.js';
 import { panelRoutes } from './panel.js';
 import { performanceRoutes } from './performance.js';
+import { studioRoutes } from './studio.js';
 import { seoRoutes } from './seo.js';
 
 export const API_PREFIX = '/api/v1';
@@ -35,6 +36,7 @@ export const routes: readonly RouteDefinition[] = [
   ...catalogRoutes,
   ...opsRoutes,
   ...panelRoutes,
+  ...studioRoutes,
 ];
 
 export {

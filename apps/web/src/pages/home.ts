@@ -317,6 +317,7 @@ export async function homePage(context: PageContext): Promise<PageResponse> {
     siteName: PLATFORM_NAME,
     headTags: head.tags,
     theme: context.theme,
+    stylesheetUrl: context.stylesheetUrl,
     fonts: context.fonts,
     assets: context.assets,
     chrome,

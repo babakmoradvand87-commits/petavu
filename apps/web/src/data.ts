@@ -269,7 +269,13 @@ export interface TaxonomyFilter {
 
 export interface WebData {
   /** توکن‌های سراسری پلتفرم — تنها چیزی که `pv_public` می‌بیند. */
-  themeTokens(requestId: string): Promise<TokenQueryRow[]>;
+  themeTokens(requestId: string, businessId?: string | null): Promise<TokenQueryRow[]>;
+  themeSettings(requestId:string,businessId?:string|null):Promise<Record<string,unknown>>;
+  themeFingerprint(requestId: string, businessId?: string | null): Promise<string>;
+  pageRegistry(request:{businessId:string|null;key:string},requestId:string):Promise<RegistryRow[]|null>;
+  sitemapDesignCount(requestId:string):Promise<number>;
+  sitemapDesignPages(limit:number,offset:number,requestId:string):Promise<Array<{path:string;last_modified:string|null}>>;
+  designPage(request: {businessId: string|null;key:string},requestId:string): Promise<{id:string;key:string;title:string;description:string|null;published_tree:unknown}|null>;
   seoSettings(requestId: string): Promise<SeoSettingsRow | null>;
   indexingEnabled(requestId: string): Promise<boolean>;
   businessBySlug(slug: string, requestId: string): Promise<{ business: PublicBusinessRow; metadata: SeoMetadataRow | null } | null>;
@@ -531,17 +537,18 @@ export function createWebData(options: WebDataOptions): WebData {
   }
 
   return {
-    themeTokens(requestId) {
-      return degrade('theme.tokens', [], () =>
-        read(requestId, ({ dal }) =>
-          dal.query<TokenQueryRow>(sql`
-            select t.key, t.group_key, t.value, t.value_type, t.alias_of, t.theme_mode, t.description
-            from design.token t
-            where t.business_id is null
-            order by t.key asc, t.theme_mode asc
-          `),
-        ),
-      );
+    themeTokens(requestId, businessId = null) {
+      return degrade('theme.tokens', [], () => read(requestId, ({dal}) => dal.query<TokenQueryRow>(sql`select key,group_key,value,value_type,alias_of,theme_mode,description from design.public_tokens(${businessId}::uuid)`)));
+    },
+    themeSettings(requestId,businessId=null){return degrade('theme.settings',{},()=>read(requestId,async({dal})=>{const row=await dal.maybeOne<{settings:Record<string,unknown>}>(sql`select design.public_theme_settings(${businessId}::uuid) as settings`);return row?.settings??{};}));},
+    themeFingerprint(requestId, businessId = null) {
+      return degrade('theme.fingerprint','bootstrap',()=>read(requestId,async({dal})=>{const row=await dal.maybeOne<{value:string}>(sql`select design.public_fingerprint(${businessId}::uuid) as value`);return row?.value??'bootstrap';}));
+    },
+    pageRegistry(request,requestId){return degrade('design.pageRegistry',null,()=>read(requestId,async({dal})=>{const row=await dal.maybeOne<{rows:RegistryRow[]|null}>(sql`select design.public_registry(${request.businessId}::uuid,${request.key}) as rows`);return row?.rows??null;}));},
+    sitemapDesignCount(requestId){return degrade('design.sitemapCount',0,()=>read(requestId,async({dal})=>{const row=await dal.maybeOne<{n:number}>(sql`select design.sitemap_count()::int as n`);return row?.n??0;}));},
+    sitemapDesignPages(limit,offset,requestId){return degrade('design.sitemapPages',[],()=>read(requestId,({dal})=>dal.query<{path:string;last_modified:string|null}>(sql`select path,last_modified from design.sitemap_pages(${limit},${offset})`)));},
+    designPage(request,requestId) {
+      return degrade('design.metadata',null,()=>read(requestId,({dal})=>dal.maybeOne<{id:string;key:string;title:string;description:string|null;published_tree:unknown}>(sql`select id,key,title,description,published_tree from design.page where business_id is not distinct from ${request.businessId}::uuid and key=${request.key} and status='published'`)));
     },
 
     seoSettings(requestId) {

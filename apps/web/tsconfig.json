@@ -23,6 +23,9 @@
     },
     {
       "path": "../../packages/security"
+    },
+    {
+      "path": "../../packages/design"
     }
   ]
 }

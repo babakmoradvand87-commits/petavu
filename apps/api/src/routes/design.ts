@@ -66,6 +66,7 @@ export const designRoutes: RouteDefinition[] = [
       if (!page) throw new AppError('not_found', { details: { reason: 'page_not_found' } });
 
       const body = validator(request.body);
+      const expectedVersion = body.integer('expected_version', { min: 1 });
       const tree = body.raw('tree');
       const changeSummary = body.optionalString('change_summary', { max: 300 });
       body.done();
@@ -83,7 +84,7 @@ export const designRoutes: RouteDefinition[] = [
         throw new AppError('validation_failed', { details: { issues: [{ path: 'tree', code: 'expected_object' }] } });
       }
 
-      const draft = await scope.repos.design.saveDraft(String((page as { id: string }).id), tree, changeSummary);
+      const draft = await scope.repos.design.saveDraft(String((page as { id: string }).id), tree, changeSummary, expectedVersion);
       return { status: 200, body: { draft } };
     },
   },

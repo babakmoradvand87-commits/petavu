@@ -12,6 +12,7 @@
     "@petavu/shared": "*",
     "@petavu/security": "*",
     "@petavu/db": "*",
-    "@petavu/seo": "*"
+    "@petavu/seo": "*",
+    "@petavu/design": "*"
   }
 }

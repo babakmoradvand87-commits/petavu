@@ -790,7 +790,7 @@ describe('طراحی (§32–44، §161–169)', () => {
 
   test('درخت بدون ریشه، رد می‌شود', async () => {
     const findings = await engine.query(`select design.validate_tree('{"version":1}'::jsonb) as f`);
-    assert.equal(findings[0].f[0].rule, 'structure.root_missing');
+    assert.equal(findings[0].f[0].rule, 'structure.tree_invalid');
   });
 
   test('اثر انگشت درخت، پایدار است', async () => {

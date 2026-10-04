@@ -29,6 +29,7 @@ export const PLATFORM_NAME_LATIN = 'PETAVU';
 export const PLATFORM_TAGLINE = 'شبکهٔ کسب‌وکارهای صنعت حیوانات خانگی و اسب';
 
 export interface DocumentShellInput {
+  readonly stylesheetUrl?: string;
   readonly config: WebConfig;
   readonly site: SitePolicy;
   readonly url: URL;
@@ -59,7 +60,7 @@ export function renderShell(input: DocumentShellInput): string {
     lang: 'fa-IR',
     dir: 'rtl',
     headTags: input.headTags,
-    stylesheets: [input.assets.url('app.css')],
+    stylesheets: [input.stylesheetUrl ?? input.assets.url('app.css')],
     preloadUrls: input.preloadFont === false ? [] : input.fonts.preloadUrls,
     theme: input.theme,
     faviconUrl: input.assets.find('favicon.svg')?.url ?? null,

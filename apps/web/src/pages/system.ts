@@ -104,6 +104,7 @@ function errorDocument(context: PageContext, status: number, options: ErrorDocum
     siteName: PLATFORM_NAME,
     headTags,
     theme: context.theme,
+    stylesheetUrl: context.stylesheetUrl,
     fonts: context.fonts,
     assets: context.assets,
     chrome: context.chrome,

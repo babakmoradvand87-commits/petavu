@@ -1,0 +1,19 @@
+{
+  "name": "@petavu/design",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js"
+  },
+  "dependencies": {
+    "@petavu/shared": "*",
+    "@petavu/db": "*",
+    "@petavu/seo": "*"
+  },
+  "optionalDependencies": {
+    "sharp": "0.34.5"
+  }
+}

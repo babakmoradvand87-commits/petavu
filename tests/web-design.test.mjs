@@ -682,25 +682,11 @@ const ADMIN_CONTEXT = () => ({
   'app.request_id': uuidv7(),
 });
 
+// Legacy/corrupt DB fixture: owner-only setup tests the renderer's defence in depth.
+// Production pv_app is explicitly forbidden to insert/delete/modify live pages (studio.test).
 async function publishPage({ key, businessId = null, scope = 'platform', tree, isSystem = true }) {
-  const context = ADMIN_CONTEXT();
-  await asRole(
-    'pv_app',
-    `delete from design.page p
-      where p.key = $1 and coalesce(p.business_id, '00000000-0000-0000-0000-000000000000'::uuid)
-        = coalesce($2::uuid, '00000000-0000-0000-0000-000000000000'::uuid)`,
-    [key, businessId],
-    context,
-  );
-
-  const rows = await asRole(
-    'pv_app',
-    `insert into design.page (key, title, scope, is_system, business_id, status, draft_tree, published_tree, published_at, published_by)
-     values ($1, $2, $3, $4, $5, 'published', $6::jsonb, $6::jsonb, now(), $7)
-     returning id`,
-    [key, `صفحهٔ ${key}`, scope, isSystem, businessId, JSON.stringify(tree), ownerUserId],
-    context,
-  );
+  await engine.query(`delete from design.page where key=$1 and business_id is not distinct from $2::uuid`,[key,businessId]);
+  const rows=await engine.query(`insert into design.page(key,title,scope,is_system,business_id,status,draft_tree,published_tree,published_at,published_by) values($1,$2,$3,$4,$5,'published',$6::jsonb,$6::jsonb,now(),$7) returning id`,[key,`صفحهٔ ${key}`,scope,isSystem,businessId,JSON.stringify(tree),ownerUserId]);
   return rows[0].id;
 }
 
@@ -829,7 +815,7 @@ describe('رندر درخت منتشرشده روی صفحهٔ واقعی', () =
     // چیدمان پایه جای خود را داده است.
     assert.ok(!response.body.includes('hero__eyebrow'));
 
-    await asRole('pv_app', `delete from design.page p where p.key = 'home' and p.business_id is null`, [], ADMIN_CONTEXT());
+    await engine.query(`delete from design.page p where p.key = 'home' and p.business_id is null`, []);
   });
 
   test('پیش‌نویس منتشرنشده رندر نمی‌شود', async () => {
@@ -851,7 +837,7 @@ describe('رندر درخت منتشرشده روی صفحهٔ واقعی', () =
     assert.ok(!response.body.includes('پیش‌نویس محرمانه'));
     assert.match(response.body, /hero__eyebrow/);
 
-    await asRole('pv_app', `delete from design.page p where p.key = 'home' and p.business_id is null`, [], ADMIN_CONTEXT());
+    await engine.query(`delete from design.page p where p.key = 'home' and p.business_id is null`, []);
   });
 
   test('درخت کسب‌وکار با نگه‌دارنده‌های واقعی رندر می‌شود', async () => {
@@ -884,7 +870,7 @@ describe('رندر درخت منتشرشده روی صفحهٔ واقعی', () =
     assert.ok(!response.body.includes('<iframe'));
     assert.match(response.body, /openstreetmap\.org/);
 
-    await asRole('pv_app', `delete from design.page p where p.key = 'home' and p.business_id = $1`, [businessId], ADMIN_CONTEXT());
+    await engine.query(`delete from design.page p where p.key = 'home' and p.business_id = $1`, [businessId]);
   });
 
   test('درخت کسب‌وکار روی پروفایل کسب‌وکار دیگر اثر نمی‌گذارد', async () => {
@@ -912,7 +898,7 @@ describe('رندر درخت منتشرشده روی صفحهٔ واقعی', () =
     assert.equal(response.status, 200);
     assert.ok(!response.body.includes('فقط برای این کسب‌وکار'));
 
-    await asRole('pv_app', `delete from design.page p where p.key = 'home' and p.business_id = $1`, [businessId], ADMIN_CONTEXT());
+    await engine.query(`delete from design.page p where p.key = 'home' and p.business_id = $1`, [businessId]);
     await asRole('pv_app', `delete from app.business b where b.slug = 'design-other'`, [], ADMIN_CONTEXT());
     assert.ok(other.length === 1);
   });
@@ -937,7 +923,7 @@ describe('رندر درخت منتشرشده روی صفحهٔ واقعی', () =
     assert.match(response.body, /&lt;script&gt;/);
     assert.match(response.body, /&lt;img src=x onerror=alert\(1\)&gt;/);
 
-    await asRole('pv_app', `delete from design.page p where p.key = 'home' and p.business_id is null`, [], ADMIN_CONTEXT());
+    await engine.query(`delete from design.page p where p.key = 'home' and p.business_id is null`, []);
   });
 
   test('درخت با کامپوننت رندرنشدنی، صفحه را نمی‌شکند', async () => {
@@ -958,7 +944,7 @@ describe('رندر درخت منتشرشده روی صفحهٔ واقعی', () =
     assert.match(response.body, /صفحهٔ نیمه‌کاره/);
     assert.ok(!response.body.includes('form'));
 
-    await asRole('pv_app', `delete from design.page p where p.key = 'home' and p.business_id is null`, [], ADMIN_CONTEXT());
+    await engine.query(`delete from design.page p where p.key = 'home' and p.business_id is null`, []);
   });
 });
 

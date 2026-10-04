@@ -16,7 +16,8 @@
     "@petavu/shared": "*",
     "@petavu/db": "*",
     "@petavu/seo": "*",
-    "@petavu/security": "*"
+    "@petavu/security": "*",
+    "@petavu/design": "*"
   },
   "optionalDependencies": {
     "sharp": "0.34.5"

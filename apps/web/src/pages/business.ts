@@ -193,6 +193,7 @@ export async function businessPage(context: PageContext, slug: string): Promise<
     siteName: PLATFORM_NAME,
     headTags: head.tags,
     theme: context.theme,
+    stylesheetUrl: context.stylesheetUrl,
     fonts: context.fonts,
     assets: context.assets,
     chrome: context.chrome,

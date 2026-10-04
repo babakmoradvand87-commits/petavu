@@ -53,6 +53,7 @@ export const RESERVED_SLUGS = new Set([
 export type RouteTarget =
   | { readonly type: 'home' }
   | { readonly type: 'businesses' }
+  | {readonly type:'design_page';readonly key:string;readonly businessSlug?:string}
   | { readonly type: 'business'; readonly slug: string }
   | { readonly type: 'search' }
   /** مرکز یک خانوادهٔ تاکسونومی: `/t`، `/i`، `/l`، `/k`. */
@@ -165,6 +166,9 @@ export function resolveTarget(pathname: string, siteKind: SiteKind): RouteTarget
       return path ? { type: 'category', path } : { type: 'not_found' };
     }
   }
+
+  if(segments.length===2&&segments[0]==='p'&&/^[a-z][a-z0-9_-]{1,59}$/.test(segments[1]??'')) return {type:'design_page',key:segments[1]!};
+  if(segments.length===3&&segments[0]==='b'&&SLUG_PATTERN.test(segments[1]??'')&&/^[a-z][a-z0-9_-]{1,59}$/.test(segments[2]??'')) return {type:'design_page',businessSlug:segments[1]!,key:segments[2]!};
 
   if (segments.length === 2) {
     const [prefix, slug] = segments as [string, string];

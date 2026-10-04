@@ -182,6 +182,7 @@ export async function platformContentPage(context: PageContext, slug: string): P
     siteName: PLATFORM_NAME,
     headTags: head.tags,
     theme: context.theme,
+    stylesheetUrl: context.stylesheetUrl,
     fonts: context.fonts,
     assets: context.assets,
     chrome: context.chrome,

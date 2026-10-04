@@ -28,9 +28,9 @@ export interface DesignFinding {
 export function designRepository(deps: RepoDeps) {
   const { dal, context } = deps;
 
-  async function requirePage(pageId: string): Promise<{ business_id: string | null; draft_tree: unknown }> {
-    const page = await dal.maybeOne<{ business_id: string | null; draft_tree: unknown }>(
-      sql`select p.business_id, p.draft_tree from design.page p where p.id = ${pageId}`,
+  async function requirePage(pageId: string): Promise<{ business_id: string | null; draft_tree: unknown; version: number }> {
+    const page = await dal.maybeOne<{ business_id: string | null; draft_tree: unknown; version: number }>(
+      sql`select p.business_id, p.draft_tree, p.version from design.page p where p.id = ${pageId}`,
     );
     if (!page) notFound('design_page', { id: pageId });
     return page;
@@ -71,36 +71,11 @@ export function designRepository(deps: RepoDeps) {
      * اعتبارسنجی اجباری است: درخت نامعتبر اگر ذخیره شود، خطا در زمان رندر و
      * در برابر بازدیدکننده رخ می‌دهد؛ اینجا در برابر سازنده رخ می‌دهد.
      */
-    async saveDraft(pageId: string, tree: unknown, changeSummary?: string | null): Promise<Row> {
+    async saveDraft(pageId: string, tree: unknown, changeSummary?: string | null, expectedVersion?: number): Promise<Row> {
       const page = await requirePage(pageId);
-      if (page.business_id) await assertPermission(deps, page.business_id, 'design.manage');
-
-      const findings = await validate(tree);
-      const blockers = findings.filter((finding) => finding.severity === 'blocker');
-      if (findings.length > 0 && blockers.length > 0) {
-        invalid('invalid_tree', 'درخت صفحه معتبر نیست', { findings: blockers });
-      }
-
-      const hashRows = await dal.query<{ hash: string }>(sql`select design.tree_hash(${JSON.stringify(tree)}::jsonb) as hash`);
-      const updated = await dal.one<Row>(
-        sql`update design.page p
-            set draft_tree = ${JSON.stringify(tree)}::jsonb,
-                draft_revision = p.draft_revision + 1,
-                draft_updated_at = now(),
-                draft_updated_by = ${context.userId ?? null}
-            where p.id = ${pageId}
-            returning ${raw(PAGE_COLUMNS)}, p.draft_revision`,
-      );
-
-      await dal.execute(
-        sql`insert into design.page_revision (page_id, revision, tree, tree_hash, change_summary, created_by)
-            values (${pageId}, ${Number((updated as { draft_revision: number }).draft_revision)},
-                    ${JSON.stringify(tree)}::jsonb, ${String(hashRows[0]?.hash ?? '')},
-                    ${changeSummary ?? null}, ${context.userId ?? null})
-            returning id`,
-      );
-
-      return updated;
+      const [row] = await dal.query<{ page: Row }>(sql`select design.save_page(${pageId}, ${expectedVersion ?? page.version}, ${JSON.stringify(tree)}::jsonb, ${changeSummary ?? null}) as page`);
+      if (!row) notFound('design_page');
+      return row.page;
     },
 
     /**
@@ -188,15 +163,8 @@ export function designRepository(deps: RepoDeps) {
 
     /** توکن‌های طراحی؛ منبع رنگ/فاصله/فونت در رندر. مقدار توکن، JSON است. */
     async tokens(options: { businessId?: string | null; themeMode?: string } = {}): Promise<Row[]> {
-      const filters = [sql`t.theme_mode = ${options.themeMode ?? 'light'}`];
-      if (options.businessId) filters.push(sql`(t.business_id = ${options.businessId} or t.business_id is null)`);
-      else filters.push(sql`t.business_id is null`);
-      const where = filters.reduce((acc, filter) => sql`${acc} and ${filter}`);
-      return dal.query(
-        sql`select t.id, t.business_id, t.group_key, t.key, t.value, t.value_type, t.alias_of, t.description, t.is_system
-            from design.token t where ${where}
-            order by t.group_key asc, t.key asc`,
-      );
+      const [row]=await dal.query<{items:Row[]}>(sql`select design.public_token_records(${options.businessId??null}::uuid) as items`);
+      return (row?.items??[]).filter(item=>item['theme_mode']===(options.themeMode??'light'));
     },
 
     /** کامپوننت‌های Registry — تنها چیزهایی که در درخت صفحه مجازند. */

@@ -419,7 +419,7 @@ describe('محتوا: چرخهٔ عمر از راه تابع دامنه، نه U
 describe('طراحی: درخت، پیش‌نویس، انتشار، بازگردانی (§32–۴۴)', () => {
   test('درخت بی‌ریشه، مانع ساختاری می‌گیرد', async () => {
     const findings = await asApp(ALICE(), (repos) => repos.design.validateTree({ version: 1 }));
-    assert.ok(findings.some((finding) => finding.rule === 'structure.root_missing'));
+    assert.ok(findings.some((finding) => finding.rule === 'structure.tree_invalid' && finding.severity === 'blocker'));
   });
 
   test('کامپوننت ناشناس، مانع ثبت در Registry می‌گیرد', async () => {
@@ -438,15 +438,10 @@ describe('طراحی: درخت، پیش‌نویس، انتشار، بازگرد
     assert.match(String(revisions[0].tree_hash), /^md5:/, 'اثر انگشت محتوایی باید ثبت شود');
   });
 
-  test('انتشار، پیش‌نویس را منتشر می‌کند و رخداد می‌گذارد', async () => {
-    const published = await asApp(ALICE(), (repos) => repos.design.publish(pageA, 'انتشار آزمایشی'));
-    assert.ok(published.published_at);
-
-    const stored = await engine.query(`select published_tree, published_at from design.page where id = $1`, [pageA]);
-    assert.deepEqual(stored[0].published_tree, sampleTree, 'درخت پیش‌نویس باید به درخت منتشرشده برود');
-
-    const events = await engine.query(`select count(*)::int as n from ops.event where event_type = 'design.published'`, []);
-    assert.ok(events[0].n >= 1, 'رخداد انتشار طراحی باید ثبت شود');
+  test('انتشار مستقیم Repository بدون Preview/Approval ممنوع است', async () => {
+    await assert.rejects(() => asApp(ALICE(), (repos) => repos.design.publish(pageA, 'بدون خط لوله')), (error) => error.code === 'precondition_failed');
+    const [stored] = await engine.query('select published_tree from design.page where id=$1', [pageA]);
+    assert.equal(stored.published_tree, null);
   });
 
   test('بازگردانی، نسخهٔ پیشین را به پیش‌نویس می‌آورد و حسابرسی می‌گذارد', async () => {

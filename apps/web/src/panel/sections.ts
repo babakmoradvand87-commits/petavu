@@ -9,6 +9,7 @@
  * رجیستری مقایسه می‌کند). منو داده است؛ فهرست بخش‌ها نباید بی‌صدا از آن عقب بماند.
  */
 
+import { pagesSection } from './studio.js';
 import { escapeText, raw, tag } from '../html.js';
 import { describeProblem } from './core.js';
 import {
@@ -828,6 +829,7 @@ const settings: Section = {
 
 export const MEMBER_SECTIONS: SectionRegistry = {
   dashboard,
+  pages:pagesSection,
   profile,
   team,
   content,

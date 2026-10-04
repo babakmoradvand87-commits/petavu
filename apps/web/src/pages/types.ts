@@ -35,6 +35,7 @@ export interface PageResponse {
 }
 
 export interface PageContext {
+  readonly stylesheetUrl?: string;
   readonly config: WebConfig;
   readonly site: SitePolicy;
   readonly url: URL;
