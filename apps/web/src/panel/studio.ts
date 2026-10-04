@@ -1,4 +1,5 @@
 /* UI استودیو، فقط مشتری API؛ دادهٔ عمل/JSON می‌فرستد و هیچ دروازه‌ای را در مرورگر اجرا نمی‌کند. */
+import {memberNocode,relationshipsBuilder} from './nocode.js';
 import {tag,escapeText,raw} from '../html.js';
 import {describeProblem} from './core.js';
 import {card,emptyNote,formBlock,actionForm,pageHeader,dataTable,htmlOf,type Field} from './kit.js';
@@ -52,4 +53,5 @@ export function studioSection(key:'pages'|'design'|'tokens'):Section{
  report:async c=>{const response=await c.api('GET',base(c,'/releases/'+c.form?.['id']));if(response.status!==200)return result(path,response);const release=response.json?.['release'] as Json;return{page:{title:'گواه واقعیِ انتشار',html:htmlOf(pageHeader('گواه انتشار'),tag('p',{},escapeText(str(release['bundle_hash']))),card('Stageها و شواهد',tag('pre',{class:'studio-code',dir:'ltr'},escapeText(json(release['validation_report'])))),tag('a',{class:'button',href:path},'بازگشت'))}};},
  }};
 }
-export const pagesSection=studioSection('pages');
+const studioPages=studioSection('pages');
+export const pagesSection:Section={...studioPages,async render(c){if(c.url.searchParams.get('builder')==='nocode'){const r=await memberNocode.render(c);return {...r,html:r.html+await relationshipsBuilder(c)};}const r=await studioPages.render(c);return{...r,html:tag('a',{class:'button button--ghost',href:'/app/pages?builder=nocode'},'Field / Relationship / Form / Page-CRUD Builder')+r.html};},actions:{...studioPages.actions,...memberNocode.actions,'nc-relationship':async c=>result('/app/pages?builder=nocode',await c.api('POST','/api/v1/nocode/relationships',{definition_id:c.form?.['definition_id'],target_business_id:c.form?.['target_business_id'],note:c.form?.['note']})),'nc-relationship-state':async c=>result('/app/pages?builder=nocode',await c.api('POST','/api/v1/nocode/relationships/'+c.form?.['id']+'/state',{expected_version:Number(c.form?.['expected_version']),to:c.form?.['to']}))}};

@@ -116,12 +116,12 @@ function escapeAttribute(value: string): string {
   return safe.startsWith('http') || safe.startsWith('/') || safe.startsWith('#') ? safe : '#';
 }
 
-export async function platformContentPage(context: PageContext, slug: string): Promise<PageResponse> {
+export async function platformContentPage(context: PageContext, slug: string, businessId:string|null=null): Promise<PageResponse> {
   const { config, site, url, settings, requestId } = context;
   const origin = config.env.origins.public;
   const locale = settings?.default_locale ?? 'fa-IR';
 
-  const page = await context.data.platformPage(slug, requestId);
+  const page = await context.data.platformPage(slug, requestId,businessId);
   if (!page) return notFoundPage(context, { reason: 'content_not_found' });
 
   const description = clampDescription(page.summary ?? page.subtitle ?? `${page.title} — ${PLATFORM_NAME}`);
@@ -134,23 +134,23 @@ export async function platformContentPage(context: PageContext, slug: string): P
   const head = await buildPageHead({
     context,
     site,
-    path: `/${page.slug}`,
+    path: (businessId?url.pathname:`/${page.slug}`),
     search: url.searchParams,
     entity: {
       kind: 'content',
-      id: null,
-      routeKey: `/${page.slug}`,
+      id: page.id??null,
+      routeKey: (businessId?url.pathname:`/${page.slug}`),
       subtype: page.kind,
       values: { name: page.title, title: page.title, type: page.kind, summary: page.summary },
     },
     fallbackTitle: `${page.title} | ${PLATFORM_NAME}`,
     fallbackDescription: description,
-    indexable: site.indexable,
+    indexable: site.indexable&&JSON.stringify(page.body).length>=80,
     og: { type: 'article' },
   });
 
   const faqItems = extractFaqItems(page.body);
-  const editorialLinks = await context.data.internalLinks(`/${page.slug}`, requestId);
+  const editorialLinks = await context.data.internalLinks((businessId?url.pathname:`/${page.slug}`), requestId);
 
   const body = [
     section({ tight: true, children: container(breadcrumb([{ label: 'خانه', href: '/' }, { label: page.title }])) }),
@@ -168,7 +168,7 @@ export async function platformContentPage(context: PageContext, slug: string): P
     breadcrumbList(
       [
         { name: 'خانه', url: '/' },
-        { name: page.title, url: `/${page.slug}` },
+        { name: page.title, url: (businessId?url.pathname:`/${page.slug}`) },
       ],
       { baseUrl: origin, brandName: PLATFORM_NAME },
     ),

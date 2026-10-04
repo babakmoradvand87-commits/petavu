@@ -268,7 +268,7 @@ export function businessRepository(deps: RepoDeps) {
             join app.business other
               on other.id = case when rel.from_business_id = ${businessId} then rel.to_business_id else rel.from_business_id end
             where (rel.from_business_id = ${businessId} or rel.to_business_id = ${businessId})
-              and rel.status in ('confirmed', 'pending')
+              and rel.status in ('active', 'pending')
             order by rel.created_at desc`,
       );
     },

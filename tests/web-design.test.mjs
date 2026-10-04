@@ -399,13 +399,13 @@ describe('رندر درخت (§161–۱۶۹)', () => {
     assert.ok(unknown.findings.some((finding) => finding.rule === 'content.unknown_placeholder'));
   });
 
-  test('کامپوننت رندرنشدنی، حذف می‌شود و دلیلش ثبت می‌شود', () => {
+  test('فرم بدون schema حذف می‌شود و نبود اتصال واقعی ثبت می‌شود', () => {
     const result = render({ version: 1, root: [{ id: 'f', component: 'form.contact_form', props: { title: 'تماس' } }] });
     assert.equal(result.html, '');
-    const finding = result.findings.find((entry) => entry.rule === 'component.not_renderable');
+    const finding = result.findings.find((entry) => entry.rule === 'nocode.form_missing');
     assert.ok(finding);
-    assert.match(finding.message, /گام ۳۱/);
-    assert.equal(UNRENDERABLE['form.contact_form'] !== undefined, true);
+    assert.match(finding.message, /تعریف/);
+    assert.equal(UNRENDERABLE['form.contact_form'], undefined);
   });
 
   test('تصویر بدون بُعد یا بدون خوانندهٔ رسانه چاپ نمی‌شود', () => {
@@ -942,7 +942,8 @@ describe('رندر درخت منتشرشده روی صفحهٔ واقعی', () =
     const response = await fetchPage('/');
     assert.equal(response.status, 200);
     assert.match(response.body, /صفحهٔ نیمه‌کاره/);
-    assert.ok(!response.body.includes('form'));
+    assert.match(response.body, /name="_nonce"/);
+    assert.match(response.headers['cache-control'], /no-store/);
 
     await engine.query(`delete from design.page p where p.key = 'home' and p.business_id is null`, []);
   });

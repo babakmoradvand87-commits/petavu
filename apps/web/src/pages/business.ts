@@ -209,5 +209,5 @@ export async function businessPage(context: PageContext, slug: string): Promise<
     bodyClass: 'page-business',
   });
 
-  return { status: 200, kind: 'html', body: html };
+  return { status: 200, kind: 'html', body: html,cacheable:!design.hasForms };
 }

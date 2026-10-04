@@ -63,6 +63,7 @@ export type RouteTarget =
   /** `suffix` مسیر بی‌ریشهٔ مکان است (`alborz.karaj`)؛ ریشه از داده می‌آید. */
   | { readonly type: 'location'; readonly suffix: string }
   | { readonly type: 'category'; readonly path: string }
+  | {readonly type:'business_content';readonly businessSlug:string;readonly slug:string}
   | { readonly type: 'content'; readonly slug: string }
   | { readonly type: 'asset'; readonly path: string }
   | { readonly type: 'media'; readonly id: string }
@@ -167,6 +168,7 @@ export function resolveTarget(pathname: string, siteKind: SiteKind): RouteTarget
     }
   }
 
+  if(segments.length===4&&segments[0]==='b'&&segments[2]==='c'&&SLUG_PATTERN.test(segments[1]??'')&&SLUG_PATTERN.test(segments[3]??''))return{type:'business_content',businessSlug:segments[1]!,slug:segments[3]!};
   if(segments.length===2&&segments[0]==='p'&&/^[a-z][a-z0-9_-]{1,59}$/.test(segments[1]??'')) return {type:'design_page',key:segments[1]!};
   if(segments.length===3&&segments[0]==='b'&&SLUG_PATTERN.test(segments[1]??'')&&/^[a-z][a-z0-9_-]{1,59}$/.test(segments[2]??'')) return {type:'design_page',businessSlug:segments[1]!,key:segments[2]!};
 

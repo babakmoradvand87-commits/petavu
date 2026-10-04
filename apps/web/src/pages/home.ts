@@ -333,5 +333,5 @@ export async function homePage(context: PageContext): Promise<PageResponse> {
     bodyClass: 'page-home',
   });
 
-  return { status: 200, kind: 'html', body: html };
+  return { status: 200, kind: 'html', body: html,cacheable:!design.hasForms };
 }

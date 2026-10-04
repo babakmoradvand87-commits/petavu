@@ -17,6 +17,8 @@
  */
 
 import { escapeText, tag, voidTag } from './html.js';
+import {uuidv7} from '@petavu/shared';
+import type {FormSchemaView} from './nocode.js';
 import { formatNumber, timeTag } from './components.js';
 import type { Finding } from './registry.js';
 import { sanitizeHref } from './registry.js';
@@ -88,6 +90,8 @@ export interface ContentCardView {
 }
 
 export interface TreeData {
+  readonly forms?:ReadonlyMap<string,FormSchemaView>;
+  readonly records?:ReadonlyMap<string,readonly {title:string;url:string}[]>;
   readonly businesses: readonly BusinessCardView[];
   readonly contents: readonly ContentCardView[];
   readonly business: BusinessView | null;
@@ -133,6 +137,19 @@ export interface RenderHelpers {
 }
 
 export type ComponentRenderer = (node: TreeNode, helpers: RenderHelpers) => string;
+
+const renderSchemaForm:ComponentRenderer=(node,h)=>{
+ const purpose=node.component==='form.contact_form'?'contact':node.component==='form.lead_form'?'lead':node.component==='form.newsletter'?'newsletter':null;
+ const requested=typeof node.props['formId']==='string'?node.props['formId']:purpose;const schema=requested?h.data.forms?.get(requested):undefined;
+ if(!schema){h.report({rule:'nocode.form_missing',severity:'blocker',message:'تعریف منتشرشدنیِ فرم در این محدوده حاضر نیست.',path:node.id});return '';}
+ const body=schema.fields.map(f=>{const s=f.spec;const id=node.id+'-'+f.key;const label=tag('label',{for:id},escapeText(String(s['label_fa'])));const common={id,name:f.key,required:s['required']===true?true:null,class:'input',maxlength:Number(s['max_length']??4000)};let control='';
+ if(s['type']==='longtext')control=tag('textarea',{...common,rows:5},'');else if(s['type']==='enum')control=tag('select',common,(s['options'] as Array<{key:string;label_fa:string}>).map(o=>tag('option',{value:o.key},escapeText(o.label_fa))).join(''));else if(s['type']==='boolean')control=tag('select',common,tag('option',{value:'false'},'خیر')+tag('option',{value:'true'},'بله'));else control=voidTag('input',{...common,type:({number:'number',email:'email',date:'date',url:'url',phone:'tel'} as Record<string,string>)[String(s['type'])]??'text',...(s['type']==='number'?{step:'any',min:s['min'] as number|undefined,max:s['max'] as number|undefined}:{})});return tag('div',{class:'field'},label+control);
+ }).join('');
+ const receiver=schema.business_id??'platform';return tag('section',{class:'ds-form'},tag('h2',{},escapeText(String(node.props['title']??schema.form.spec['title_fa'])))+tag('form',{method:'post',action:`/forms/${receiver}/${schema.form.id}`,class:'stack'},[
+ voidTag('input',{type:'hidden',name:'_schema',value:schema.schema_hash}),voidTag('input',{type:'hidden',name:'_nonce',value:uuidv7()}),tag('div',{class:'visually-hidden','aria-hidden':'true'},tag('label',{for:node.id+'-website'},'این فیلد را خالی بگذارید')+voidTag('input',{id:node.id+'-website',name:'_website',type:'text',tabindex:-1,autocomplete:'off'})),body,tag('label',{class:'cluster'},voidTag('input',{type:'checkbox',name:'_consent',value:'true',required:true})+escapeText(String(node.props['consentText']??node.props['privacyNote']??'با ثبت و نگهداری این اطلاعات برای رسیدگی به درخواست موافقم.'))),tag('button',{type:'submit',class:'button button--primary'},escapeText(String(node.props['submitLabel']??schema.form.spec['submit_label']??'ثبت درخواست')))
+ ].join('')));
+};
+const renderCrudList:ComponentRenderer=(node,h)=>{const id=typeof node.props['definitionId']==='string'?node.props['definitionId']:null;const records=id?h.data.records?.get(id):null;if(!records){h.report({rule:'nocode.model_missing',severity:'blocker',message:'مدل CRUD در محدوده نیست.',path:node.id});return '';}return records.length?tag('ul',{class:'ds-list'},records.map(v=>tag('li',{},tag('a',{href:v.url},escapeText(v.title)))).join('')):tag('p',{class:'ds-text'},'هنوز مورد عمومیِ منتشرشده‌ای در این مدل وجود ندارد.');};
 
 /* ------------------------------------------------------------------ کمک‌ابزارها */
 
@@ -891,6 +908,11 @@ export const RENDERERS: Readonly<Record<string, ComponentRenderer>> = {
   'layout.section': sectionRenderer,
   'layout.grid': gridRenderer,
   'layout.columns': columnsRenderer,
+  'form.contact_form':renderSchemaForm,
+  'form.lead_form':renderSchemaForm,
+  'form.newsletter':renderSchemaForm,
+  'form.schema_form':renderSchemaForm,
+  'data.crud_list':renderCrudList,
   'content.heading': headingRenderer,
   'content.paragraph': paragraphRenderer,
   'content.hero': heroRenderer,
@@ -934,9 +956,6 @@ export const RENDERERS: Readonly<Record<string, ComponentRenderer>> = {
  * آگاهانه حذف می‌شوند و در بازرسی طراحی، یافتهٔ «رندرنشده» ثبت می‌شود.
  */
 export const UNRENDERABLE: Readonly<Record<string, string>> = {
-  'form.contact_form': 'نقطهٔ پایانیِ ارسال و ضداسپم هنوز ساخته نشده (گام ۳۱)',
-  'form.lead_form': 'ثبت سرنخ و نقطهٔ پایانی ارسال هنوز ساخته نشده (گام ۳۱)',
-  'form.newsletter': 'عضویت خبرنامه و نقطهٔ پایانی ارسال هنوز ساخته نشده (گام ۳۱)',
   'data.search_box': 'صفحهٔ جست‌وجو هنوز ساخته نشده (گام ۳۳)',
   'data.price_table': 'دادهٔ قیمت محصول نیازمند فروشگاه است (گام ۳۴)',
   'commerce.product_grid': 'فروشگاه هنوز ساخته نشده (گام ۳۴)',

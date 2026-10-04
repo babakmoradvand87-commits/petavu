@@ -1,4 +1,5 @@
 /* §35–38، Addendum §96–100: رندر، ساختار، امنیت و اندازه‌گیری Preview از همان کد سایت. */
+import {definitionFindings,type Definition} from './nocode.js';
 import { fileURLToPath } from 'node:url';
 import { buildHead } from '@petavu/seo';
 import { createAssetRegistry } from './assets.js';
@@ -16,7 +17,7 @@ import { buildTokenSet, type TokenRow } from './tokens.js';
 import { renderTree, scanTree } from './tree.js';
 
 export interface BundlePage {id:string;key:string;title:string;description:string|null;tree:unknown;version:number;revision:number}
-export interface DesignBundle { pages:BundlePage[];registry?:RegistryRow[];tokens:TokenRow[];themes:Array<{settings:Record<string,unknown>;business_id?:string|null;is_default?:boolean}>;seo:Record<string,unknown> }
+export interface DesignBundle { pages:BundlePage[];definitions?:Definition[];registry?:RegistryRow[];tokens:TokenRow[];themes:Array<{settings:Record<string,unknown>;business_id?:string|null;is_default?:boolean}>;seo:Record<string,unknown> }
 export interface PreviewPage {id:string;path:string;html:string;fragment:string;css:string;delivery:PageReport;findings:Finding[];h1Count:number;outline:readonly {level:number;text:string;id:string}[]}
 export function publicDesignPath(key:string,businessSlug:string|null=null):string {
  if(businessSlug)return `/b/${encodeURIComponent(businessSlug)}${key==='home'?'':`/${encodeURIComponent(key)}`}`;
@@ -30,7 +31,7 @@ export async function compilePreview(input:{bundle:DesignBundle;registry:Registr
  const registry=createRegistry(input.bundle.registry??input.registry), assets=createAssetRegistry({directory:input.assetsDirectory??DEFAULT_ASSETS});
  const theme=buildTheme(input.bundle.tokens.map(t=>({...t,description:t.description??null})),[...input.bundle.themes].reverse().find(t=>t.is_default)?.settings??input.bundle.themes.at(-1)?.settings??{}),fonts=createFontSetup({assets,publicOrigin:input.origin,assetsDirectory:input.assetsDirectory??DEFAULT_ASSETS});
  const css=[theme.css,fonts.faceCss,SHELL_CSS].join('\n\n');const stylesheet=assets.registerGenerated('preview.css',css,'text/css; charset=utf-8');
- const tokenFindings:Finding[]=[...theme.rejected.map(v=>({rule:'security.token',severity:'blocker' as const,message:v.reason,path:v.key})),...theme.unresolved.map(v=>({rule:'tokens.alias',severity:'blocker' as const,message:'ارجاع حل نشده',path:v}))];
+ const tokenFindings:Finding[]=[...definitionFindings(input.bundle.definitions??[]),...theme.rejected.map(v=>({rule:'security.token',severity:'blocker' as const,message:v.reason,path:v.key})),...theme.unresolved.map(v=>({rule:'tokens.alias',severity:'blocker' as const,message:'ارجاع حل نشده',path:v}))];
  for(const mode of ['light','dark','high_contrast'] as const){const built=buildTokenSet(input.bundle.tokens,mode);
  for(const [foreground,background] of [['color.text','color.bg'],['color.text','color.surface'],['color.text.muted','color.surface'],['color.link','color.bg'],['color.on.primary','color.brand.600']] as const){const fg=built.tokens.get(foreground),bg=built.tokens.get(background);if(!fg||!bg)continue;const ratio=contrastRatio(fg,bg);if(ratio===null||ratio<4.5)tokenFindings.push({rule:'a11y.contrast',severity:'blocker',message:`${mode}/${foreground}/${background}: ${ratio===null?'رنگ غیرقابل‌سنجش در موتور انتشار':ratio.toFixed(2)+' < 4.5'}`});}
  const touch=built.tokens.get('size.touch.target');if(touch&&(!/^\d+(?:\.\d+)?px$/.test(touch)||parseFloat(touch)<44))tokenFindings.push({rule:'a11y.touch',severity:'blocker',message:'هدف لمس کمتر از ۴۴ پیکسل است.'});}

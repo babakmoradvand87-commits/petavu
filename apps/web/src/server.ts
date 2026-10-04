@@ -61,6 +61,10 @@ import { llmsPage, robotsPage, sitemapPage, sitemapPartPage } from './pages/feed
 import { homePage } from './pages/home.js';
 import { indexNowStatus } from './indexnow.js';
 import { publicDesignPage } from './pages/design.js';
+import {renderShell} from './chrome.js';
+import {buildHead} from '@petavu/seo';
+import {parseForm} from './panel/forms.js';
+import {escapeText,tag} from './html.js';
 import { platformContentPage } from './pages/content.js';
 import { textPageResponse } from './chrome.js';
 import { searchPage } from './pages/search.js';
@@ -387,6 +391,7 @@ export function createWebServer(options: WebServerOptions): WebServer {
         return finalize(await locationPage(context, target.suffix), input.requestId);
       case 'category':
         return finalize(await categoryPage(context, target.path), input.requestId);
+      case 'business_content': {const b=await data.businessBySlug(target.businessSlug,input.requestId);return finalize(b?await platformContentPage(context,target.slug,b.business.id):notFoundPage(context,{reason:'content_scope'}),input.requestId);}
       case 'content':
         if (await data.designPage({businessId:null,key:target.slug},input.requestId)) return finalize(await publicDesignPage(context,target.slug,null),input.requestId);
         return finalize(await platformContentPage(context, target.slug), input.requestId);
@@ -581,6 +586,12 @@ export function createWebServer(options: WebServerOptions): WebServer {
     const site = resolveSite(config, input.host);
     let privatePath: string | null = null;
     try { privatePath = decodePath(new URL(input.url, 'http://placeholder').pathname); } catch { return plain(400, 'bad request', requestId); }
+    const formMatch=privatePath? /^\/forms\/(platform|[0-9a-f-]{36})\/([0-9a-f-]{36})$/.exec(privatePath):null;
+    if(site?.kind==='public'&&method==='POST'&&formMatch){
+      if(input.headers?.origin!==site.origin)return plain(403,'forbidden',requestId);if((input.headers?.['content-type']??'').split(';')[0]!=='application/x-www-form-urlencoded')return plain(415,'unsupported media',requestId);if(Buffer.byteLength(input.body??'')>MAX_FORM_BYTES)return plain(413,'payload too large',requestId);const form=parseForm(input.body??'');if(!form)return plain(400,'invalid form',requestId);const values:Record<string,string>=Object.create(null) as Record<string,string>;for(const[k,v]of Object.entries(form))if(!k.startsWith('_'))values[k]=v;
+      const receiver=formMatch[1],id=formMatch[2];const endpoint=receiver==='platform'?`/api/v1/public/forms/${id}/submissions`:`/api/v1/public/businesses/${receiver}/forms/${id}/submissions`;const res=await createApiClient({origin:apiOrigin,logger}).call({method:'POST',path:endpoint,cookie:null,origin:site.origin,ip:input.ip??'127.0.0.1',requestId,body:{values,consent:form['_consent']==='true',schema_hash:form['_schema'],idempotency_key:form['_nonce'],website:form['_website']??''}});
+      await getCssAsset();const context=await buildContext({url:new URL(input.url,site.origin),host:input.host,requestId,site,theme:await getTheme()});const ok=res.status===201;const content=tag('section',{class:'section'},tag('h1',{},ok?'درخواست ثبت شد':'درخواست ثبت نشد')+tag('p',{role:ok?'status':'alert'},escapeText(ok?String(res.json?.['success_message']??'درخواست شما ذخیره شد.'):'اطلاعات کامل و معتبر نیست، نسخهٔ فرم تغییر کرده یا سرویس در دسترس نیست.'))+(ok?tag('p',{},'شماره رسید: '+escapeText(String(res.json?.['id']))):'')+tag('a',{class:'button',href:'/'},'بازگشت'));return finalize({status:ok?200:res.status,kind:'html',cacheable:false,body:renderShell({config,site,url:context.url,siteName:context.siteName,headTags:buildHead({url:context.url.href,title:'ثبت درخواست',indexable:false,environment:'preview'}),theme:context.theme,fonts:context.fonts,assets,chrome:context.chrome,now:context.now,content})},requestId);
+    }
     const isPanel = site && (site.kind === 'panel' || site.kind === 'admin') && privatePath !== null && !privatePath.startsWith('/api/') && !privatePath.startsWith('/assets/') && !privatePath.startsWith('/media/') && !['/healthz','/readyz'].includes(privatePath);
     if (isPanel && ['GET','HEAD','POST'].includes(method)) {
       if (Buffer.byteLength(input.body ?? '') > MAX_FORM_BYTES) return plain(413, 'payload too large', requestId);
@@ -660,7 +671,7 @@ export function createWebServer(options: WebServerOptions): WebServer {
 
     let formBody: string | undefined;
     const surface = resolveSite(config, host);
-    if (method === 'POST' && surface && ['panel','admin'].includes(surface.kind)) {
+    if (method === 'POST' && surface && (['panel','admin'].includes(surface.kind)||(surface.kind==='public'&&/^\/forms\/(?:platform|[0-9a-f-]{36})\/[0-9a-f-]{36}$/.test(new URL(request.url??'/','http://localhost').pathname)))) {
       if (Number(request.headers['content-length'] ?? 0) > MAX_FORM_BYTES) { response.writeHead(413, { 'content-type': 'text/plain', 'cache-control': 'no-store', connection: 'close' }); response.end('payload too large'); request.resume(); return; }
       const chunks: Buffer[] = []; let size = 0;
       for await (const chunk of request) { size += chunk.length; if (size > MAX_FORM_BYTES) { response.writeHead(413, {'cache-control': 'no-store', connection: 'close'}); response.end('payload too large'); return; } chunks.push(chunk); }

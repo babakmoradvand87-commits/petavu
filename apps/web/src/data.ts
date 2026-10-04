@@ -1,3 +1,4 @@
+import type {FormSchemaView} from '@petavu/design/nocode';
 /**
  * دادهٔ صفحه‌های وب (گام ۲۲؛ §52–۵۵، §58، §181).
  *
@@ -268,6 +269,8 @@ export interface TaxonomyFilter {
 }
 
 export interface WebData {
+  publicForms(businessId:string|null,requestId:string):Promise<FormSchemaView[]>;
+  publicRecords(definitionId:string,businessId:string|null,requestId:string):Promise<Array<{title:string;slug:string;business_slug:string|null}>>;
   /** توکن‌های سراسری پلتفرم — تنها چیزی که `pv_public` می‌بیند. */
   themeTokens(requestId: string, businessId?: string | null): Promise<TokenQueryRow[]>;
   themeSettings(requestId:string,businessId?:string|null):Promise<Record<string,unknown>>;
@@ -343,7 +346,7 @@ export interface WebData {
   /** شمارنده‌های واقعی پلتفرم برای صفحهٔ اصلی — از خود جدول‌ها، نه ادعا. */
   platformStats(requestId: string): Promise<PlatformStats>;
   /** صفحهٔ محتوای سراسری پلتفرم از `app.content` (بدون کسب‌وکار). */
-  platformPage(slug: string, requestId: string): Promise<PlatformPageRow | null>;
+  platformPage(slug: string, requestId: string, businessId?:string|null): Promise<PlatformPageRow | null>;
   /** فهرست صفحه‌های منتشرشدهٔ پلتفرم — برای ناوبری و نقشهٔ سایت. */
   platformPages(requestId: string): Promise<PlatformPageRow[]>;
   /**
@@ -400,6 +403,7 @@ export interface PlatformStats extends Row {
 }
 
 export interface PlatformPageRow extends Row {
+  id?:string;
   slug: string;
   kind: string;
   title: string;
@@ -537,6 +541,8 @@ export function createWebData(options: WebDataOptions): WebData {
   }
 
   return {
+    publicForms(businessId,requestId){return degrade('nocode.forms',[],()=>read(requestId,async({dal})=>{const row=await dal.maybeOne<{items:FormSchemaView[]}>(sql`select design.public_forms(${businessId}::uuid) items`);return row?.items??[];}));},
+    publicRecords(definitionId,businessId,requestId){return degrade('nocode.records',[],()=>read(requestId,async({dal})=>{const row=await dal.maybeOne<{items:Array<{title:string;slug:string;business_slug:string|null}>}>(sql`select design.public_records(${definitionId}::uuid,${businessId}::uuid) items`);return row?.items??[];}));},
     themeTokens(requestId, businessId = null) {
       return degrade('theme.tokens', [], () => read(requestId, ({dal}) => dal.query<TokenQueryRow>(sql`select key,group_key,value,value_type,alias_of,theme_mode,description from design.public_tokens(${businessId}::uuid)`)));
     },
@@ -1222,13 +1228,13 @@ export function createWebData(options: WebDataOptions): WebData {
       );
     },
 
-    platformPage(slug, requestId) {
+    platformPage(slug, requestId, businessId=null) {
       return degrade(`platform.page:${slug}`, null, () =>
         read(requestId, ({ dal }) =>
           dal.maybeOne<PlatformPageRow>(sql`
-            select c.slug, c.kind, c.title, c.subtitle, c.summary, c.body, c.updated_at, c.published_at
+            select c.id,c.slug, c.kind, c.title, c.subtitle, c.summary, c.body, c.updated_at, c.published_at
             from app.content c
-            where c.business_id is null and c.slug = ${slug}
+            where c.business_id is not distinct from ${businessId}::uuid and c.slug = ${slug}
               and c.status = 'published' and c.visibility = 'public' and c.deleted_at is null
               and (c.published_at is null or c.published_at <= now())
             limit 1
@@ -1241,7 +1247,7 @@ export function createWebData(options: WebDataOptions): WebData {
       return degrade('platform.pages', [], () =>
         read(requestId, ({ dal }) =>
           dal.query<PlatformPageRow>(sql`
-            select c.slug, c.kind, c.title, c.subtitle, c.summary, c.body, c.updated_at, c.published_at
+            select c.id,c.slug, c.kind, c.title, c.subtitle, c.summary, c.body, c.updated_at, c.published_at
             from app.content c
             where c.business_id is null and c.status = 'published' and c.visibility = 'public' and c.deleted_at is null
               and (c.published_at is null or c.published_at <= now())

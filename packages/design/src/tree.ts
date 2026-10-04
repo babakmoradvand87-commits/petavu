@@ -26,7 +26,7 @@ export const TREE_LIMITS = {
   maxSlotItems: 60,
 } as const;
 
-export type TreeNeed = 'businesses' | 'contents' | 'business';
+export type TreeNeed = 'businesses' | 'contents' | 'business' | 'forms' | 'records';
 
 export interface TreeScan {
   readonly nodes: readonly TreeNode[];
@@ -66,6 +66,8 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 /** پیش‌نیازهای دادهٔ هر کامپوننت — همان‌جا که کامپوننت استفاده می‌شود. */
 function collectNeeds(key: string, state: ParseState): void {
+  if(key.startsWith('form.'))state.needs.add('forms');
+  if(key==='data.crud_list')state.needs.add('records');
   if (key === 'data.business_list') state.needs.add('businesses');
   if (key === 'data.content_list') state.needs.add('contents');
   if (key === 'content.contact_block' || key === 'content.map') state.needs.add('business');

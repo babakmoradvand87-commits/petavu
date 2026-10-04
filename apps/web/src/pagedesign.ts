@@ -1,5 +1,7 @@
 import {buildBusinessView} from '@petavu/design/businesscontext';
 export {buildBusinessView,formatHours,contactHref} from '@petavu/design/businesscontext';
+import {isUuid} from '@petavu/shared';
+import type {FormSchemaView} from '@petavu/design/nocode';
 import {createRegistry} from './registry.js';
 /**
  * اتصال صفحه‌ها به درخت طراحی (گام ۲۳؛ §35–۳۸، §103، §161–۱۶۹).
@@ -55,6 +57,7 @@ export interface DesignPageResult {
   readonly weightKb: number;
   readonly findings: readonly Finding[];
   readonly used: boolean;
+  readonly hasForms?:boolean;
 }
 
 const NO_TREE: DesignPageResult = { html: null, hasH1: false, weightKb: 0, findings: [], used: false };
@@ -83,11 +86,13 @@ export async function renderDesignPage(input: DesignPageInput): Promise<DesignPa
     loadMedia(input, scan.assetIds),
   ]);
 
+  const forms=new Map<string,FormSchemaView>();if(scan.needs.has('forms'))for(const form of await context.data.publicForms(input.businessId,requestId)){forms.set(form.form.id,form);forms.set(String(form.form.spec['purpose']),form);}
+  const records=new Map<string,Array<{title:string;url:string}>>();const visit=(nodes:typeof scan.nodes)=>{for(const n of nodes){if(n.component==='data.crud_list'&&isUuid(n.props['definitionId']))records.set(n.props['definitionId'],[]);for(const values of Object.values(n.slots))visit(values);}};visit(scan.nodes);for(const id of records.keys()){const values=await context.data.publicRecords(id,input.businessId,requestId);records.set(id,values.map(v=>({title:v.title,url:v.business_slug?`/b/${encodeURIComponent(v.business_slug)}/c/${encodeURIComponent(v.slug)}`:`/${encodeURIComponent(v.slug)}`})));}
   const rendered = renderTree({
     scan,
     registry,
     strings: input.strings,
-    data,
+    data:{...data,forms,records},
     pageUrl: input.pageUrl,
     locale: context.settings?.default_locale ?? 'fa-IR',
     media: media.size === 0 ? null : (assetId) => media.get(assetId) ?? null,
@@ -115,6 +120,7 @@ export async function renderDesignPage(input: DesignPageInput): Promise<DesignPa
     weightKb: rendered.weightKb,
     findings: rendered.findings,
     used: true,
+    hasForms: scan.needs.has('forms'),
   };
 }
 
@@ -175,7 +181,7 @@ function toBusinessCard(row: PublicBusinessRow): BusinessCardView {
 function toContentCard(row: ContentIndexRow): ContentCardView {
   return {
     title: row.title,
-    url: row.business_slug ? `/${row.slug}` : `/${row.slug}`,
+    url: row.business_slug ? `/b/${encodeURIComponent(row.business_slug)}/c/${encodeURIComponent(row.slug)}` : `/${encodeURIComponent(row.slug)}`,
     summary: null,
     publishedAt: row.published_at ?? null,
   };

@@ -3,9 +3,9 @@
 این پرونده **تولیدشده** است (`npm run audit:security`). منبع حقیقت، پایگاه‌داده است؛
 ویرایش دستی این پرونده بی‌اثر است و در اجرای بعدی بازنویسی می‌شود (§103).
 
-- زمان تولید (UTC): 2026-10-04 09:19
-- جدول‌های دامنه: 94 — همه با RLS فعال: بله
-- سیاست‌ها: 294
+- زمان تولید (UTC): 2026-10-04 10:24
+- جدول‌های دامنه: 98 — همه با RLS فعال: بله
+- سیاست‌ها: 304
 - مجوزها: 61 — دامنه‌ای: 41، پلتفرمی: 20
 
 ## نقش‌های کسب‌وکار
@@ -111,7 +111,9 @@
 | `app.content` | روشن | 8 |
 | `app.content_block` | روشن | 6 |
 | `app.content_category` | روشن | 4 |
+| `app.content_extension` | روشن | 3 |
 | `app.content_review` | روشن | 3 |
+| `app.form_submission` | روشن | 2 |
 | `app.invitation` | روشن | 2 |
 | `app.membership` | روشن | 6 |
 | `app.ownership_transfer` | روشن | 3 |
@@ -133,6 +135,8 @@
 | `auth.user_platform_role` | روشن | 2 |
 | `design.audit` | روشن | 3 |
 | `design.component` | روشن | 2 |
+| `design.definition` | روشن | 3 |
+| `design.definition_revision` | روشن | 2 |
 | `design.page` | روشن | 5 |
 | `design.page_revision` | روشن | 3 |
 | `design.page_template` | روشن | 2 |
@@ -244,9 +248,14 @@
 | `app.content_category` | `content_category_member_write` | ALL | pv_app |
 | `app.content_category` | `content_category_public` | SELECT | pv_public |
 | `app.content_category` | `content_category_reader` | SELECT | pv_reader |
+| `app.content_extension` | `extension_read` | SELECT | pv_app |
+| `app.content_extension` | `extension_reader` | SELECT | pv_reader |
+| `app.content_extension` | `extension_write` | ALL | pv_app |
 | `app.content_review` | `content_review_insert` | INSERT | pv_app |
 | `app.content_review` | `content_review_member_select` | SELECT | pv_app |
 | `app.content_review` | `content_review_reader` | SELECT | pv_reader |
+| `app.form_submission` | `submission_read` | SELECT | pv_app |
+| `app.form_submission` | `submission_reader` | SELECT | pv_reader |
 | `app.invitation` | `invitation_member` | ALL | pv_app |
 | `app.invitation` | `invitation_reader` | SELECT | pv_reader |
 | `app.membership` | `membership_bootstrap_owner` | INSERT | pv_app |
@@ -301,6 +310,11 @@
 | `design.audit` | `design_audit_reader` | SELECT | pv_reader |
 | `design.component` | `component_read` | SELECT | pv_app, pv_public, pv_reader, pv_worker |
 | `design.component` | `component_write` | ALL | pv_app, pv_worker |
+| `design.definition` | `definition_read` | SELECT | pv_app, pv_worker |
+| `design.definition` | `definition_reader` | SELECT | pv_reader |
+| `design.definition` | `definition_write` | ALL | pv_app |
+| `design.definition_revision` | `definition_revision_read` | SELECT | pv_app |
+| `design.definition_revision` | `definition_revision_reader` | SELECT | pv_reader |
 | `design.page` | `page_public_select` | SELECT | pv_public |
 | `design.page` | `page_read_member` | SELECT | pv_app |
 | `design.page` | `page_reader` | SELECT | pv_reader |
