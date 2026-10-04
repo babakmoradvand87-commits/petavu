@@ -4,12 +4,25 @@
     "rootDir": "src",
     "outDir": "dist",
     "composite": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts"
+  ],
   "references": [
-    { "path": "../../packages/shared" },
-    { "path": "../../packages/db" },
-    { "path": "../../packages/seo" }
+    {
+      "path": "../../packages/shared"
+    },
+    {
+      "path": "../../packages/db"
+    },
+    {
+      "path": "../../packages/seo"
+    },
+    {
+      "path": "../../packages/security"
+    }
   ]
 }

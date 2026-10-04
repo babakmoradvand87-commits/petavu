@@ -381,6 +381,11 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
       },
     };
 
+    if (request.method === 'POST' && segments[1] === 'auth' && segments[2] === 'reauth' && segments.length === 3) {
+      const result = await ctx.api('POST', '/api/v1/auth/reauth', { password: form?.['password'] ?? '' });
+      return redirect('/app', request.requestId, [...cookies, flashCookie({ kind: result.status === 200 ? 'success' : 'error', text: result.status === 200 ? 'هویت برای ۱۵ دقیقه تأیید شد.' : describeProblem(result) })]);
+    }
+
     // کنش‌های عمومی پنل عضو: تغییر کسب‌وکار فعال و ساخت کسب‌وکار.
     if (request.surface === 'panel' && request.method === 'POST' && segments[1] === 'switch' && segments.length === 2) {
       const result = await ctx.api('POST', '/api/v1/auth/business', { business_id: form?.['business_id'] ?? '' });

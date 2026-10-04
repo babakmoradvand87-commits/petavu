@@ -3,17 +3,17 @@
 این پرونده با `npm run status -- --write` ساخته می‌شود؛ دستی ویرایش نشود.
 عددها از پایگاه‌داده‌ای خوانده می‌شوند که همین حالا از صفر ساخته، مهاجرت و seed شده است.
 
-- **زمان اندازه‌گیری (UTC):** 2026-10-04 07:44
-- **مهاجرت‌ها:** 23 فایل، 23 اجراشده روی پایگاه‌دادهٔ تازه
-- **Seed:** 8 فایل — 0001_reference.sql, 0002_design_system.sql, 0003_platform_defaults.sql, 0004_automation_rules.sql, 0005_reference_completeness.sql, 0006_site_pages.sql, 0007_budget_routes.sql, 0008_panel_menus.sql
-- **تست‌ها:** 976 مورد در 23 پرونده (وضعیت سبز/سرخ تنها با «npm test» تأیید می‌شود)
+- **زمان اندازه‌گیری (UTC):** 2026-10-04 07:53
+- **مهاجرت‌ها:** 24 فایل، 24 اجراشده روی پایگاه‌دادهٔ تازه
+- **Seed:** 9 فایل — 0001_reference.sql, 0002_design_system.sql, 0003_platform_defaults.sql, 0004_automation_rules.sql, 0005_reference_completeness.sql, 0006_site_pages.sql, 0007_budget_routes.sql, 0008_panel_menus.sql, 0009_admin_permissions.sql
+- **تست‌ها:** 988 مورد در 24 پرونده (وضعیت سبز/سرخ تنها با «npm test» تأیید می‌شود)
 
 ## شمارش‌های پایگاه‌داده
 
 | سنجه | شمار |
 | --- | --- |
 | جدول‌ها | ۹۳ |
-| توابع دامنه | ۱۱۴ |
+| توابع دامنه | ۱۲۲ |
 | سیاست RLS | ۲۹۲ |
 | قید یکپارچگی | ۳۶۴ |
 | ماشه | ۶۰ |
@@ -34,6 +34,7 @@
 
 | پرونده | تعداد تست |
 | --- | --- |
+| `tests/admin.test.mjs` | 12 |
 | `tests/api.test.mjs` | 68 |
 | `tests/automation.test.mjs` | 23 |
 | `tests/coverage.test.mjs` | 20 |

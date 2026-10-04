@@ -7,6 +7,7 @@
  */
 
 import type { RouteDefinition } from '../types.js';
+import { adminRoutes } from './admin.js';
 import { authRoutes } from './auth.js';
 import { automationRoutes } from './automation.js';
 import { businessRoutes } from './businesses.js';
@@ -23,6 +24,7 @@ export const API_PREFIX = '/api/v1';
 
 export const routes: readonly RouteDefinition[] = [
   ...healthRoutes,
+  ...adminRoutes,
   ...authRoutes,
   ...businessRoutes,
   ...contentRoutes,

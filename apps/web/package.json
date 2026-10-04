@@ -15,7 +15,8 @@
   "dependencies": {
     "@petavu/shared": "*",
     "@petavu/db": "*",
-    "@petavu/seo": "*"
+    "@petavu/seo": "*",
+    "@petavu/security": "*"
   },
   "optionalDependencies": {
     "sharp": "0.34.5"

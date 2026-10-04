@@ -52,6 +52,7 @@ import { notModifiedHeaders, securityHeaders } from './headers.js';
 import { createApiClient } from './panel/api.js';
 import { createPanel } from './panel/core.js';
 import { MAX_FORM_BYTES } from './panel/forms.js';
+import { ADMIN_SECTIONS } from './panel/admin.js';
 import { MEMBER_SECTIONS } from './panel/sections.js';
 import { PROXY_RULES, forwardToApi, matchProxyRule } from './proxy.js';
 import { businessPage } from './pages/business.js';
@@ -580,7 +581,7 @@ export function createWebServer(options: WebServerOptions): WebServer {
     if (isPanel && ['GET','HEAD','POST'].includes(method)) {
       if (Buffer.byteLength(input.body ?? '') > MAX_FORM_BYTES) return plain(413, 'payload too large', requestId);
       await getCssAsset();
-      const panel = createPanel({ api: createApiClient({ origin: apiOrigin, logger }), config, assets, theme: await getTheme(), logger, sections: { panel: MEMBER_SECTIONS, admin: {} } });
+      const panel = createPanel({ api: createApiClient({ origin: apiOrigin, logger }), config, assets, theme: await getTheme(), logger, sections: { panel: MEMBER_SECTIONS, admin: ADMIN_SECTIONS } });
       const url = new URL(input.url, site.origin);
       const result = await panel.handle({ surface: site.kind as 'panel' | 'admin', method: method === 'POST' ? 'POST' : 'GET', pathname: privatePath as string, search: url.searchParams, cookie: input.headers?.cookie ?? null, origin: input.headers?.origin ?? null, ip: input.ip ?? '127.0.0.1', userAgent: input.headers?.['user-agent'] ?? null, body: input.body ?? null, contentType: input.headers?.['content-type'] ?? null, requestId });
       return { ...result, cookies: result.cookies };
