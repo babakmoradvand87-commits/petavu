@@ -94,8 +94,8 @@ export const panelRoutes: RouteDefinition[] = [
     role: 'pv_app',
     handler: async (request, scope) => {
       const surface = request.query.get('surface') ?? 'panel';
-      if (surface !== 'panel' && surface !== 'admin') {
-        throw new AppError('validation_failed', { details: { issues: [{ path: 'surface', code: 'not_allowed', allowed: ['panel', 'admin'] }] } });
+      if (!['panel','admin','shop','admin_shop'].includes(surface)) {
+        throw new AppError('validation_failed', { details: { issues: [{ path: 'surface', code: 'not_allowed', allowed: ['panel', 'admin','shop','admin_shop'] }] } });
       }
       const items = await scope.query('select key, label_fa, path, icon_key, availability, planned_step, description from app.panel_menu($1)', [surface]);
       return { body: { surface, items } };

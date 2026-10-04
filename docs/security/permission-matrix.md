@@ -3,17 +3,17 @@
 این پرونده **تولیدشده** است (`npm run audit:security`). منبع حقیقت، پایگاه‌داده است؛
 ویرایش دستی این پرونده بی‌اثر است و در اجرای بعدی بازنویسی می‌شود (§103).
 
-- زمان تولید (UTC): 2026-10-04 15:20
-- جدول‌های دامنه: 102 — همه با RLS فعال: بله
-- سیاست‌ها: 317
-- مجوزها: 61 — دامنه‌ای: 41، پلتفرمی: 20
+- زمان تولید (UTC): 2026-10-04 15:32
+- جدول‌های دامنه: 108 — همه با RLS فعال: بله
+- سیاست‌ها: 331
+- مجوزها: 64 — دامنه‌ای: 44، پلتفرمی: 20
 
 ## نقش‌های کسب‌وکار
 
 | نقش | نام | رتبه | شمار مجوز |
 | --- | --- | --- | --- |
-| `owner` | مالک | 10 | 41 |
-| `admin` | مدیر | 20 | 33 |
+| `owner` | مالک | 10 | 44 |
+| `admin` | مدیر | 20 | 36 |
 | `editor` | ویرایشگر محتوا | 40 | 9 |
 | `marketer` | بازاریاب | 45 | 14 |
 | `member` | عضو | 60 | 6 |
@@ -93,9 +93,12 @@
 | `seo.manage` | seo | — | ● | ● | — | ● | — | — | ● | — | — | — | — |
 | `seo.redirect.manage` | seo | — | ● | ● | — | ● | — | — | ● | — | — | — | — |
 | `shop.discount.manage` | shop | — | ● | ● | — | — | — | — | ● | — | — | — | — |
+| `shop.manage` | shop | بله | ● | ● | — | — | — | — | — | — | — | — | — |
 | `shop.order.manage` | shop | — | ● | ● | — | — | — | — | ● | — | — | — | — |
 | `shop.order.view` | shop | — | ● | ● | — | — | — | — | ● | — | — | — | — |
 | `shop.product.manage` | shop | — | ● | ● | — | — | — | — | ● | — | — | — | — |
+| `shop.purchase` | shop | بله | ● | ● | — | — | — | — | — | — | — | — | — |
+| `shop.view` | shop | — | ● | ● | — | — | — | — | — | — | — | — | — |
 
 ## جدول‌ها، RLS و سیاست‌ها
 
@@ -119,6 +122,12 @@
 | `app.ownership_transfer` | روشن | 3 |
 | `app.role` | روشن | 3 |
 | `app.role_permission` | روشن | 2 |
+| `app.shop_cart` | روشن | 2 |
+| `app.shop_cart_line` | روشن | 2 |
+| `app.shop_order` | روشن | 2 |
+| `app.shop_order_line` | روشن | 2 |
+| `app.shop_product` | روشن | 4 |
+| `app.stock_movement` | روشن | 2 |
 | `auth.app_user` | روشن | 5 |
 | `auth.credential` | روشن | 1 |
 | `auth.device` | روشن | 4 |
@@ -276,6 +285,20 @@
 | `app.role` | `role_write_member` | ALL | pv_app |
 | `app.role_permission` | `role_permission_member` | ALL | pv_app |
 | `app.role_permission` | `role_permission_read` | SELECT | pv_app, pv_reader |
+| `app.shop_cart` | `cart_app` | ALL | pv_app |
+| `app.shop_cart` | `cart_reader` | SELECT | pv_reader |
+| `app.shop_cart_line` | `cart_line_app` | ALL | pv_app |
+| `app.shop_cart_line` | `cart_line_reader` | SELECT | pv_reader |
+| `app.shop_order` | `order_party` | SELECT | pv_app |
+| `app.shop_order` | `order_reader` | SELECT | pv_reader |
+| `app.shop_order_line` | `order_line_party` | SELECT | pv_app |
+| `app.shop_order_line` | `order_line_reader` | SELECT | pv_reader |
+| `app.shop_product` | `product_app_read` | SELECT | pv_app |
+| `app.shop_product` | `product_app_write` | ALL | pv_app |
+| `app.shop_product` | `product_public` | SELECT | pv_public |
+| `app.shop_product` | `product_reader` | SELECT | pv_reader |
+| `app.stock_movement` | `stock_app` | SELECT | pv_app |
+| `app.stock_movement` | `stock_reader` | SELECT | pv_reader |
 | `auth.app_user` | `app_user_directory_read` | SELECT | pv_app, pv_worker |
 | `auth.app_user` | `app_user_reader` | SELECT | pv_reader |
 | `auth.app_user` | `app_user_self_select` | SELECT | pv_app |

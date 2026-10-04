@@ -7,7 +7,7 @@ import type { Flash } from './kit.js';
 import type { ApiResponse } from './api.js';
 import type { Form } from './forms.js';
 
-export type PanelSurface = 'panel' | 'admin';
+export type PanelSurface = 'panel' | 'admin' | 'shop' | 'admin_shop';
 
 export interface PanelBusiness {
   readonly id: string;

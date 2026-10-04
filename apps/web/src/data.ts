@@ -269,6 +269,7 @@ export interface TaxonomyFilter {
 }
 
 export interface WebData {
+  shopProducts(requestId:string):Promise<Array<{id:string;sku:string;title:string;description:string|null;price_minor:string;currency:string;stock_qty:number;reserved_qty:number}>>;
   searchMixed(query:string,requestId:string):Promise<Array<{id:string;entity_kind:string;title:string;snippet:string;path:string}>>;
   sitemapBusinessContentCount(requestId:string):Promise<number>;
   sitemapBusinessContent(limit:number,offset:number,requestId:string):Promise<Array<{path:string;last_modified:string}>>;
@@ -544,6 +545,7 @@ export function createWebData(options: WebDataOptions): WebData {
   }
 
   return {
+    shopProducts(requestId){return degrade('shop.catalog',[],()=>read(requestId,({dal})=>dal.query<{id:string;sku:string;title:string;description:string|null;price_minor:string;currency:string;stock_qty:number;reserved_qty:number}>(sql`select id,sku,title,description,price_minor::text,currency,stock_qty,reserved_qty from app.shop_product where status='published' order by id limit 100`)));},
     searchMixed(query,requestId){return degrade('search.mixed',[],()=>read(requestId,({dal})=>dal.query<{id:string;entity_kind:string;title:string;snippet:string;path:string}>(sql`select id,entity_kind,title,snippet,path from seo.search_public(${query},24,null,null)`)));},
     sitemapBusinessContentCount(requestId){return degrade('sitemap.businessContentCount',0,()=>read(requestId,async({dal})=>{const row=await dal.maybeOne<{n:number}>(sql`select seo.sitemap_business_content_count()::int n`);return row?.n??0;}));},
     sitemapBusinessContent(limit,offset,requestId){return degrade('sitemap.businessContent',[],()=>read(requestId,({dal})=>dal.query<{path:string;last_modified:string}>(sql`select path,last_modified from seo.sitemap_business_content(${limit},${offset})`)));},

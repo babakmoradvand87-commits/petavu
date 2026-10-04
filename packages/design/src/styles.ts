@@ -850,6 +850,11 @@ th { font-weight: var(--font-weight-semibold, 600); color: var(--color-text-mute
 .studio-preview__frame { display:block; inline-size:100%; block-size:clamp(560px,74vh,1000px); border:1px solid var(--color-border,#DCE0E5); border-radius:var(--radius-lg,16px); background:var(--color-surface,#FFFFFF); }
 .studio-preview { background:var(--color-bg,#fff); color:var(--color-text,#111); border:1px solid var(--color-border,#d6d9df); border-radius:var(--radius-lg,16px); overflow:clip; }
 
+/* طراحی مستقلِ سطوح فروشگاه، با همان tokens و کنترل‌های حداقل ۴۴. */
+.shop-body { background:var(--color-bg-subtle,#F7F8F9); }
+.shop-body .card { border-block-start:3px solid var(--color-accent-400,#F5A623); }
+.panel-body--shop { --panel-bg:var(--color-bg-subtle,#F7F8F9); --panel-accent:var(--color-accent-600,#A96914); }
+.panel-body--admin_shop { --panel-bg:var(--color-brand-900,#03292D); --panel-surface:var(--color-neutral-900,#14171A); --color-text:var(--color-neutral-100,#EDEFF2); --color-text-muted:var(--color-neutral-400,#9AA3AE); }
 @media print {
   .site-header, .site-footer, .skip-link { display: none; }
   body { background: #FFFFFF; color: #000000; }

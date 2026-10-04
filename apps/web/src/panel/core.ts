@@ -37,7 +37,7 @@ export interface PanelDeps {
   readonly config: WebConfig;
   readonly assets: AssetRegistry;
   readonly theme: ThemeBundle;
-  readonly sections: Readonly<Record<PanelSurface, SectionRegistry>>;
+  readonly sections: Readonly<Partial<Record<PanelSurface, SectionRegistry>>>;
 }
 
 export interface PanelRequest {
@@ -214,7 +214,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
     });
 
     const switcher =
-      request.surface === 'panel' && session.businesses.length > 0
+      request.surface !== 'admin' && session.businesses.length > 0
         ? tag('form', { class: 'inline-form', method: 'post', action: '/app/switch' }, [
             voidTag('input', { type: 'hidden', name: '_csrf', value: session.csrf }),
             tag('label', { class: 'visually-hidden', for: 'switch-business' }, 'کسب‌وکار فعال'),
@@ -368,7 +368,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
           path,
           cookie: request.cookie,
           csrf: method === 'GET' ? null : (form?.['_csrf'] ?? session.csrf),
-          businessId: request.surface === 'panel' ? session.activeBusinessId : null,
+          businessId: request.surface !== 'admin' ? session.activeBusinessId : null,
           body,
           origin,
           ip: request.ip,
@@ -390,11 +390,11 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
     }
 
     // کنش‌های عمومی پنل عضو: تغییر کسب‌وکار فعال و ساخت کسب‌وکار.
-    if (request.surface === 'panel' && request.method === 'POST' && segments[1] === 'switch' && segments.length === 2) {
+    if (request.surface !== 'admin' && request.method === 'POST' && segments[1] === 'switch' && segments.length === 2) {
       const result = await ctx.api('POST', '/api/v1/auth/business', { business_id: form?.['business_id'] ?? '' });
       return redirect('/app', request.requestId, [...cookies, flashCookie(result.status === 200 ? { kind: 'success', text: 'کسب‌وکار فعال تغییر کرد.' } : { kind: 'error', text: describeProblem(result) })]);
     }
-    if (request.surface === 'panel' && request.method === 'POST' && segments[1] === 'business' && segments[2] === 'create' && segments.length === 3) {
+    if (request.surface !== 'admin' && request.method === 'POST' && segments[1] === 'business' && segments[2] === 'create' && segments.length === 3) {
       const created = await ctx.api('POST', '/api/v1/businesses', { name: form?.['name'] ?? '', business_type_key: form?.['business_type_key'] ?? '' });
       const id = ((created.json?.['business'] ?? {}) as { id?: string }).id;
       if (created.status !== 201 || !id) return redirect('/app', request.requestId, [...cookies, flashCookie({ kind: 'error', text: describeProblem(created) })]);
@@ -417,7 +417,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
       });
     }
 
-    const section: Section | undefined = deps.sections[request.surface][item.key];
+    const section: Section | undefined = deps.sections[request.surface]?.[item.key];
     if (!section) {
       // منوی داده‌محور «آماده» می‌گوید، ولی کدی نیست: خطای ما، نه کاربر.
       logger.error('بخش منو پیاده‌سازی نشده', { surface: request.surface, key: item.key });
@@ -435,7 +435,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
 
     if (segments.length > 2) return notFoundPage(request, session, menu);
 
-    if (request.surface === 'panel' && !session.activeBusinessId && !['dashboard','account','notifications'].includes(section.key)) return shell(request, session, menu, { title: section.title, main: pageHeader('ابتدا کسب‌وکار را انتخاب کنید'), status: 200, cookies });
+    if (request.surface !== 'admin' && !session.activeBusinessId && !['dashboard','account','notifications'].includes(section.key)) return shell(request, session, menu, { title: section.title, main: pageHeader('ابتدا کسب‌وکار را انتخاب کنید'), status: 200, cookies });
     const rendered = await section.render(ctx);
     return shell(request, session, menu, { title: section.title, main: rendered.html, flash: readFlash(request.cookie), status: rendered.status, cookies: [...cookies, ...(readFlash(request.cookie) ? [flashCookie(null)] : [])] });
   }
