@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "PETAVU — B2B network for the pet and equine industry",
+  "description": "PETAVU \u2014 B2B network for the pet and equine industry",
   "engines": {
     "node": ">=20.11"
   },
@@ -23,7 +23,9 @@
     "status": "node scripts/status.mjs",
     "audit:security": "node scripts/audit-security.mjs",
     "seo:crawl": "node scripts/seo-crawl.mjs",
-    "perf:budget": "node scripts/perf-budget.mjs"
+    "perf:budget": "node scripts/perf-budget.mjs",
+    "start": "node scripts/run.mjs",
+    "worker": "node scripts/run.mjs --worker"
   },
   "devDependencies": {
     "@types/node": "22.18.9",

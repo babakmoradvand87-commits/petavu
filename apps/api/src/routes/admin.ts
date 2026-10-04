@@ -75,3 +75,4 @@ adminRoutes.push(
     if(!items.length)throw new AppError('conflict');await s.query("select app.record_audit('setting.updated','setting',$1,null,null,$2::jsonb)",[r.params.key,JSON.stringify({version:items[0]?.['version']})]);return {body:{item:items[0]}};
  }}
 );
+adminRoutes.push({method:'POST',path:'/api/v1/admin/jobs/:id/retry',name:'admin.retryJob',summary:'بازگرداندن DLQ با نسخه، دلیل، re-auth و audit',tags:['admin'],auth:'session',role:'pv_app',platformPermission:'platform.job.manage',handler:async(r,s)=>{if(!isUuid(r.params['id']))throw new AppError('validation_failed');const v=validator(r.body),version=v.integer('expected_version',{min:1}),reason=v.string('reason',{min:3,max:300});v.done();const [row]=await s.query('select ops.retry_job($1::uuid,$2,$3) job',[r.params['id'],version,reason]);return{status:200,body:row??{}};}});

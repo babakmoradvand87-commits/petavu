@@ -3,20 +3,20 @@
 این پرونده با `npm run status -- --write` ساخته می‌شود؛ دستی ویرایش نشود.
 عددها از پایگاه‌داده‌ای خوانده می‌شوند که همین حالا از صفر ساخته، مهاجرت و seed شده است.
 
-- **زمان اندازه‌گیری (UTC):** 2026-10-04 10:26
-- **مهاجرت‌ها:** 26 فایل، 26 اجراشده روی پایگاه‌دادهٔ تازه
-- **Seed:** 11 فایل — 0001_reference.sql, 0002_design_system.sql, 0003_platform_defaults.sql, 0004_automation_rules.sql, 0005_reference_completeness.sql, 0006_site_pages.sql, 0007_budget_routes.sql, 0008_panel_menus.sql, 0009_admin_permissions.sql, 0010_design_studio.sql, 0011_nocode.sql
-- **تست‌ها:** 1036 مورد در 26 پرونده (وضعیت سبز/سرخ تنها با «npm test» تأیید می‌شود)
+- **زمان اندازه‌گیری (UTC):** 2026-10-04 10:45
+- **مهاجرت‌ها:** 27 فایل، 27 اجراشده روی پایگاه‌دادهٔ تازه
+- **Seed:** 12 فایل — 0001_reference.sql, 0002_design_system.sql, 0003_platform_defaults.sql, 0004_automation_rules.sql, 0005_reference_completeness.sql, 0006_site_pages.sql, 0007_budget_routes.sql, 0008_panel_menus.sql, 0009_admin_permissions.sql, 0010_design_studio.sql, 0011_nocode.sql, 0012_worker.sql
+- **تست‌ها:** 1047 مورد در 27 پرونده (وضعیت سبز/سرخ تنها با «npm test» تأیید می‌شود)
 
 ## شمارش‌های پایگاه‌داده
 
 | سنجه | شمار |
 | --- | --- |
-| جدول‌ها | ۹۷ |
-| توابع دامنه | ۱۶۴ |
-| سیاست RLS | ۳۰۲ |
-| قید یکپارچگی | ۳۶۸ |
-| ماشه | ۷۰ |
+| جدول‌ها | ۹۸ |
+| توابع دامنه | ۱۷۷ |
+| سیاست RLS | ۳۰۵ |
+| قید یکپارچگی | ۳۶۹ |
+| ماشه | ۷۲ |
 | مجوز | ۶۱ |
 | نقش کسب‌وکار | ۶ |
 | نقش پلتفرم | ۵ |
@@ -60,3 +60,4 @@
 | `tests/web-performance.test.mjs` | 76 |
 | `tests/web-seo.test.mjs` | 45 |
 | `tests/web.test.mjs` | 57 |
+| `tests/worker.test.mjs` | 11 |

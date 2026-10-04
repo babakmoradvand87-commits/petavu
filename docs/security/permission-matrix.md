@@ -3,9 +3,9 @@
 این پرونده **تولیدشده** است (`npm run audit:security`). منبع حقیقت، پایگاه‌داده است؛
 ویرایش دستی این پرونده بی‌اثر است و در اجرای بعدی بازنویسی می‌شود (§103).
 
-- زمان تولید (UTC): 2026-10-04 10:24
-- جدول‌های دامنه: 98 — همه با RLS فعال: بله
-- سیاست‌ها: 304
+- زمان تولید (UTC): 2026-10-04 10:34
+- جدول‌های دامنه: 99 — همه با RLS فعال: بله
+- سیاست‌ها: 307
 - مجوزها: 61 — دامنه‌ای: 41، پلتفرمی: 20
 
 ## نقش‌های کسب‌وکار
@@ -169,6 +169,7 @@
 | `ops.restore_test` | روشن | 3 |
 | `ops.retention_policy` | روشن | 3 |
 | `ops.retention_run` | روشن | 3 |
+| `ops.schedule` | روشن | 3 |
 | `ops.security_event` | روشن | 2 |
 | `ops.seed` | روشن | 2 |
 | `ops.setting` | روشن | 9 |
@@ -414,6 +415,9 @@
 | `ops.retention_run` | `retention_run_reader` | SELECT | pv_reader |
 | `ops.retention_run` | `retention_run_staff_select` | SELECT | pv_app |
 | `ops.retention_run` | `retention_run_worker_all` | ALL | pv_worker |
+| `ops.schedule` | `schedule_reader` | SELECT | pv_reader |
+| `ops.schedule` | `schedule_staff` | ALL | pv_app |
+| `ops.schedule` | `schedule_worker` | ALL | pv_worker |
 | `ops.security_event` | `security_event_insert` | INSERT | pv_app, pv_public, pv_worker |
 | `ops.security_event` | `security_event_staff_all` | ALL | pv_app, pv_worker |
 | `ops.seed` | `seed_reader` | SELECT | pv_reader |
