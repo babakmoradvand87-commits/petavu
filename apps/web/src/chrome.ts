@@ -22,6 +22,7 @@ import { renderDocument, textResponse } from './render.js';
 import type { ThemeBundle } from './theme.js';
 import type { FontSetup } from './fonts.js';
 import type { HeadTag } from '@petavu/seo';
+import { DEFAULT_LOCALE, directionFor, type SupportedLocale } from '@petavu/shared';
 
 /** نام پلتفرم؛ ثابتِ برند است، نه دادهٔ کسب‌وکار. */
 export const PLATFORM_NAME = 'پِتاوو';
@@ -44,6 +45,7 @@ export interface DocumentShellInput {
   readonly now: Date;
   readonly bodyClass?: string;
   readonly preloadFont?: boolean;
+  readonly locale?: SupportedLocale;
 }
 
 /**
@@ -57,8 +59,8 @@ export function renderShell(input: DocumentShellInput): string {
   const columns = footerColumns(input.chrome, input.site.kind);
 
   return renderDocument({
-    lang: 'fa-IR',
-    dir: 'rtl',
+    lang: input.locale ?? DEFAULT_LOCALE,
+    dir: directionFor(input.locale ?? DEFAULT_LOCALE),
     headTags: input.headTags,
     stylesheets: [input.stylesheetUrl ?? input.assets.url('app.css')],
     preloadUrls: input.preloadFont === false ? [] : input.fonts.preloadUrls,
