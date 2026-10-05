@@ -28,6 +28,7 @@ import {
   sessionCookie,
 } from '@petavu/security';
 
+import {verifySecondFactor} from './mfa.js';
 import type { RouteDefinition, Scope } from '../types.js';
 import { cookieNames } from '../cookies.js';
 import { validator } from '../validate.js';
@@ -51,6 +52,7 @@ export const authRoutes: RouteDefinition[] = [
       const identifier = body.string('identifier', { min: 3, max: 190 });
       const password = body.string('password', { min: 1, max: 200 });
       const deviceFingerprint = body.optionalString('device_fingerprint', { min: 16, max: 200 });
+      const totp=body.optionalString('totp',{min:6,max:6});const recovery=body.optionalString('recovery_code',{max:64});
       body.done();
 
       const identifierHash = hashIdentifier(identifier);
@@ -137,6 +139,8 @@ export const authRoutes: RouteDefinition[] = [
        * جدول نشست خودش یک خواندن است و مسیر بی‌نام نباید نشست‌ها را بخواند
        * (§54، ADR-0011).
        */
+      const factor=await verifySecondFactor(scope,candidate.user_id,totp,recovery,scope.services.env.isProduction);
+      if(!factor.ok)return{status:401,body:errorPayload(new AppError('unauthenticated',{details:{reason:'second_factor_required_or_invalid'}}),request.requestId)};
       const sessionId = uuidv7(scope.services.now());
       const minted = mintSessionToken(sessionId);
 
@@ -149,8 +153,8 @@ export const authRoutes: RouteDefinition[] = [
         mfa_required: boolean | null;
         user_id: string | null;
       }>(
-        'select session_id, expires_at, absolute_expires_at, display_name, locale, mfa_required, user_id from app.complete_login($1, true, $2, 1::smallint, null, $3, $4, $5, null, $6)',
-        [ticket.ticket_id, minted.secretHash, request.ip, deviceFingerprint, request.userAgent, sessionId],
+        'select session_id, expires_at, absolute_expires_at, display_name, locale, mfa_required, user_id from app.complete_login($1, true, $2, $7::smallint, null, $3, $4, $5, null, $6)',
+        [ticket.ticket_id, minted.secretHash, request.ip, deviceFingerprint, request.userAgent, sessionId,factor.aal],
       );
 
       const session = sessions[0];
@@ -267,7 +271,7 @@ export const authRoutes: RouteDefinition[] = [
         locale: string | null;
         mfa_required: boolean | null;
       }>(
-        'select session_id, expires_at, absolute_expires_at, display_name, locale, mfa_required from app.complete_login($1, true, $2, 1::smallint, null, $3, $4, $5, null, $6)',
+        'select session_id, expires_at, absolute_expires_at, display_name, locale, mfa_required from app.complete_login($1, true, $2, $7::smallint, null, $3, $4, $5, null, $6)',
         [loginTicket.ticket_id, minted.secretHash, request.ip, deviceFingerprint, request.userAgent, sessionId],
       );
 

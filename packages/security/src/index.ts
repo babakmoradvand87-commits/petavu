@@ -11,3 +11,4 @@ export * from './tokens.js';
 export * from './cookies.js';
 export * from './csrf.js';
 export * from './ratelimit.js';
+export * from './mfa.js';

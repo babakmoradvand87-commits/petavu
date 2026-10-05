@@ -11,7 +11,7 @@ import type { ActionOutcome, PanelCtx, Section, SectionRegistry } from './types.
 type Json = Record<string, unknown>;
 const str=(v:unknown):string=>v===null||v===undefined?'':typeof v==='object'?JSON.stringify(v):String(v);
 const rows=(j:Json|null,key='items'):Json[]=>Array.isArray(j?.[key])?j[key] as Json[]:[];
-const reauth=(ctx:PanelCtx)=>card('تأیید دوبارهٔ هویت',formBlock({id:'reauth',action:'/app/auth/reauth',csrf:ctx.csrf,fields:[{name:'password',label:'رمز فعلی',type:'password',autocomplete:'current-password',required:true,hint:'کنش‌های حساس، تأیید مجدد در ۱۵ دقیقهٔ اخیر می‌خواهند.'}],submit:'تأیید هویت'}));
+const reauth=(ctx:PanelCtx)=>card('تأیید دوبارهٔ هویت',formBlock({id:'reauth',action:'/app/auth/reauth',csrf:ctx.csrf,fields:[{name:'password',label:'رمز فعلی',type:'password',autocomplete:'current-password',required:true,hint:'کنش‌های حساس، تأیید مجدد در ۱۵ دقیقهٔ اخیر می‌خواهند.'},{name:'totp',label:'کد authenticator',dir:'ltr',maxLength:6},{name:'recovery_code',label:'کد بازیابی',dir:'ltr',maxLength:64}],submit:'تأیید هویت'}));
 const failed=(title:string,response:{status:number;json:Json|null;cookies:readonly string[]})=>({html:htmlOf(pageHeader(title),card('انجام نشد',emptyNote(describeProblem(response)))),status:response.status});
 const outcome=(path:string,response:{status:number;json:Json|null;cookies:readonly string[]}):ActionOutcome=>({redirect:path,flash:{kind:response.status>=200&&response.status<300?'success':'error',text:response.status>=200&&response.status<300?'ثبت شد.':describeProblem(response)}});
 const COLUMNS:Record<string,readonly [string,string][]>={

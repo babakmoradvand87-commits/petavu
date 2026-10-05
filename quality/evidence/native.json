@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-04T17:00:03.604Z",
+  "engine": "PostgreSQL 18.6 on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+  "concurrent_inventory": {
+    "successes": 1,
+    "failures": 1,
+    "stock": {
+      "stock_qty": 1,
+      "reserved_qty": 1
+    }
+  },
+  "context_isolation": true,
+  "server_version": "18.6",
+  "passed": true
+}

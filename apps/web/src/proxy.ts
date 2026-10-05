@@ -45,6 +45,7 @@ export interface ProxyRule {
  * بیکن سنجش عملکرد: بی‌نام، بی‌کوکی، فقط JSON، حداکثر ۱۶ کیلوبایت (۲۰ نمونه ≈ ۳ کیلوبایت).
  */
 export const PROXY_RULES: readonly ProxyRule[] = [
+  {name:'passkeys.securityCeremony',sites:['panel','admin','shop','admin_shop'],methods:['POST'],path:/^\/api\/v1\/auth\/passkeys\/(?:options|register|auth\/options|auth\/verify)$/,maxBodyBytes:32768,contentTypes:['application/json'],cookies:true},
   {
     name: 'performance.recordVitals',
     sites: ['public'],

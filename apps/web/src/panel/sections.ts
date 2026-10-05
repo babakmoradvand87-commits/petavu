@@ -9,6 +9,7 @@
  * رجیستری مقایسه می‌کند). منو داده است؛ فهرست بخش‌ها نباید بی‌صدا از آن عقب بماند.
  */
 
+import {secureAccount} from './mfa.js';
 import { pagesSection } from './studio.js';
 import { escapeText, raw, tag } from '../html.js';
 import { describeProblem } from './core.js';
@@ -841,6 +842,6 @@ export const MEMBER_SECTIONS: SectionRegistry = {
   relationships,
   integrations,
   notifications,
-  account,
+  account:secureAccount(account),
   settings,
 };

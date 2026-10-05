@@ -1,3 +1,4 @@
+import {verifySecondFactor} from './mfa.js';
 /* §28، §14–17، §24: کنسول از همان DAL و RLS استفاده می‌کند؛ فهرست بسته، نه SQL از داده. */
 import { buildPage, decodeCursor, normalizeLimit } from '@petavu/db';
 import { AppError, isUuid } from '@petavu/shared';
@@ -45,9 +46,9 @@ adminRoutes.push(
     }
   },
   { method:'POST',path:'/api/v1/auth/reauth',name:'auth.reauth',summary:'تأیید مجدد رمز، بدون صدور نشست تازه',tags:['auth'],auth:'session',role:'pv_app',rateLimit:RATE_LIMITS.loginIp,
-    handler:async(r,s)=>{const b=validator(r.body);const password=b.string('password',{min:1,max:200});b.done();const [material]=await s.query<{hash:string|null}>('select app.own_password_hash() as hash');
+    handler:async(r,s)=>{const b=validator(r.body);const password=b.string('password',{min:1,max:200}),totp=b.optionalString('totp',{min:6,max:6}),recovery=b.optionalString('recovery_code',{max:64});b.done();const [material]=await s.query<{hash:string|null}>('select app.own_password_hash() as hash');
       const valid=material?.hash?await s.services.passwords.verify(material.hash,password):false;
-      if(!valid) throw new AppError('unauthenticated');const [done]=await s.query<{ok:boolean}>('select app.complete_reauth($1) as ok',[valid]);return {status:200,body:{reauthenticated:done?.ok===true}};
+      if(!valid) throw new AppError('unauthenticated');const factor=await verifySecondFactor(s,null,totp,recovery,s.services.env.isProduction);if(!factor.ok)throw new AppError('unauthenticated');const [done]=await s.query<{ok:boolean}>('select app.complete_reauth_mfa($1,$2::smallint) as ok',[valid,factor.aal]);return {status:200,body:{reauthenticated:done?.ok===true}};
     }
   },
 );

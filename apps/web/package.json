@@ -13,13 +13,13 @@
     "subset-fonts": "node scripts/subset-fonts.mjs"
   },
   "dependencies": {
-    "@petavu/shared": "*",
     "@petavu/db": "*",
-    "@petavu/seo": "*",
+    "@petavu/design": "*",
     "@petavu/security": "*",
-    "@petavu/design": "*"
+    "@petavu/seo": "*",
+    "@petavu/shared": "*"
   },
   "optionalDependencies": {
-    "sharp": "0.34.5"
+    "sharp": "0.35.5"
   }
 }

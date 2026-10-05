@@ -163,6 +163,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
       bodyClass: `panel-body panel-body--${request.surface}`,
       header: input.header ?? '',
       main,
+      scripts:request.pathname==='/app/account'&&assets.find('passkeys.js')?[assets.url('passkeys.js')]:[],
       footer: '',
       skip: '<a class="skip-link" href="#main">پرش به محتوای اصلی</a>',
     });
@@ -179,6 +180,8 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
         ? [
             { name: 'identifier', label: 'ایمیل یا موبایل', type: 'text' as const, required: true, autocomplete: 'username', value: options.identifier ?? '', dir: 'ltr' as const },
             { name: 'password', label: 'رمز عبور', type: 'password' as const, required: true, autocomplete: 'current-password' },
+            {name:'totp',label:'کد authenticator (اگر فعال است)',dir:'ltr' as const,maxLength:6},
+            {name:'recovery_code',label:'کد بازیابی به جای authenticator',dir:'ltr' as const,maxLength:64},
           ]
         : [
             { name: 'display_name', label: 'نام شما', type: 'text' as const, required: true, autocomplete: 'name' },
@@ -232,7 +235,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
       tag('form', { class: 'inline-form', method: 'post', action: '/logout' }, [voidTag('input', { type: 'hidden', name: '_csrf', value: session.csrf }), tag('button', { class: 'button button--ghost button--small', type: 'submit' }, 'خروج')].join('')),
     ].join('')));
 
-    const main = tag('div', { class: 'panel-layout' }, [
+    const main = (session.impersonatedBy?tag('aside',{class:'flash flash--error',role:'alert'},'ورود با اختیار کاربر فعال است؛ این یک نشست زمان‌دار و حسابرسی‌شده است.'+actionForm({action:'/app/account/impersonation-stop',csrf:session.csrf,label:'پایان ورود با اختیار'}).__html):'')+tag('div', { class: 'panel-layout' }, [
       tag('nav', { class: 'panel-nav', 'aria-label': 'منوی اصلی' }, tag('details', { class: 'panel-nav__toggle', open: true }, [tag('summary', {}, 'منو'), tag('ul', { class: 'panel-nav__list', role: 'list' }, navItems.join(''))].join(''))),
       tag('div', { class: 'panel-content stack' }, [flashBlock(input.flash ?? null), input.main].join('')),
     ].join(''));
@@ -254,7 +257,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
     if (response.status !== 200 || !response.json) return { session: null, unavailable: false };
 
     const user = (response.json['user'] ?? {}) as { id?: string; display_name?: string };
-    const meta = (response.json['session'] ?? {}) as { id?: string; platform_role?: string | null };
+    const meta = (response.json['session'] ?? {}) as { id?: string; platform_role?: string | null;impersonated_by?:string|null };
     const businesses = Array.isArray(response.json['businesses']) ? (response.json['businesses'] as Array<Record<string, unknown>>) : [];
     if (typeof user.id !== 'string' || typeof response.json['csrf_token'] !== 'string') return { session: null, unavailable: false };
 
@@ -264,6 +267,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
         userId: user.id,
         displayName: String(user.display_name ?? ''),
         platformRole: typeof meta.platform_role === 'string' ? meta.platform_role : null,
+        impersonatedBy:typeof meta.impersonated_by==='string'?meta.impersonated_by:null,
         activeBusinessId: typeof response.json['active_business_id'] === 'string' ? (response.json['active_business_id'] as string) : null,
         businesses: businesses.flatMap((business): PanelBusiness[] =>
           typeof business['id'] === 'string' ? [{ id: business['id'] as string, name: String(business['name'] ?? ''), slug: typeof business['slug'] === 'string' ? (business['slug'] as string) : null, role_key: typeof business['role_key'] === 'string' ? (business['role_key'] as string) : null }] : [],
@@ -316,7 +320,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
       if (!form) return authPage(request, mode, { error: 'اطلاعات فرم نامعتبر است.', status: 400 });
       const payload =
         mode === 'login'
-          ? { identifier: form['identifier'] ?? '', password: form['password'] ?? '' }
+          ? { identifier: form['identifier'] ?? '', password: form['password'] ?? '',...(form['totp']?{totp:form['totp']}:{}),...(form['recovery_code']?{recovery_code:form['recovery_code']}:{}) }
           : { identifier: form['identifier'] ?? '', password: form['password'] ?? '', display_name: form['display_name'] ?? '' };
       const result = await api.call({ method: 'POST', path: mode === 'login' ? '/api/v1/auth/login' : '/api/v1/auth/register', body: payload, origin, ip: request.ip, requestId: request.requestId, userAgent: request.userAgent });
       if (result.status === 200 || result.status === 201) return redirect('/app', request.requestId, result.cookies);
@@ -385,7 +389,7 @@ export function createPanel(deps: PanelDeps): { handle(request: PanelRequest): P
     };
 
     if (request.method === 'POST' && segments[1] === 'auth' && segments[2] === 'reauth' && segments.length === 3) {
-      const result = await ctx.api('POST', '/api/v1/auth/reauth', { password: form?.['password'] ?? '' });
+      const result = await ctx.api('POST', '/api/v1/auth/reauth', { password: form?.['password'] ?? '',...(form?.['totp']?{totp:form['totp']}:{}),...(form?.['recovery_code']?{recovery_code:form['recovery_code']}:{}) });
       return redirect('/app', request.requestId, [...cookies, flashCookie({ kind: result.status === 200 ? 'success' : 'error', text: result.status === 200 ? 'هویت برای ۱۵ دقیقه تأیید شد.' : describeProblem(result) })]);
     }
 

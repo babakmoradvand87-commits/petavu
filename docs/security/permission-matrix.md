@@ -3,9 +3,9 @@
 این پرونده **تولیدشده** است (`npm run audit:security`). منبع حقیقت، پایگاه‌داده است؛
 ویرایش دستی این پرونده بی‌اثر است و در اجرای بعدی بازنویسی می‌شود (§103).
 
-- زمان تولید (UTC): 2026-10-04 15:32
-- جدول‌های دامنه: 108 — همه با RLS فعال: بله
-- سیاست‌ها: 331
+- زمان تولید (UTC): 2026-10-05 02:28
+- جدول‌های دامنه: 109 — همه با RLS فعال: بله
+- سیاست‌ها: 332
 - مجوزها: 64 — دامنه‌ای: 44، پلتفرمی: 20
 
 ## نقش‌های کسب‌وکار
@@ -129,6 +129,7 @@
 | `app.shop_product` | روشن | 4 |
 | `app.stock_movement` | روشن | 2 |
 | `auth.app_user` | روشن | 5 |
+| `auth.challenge` | روشن | 1 |
 | `auth.credential` | روشن | 1 |
 | `auth.device` | روشن | 4 |
 | `auth.identity` | روشن | 3 |
@@ -304,6 +305,7 @@
 | `auth.app_user` | `app_user_self_select` | SELECT | pv_app |
 | `auth.app_user` | `app_user_self_update` | UPDATE | pv_app |
 | `auth.app_user` | `app_user_signup_insert` | INSERT | pv_app, pv_public |
+| `auth.challenge` | `challenge_closed` | ALL | pv_app, pv_public |
 | `auth.credential` | `credential_staff_select` | SELECT | pv_app, pv_worker |
 | `auth.device` | `device_insert_login` | INSERT | pv_app, pv_public |
 | `auth.device` | `device_reader` | SELECT | pv_reader |

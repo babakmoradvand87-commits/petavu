@@ -793,7 +793,7 @@ th { font-weight: var(--font-weight-semibold, 600); color: var(--color-text-mute
 
 /* §26–28: پنج سطح مستقل؛ پنلْ چیدمان و توکن‌های معنایی خودش را دارد. */
 .panel-body { --panel-bg: var(--color-neutral-50, #F7F8F9); --panel-surface: var(--color-neutral-0, #FFFFFF); background: var(--panel-bg); }
-.panel-body--admin { --panel-bg: var(--color-neutral-1000, #0B0D0F); --panel-surface: var(--color-neutral-900, #14171A); --color-text: var(--color-neutral-100, #EDEFF2); --color-text-muted: var(--color-neutral-400, #9AA3AE); --color-border: var(--color-neutral-700, #343A42); --color-text-inverse: var(--color-neutral-0, #FFFFFF); }
+.panel-body--admin { --color-surface:var(--color-neutral-900,#14171A); --color-bg-subtle:var(--color-neutral-1000,#0B0D0F); --panel-bg: var(--color-neutral-1000, #0B0D0F); --panel-surface: var(--color-neutral-900, #14171A); --color-text: var(--color-neutral-100, #EDEFF2); --color-text-muted: var(--color-neutral-400, #9AA3AE); --color-border: var(--color-neutral-700, #343A42); --color-text-inverse: var(--color-neutral-0, #FFFFFF); }
 .panel-top { background: var(--panel-surface); border-block-end: 1px solid var(--color-border); }
 .panel-top__inner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3, 12px); padding: var(--space-4, 16px); }
 .panel-top__surface { font-size: var(--font-size-xs, 12px); color: var(--color-text-muted); }
@@ -854,7 +854,7 @@ th { font-weight: var(--font-weight-semibold, 600); color: var(--color-text-mute
 .shop-body { background:var(--color-bg-subtle,#F7F8F9); }
 .shop-body .card { border-block-start:3px solid var(--color-accent-400,#F5A623); }
 .panel-body--shop { --panel-bg:var(--color-bg-subtle,#F7F8F9); --panel-accent:var(--color-accent-600,#A96914); }
-.panel-body--admin_shop { --panel-bg:var(--color-brand-900,#03292D); --panel-surface:var(--color-neutral-900,#14171A); --color-text:var(--color-neutral-100,#EDEFF2); --color-text-muted:var(--color-neutral-400,#9AA3AE); }
+.panel-body--admin_shop { --color-surface:var(--color-neutral-900,#14171A); --color-bg-subtle:var(--color-neutral-1000,#0B0D0F); --panel-bg:var(--color-brand-900,#03292D); --panel-surface:var(--color-neutral-900,#14171A); --color-text:var(--color-neutral-100,#EDEFF2); --color-text-muted:var(--color-neutral-400,#9AA3AE); }
 @media print {
   .site-header, .site-footer, .skip-link { display: none; }
   body { background: #FFFFFF; color: #000000; }

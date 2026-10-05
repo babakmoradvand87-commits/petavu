@@ -561,11 +561,12 @@ describe('مجوز و ایزوله‌سازی (§14–۱۷، §54)', () => {
     assert.equal(stale.status, 412);
     assert.equal(stale.body.error.code, 'precondition_failed');
 
+    const [current]=await engine.query('select version from app.business where id=$1',[businessId]);
     const fresh = await request(`/api/v1/businesses/${businessId}`, {
       method: 'PATCH',
       jar: alice.jar,
       headers: { 'x-business-id': businessId, 'x-csrf-token': alice.csrf },
-      body: { expected_version: 1, name: 'کلینیک دامپزشکی شریف تهران' },
+      body: { expected_version: current.version, name: 'کلینیک دامپزشکی شریف تهران' },
     });
     assert.equal(fresh.status, 200);
     assert.equal(fresh.body.business.name, 'کلینیک دامپزشکی شریف تهران');
@@ -603,11 +604,12 @@ describe('محتوا: گذر وضعیت فقط از تابع دامنه (§23)',
   });
 
   test('فیلد status در ویرایش وجود ندارد؛ وضعیت تکان نمی‌خورد', async () => {
+    const [row] = await engine.query('select version from app.content where id=$1', [contentId]);
     const response = await request(`/api/v1/businesses/${businessId}/content/${contentId}`, {
       method: 'PATCH',
       jar: alice.jar,
       headers: { 'x-business-id': businessId, 'x-csrf-token': alice.csrf },
-      body: { expected_version: 1, title: 'واکسن سگ و گربه (بازنگری‌شده)', status: 'published' },
+      body: { expected_version: row.version, title: 'واکسن سگ و گربه (بازنگری‌شده)', status: 'published' },
     });
     assert.equal(response.status, 200);
     assert.equal(response.body.content.status, 'draft', 'status نباید از مسیر ویرایش تغییر کند');

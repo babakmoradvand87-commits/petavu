@@ -1,0 +1,2230 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:bbcb3ffcaeec5504350a58253f33e5a9",
+  "metadata": {
+    "timestamp": "2026-10-05T02:27:49.025Z",
+    "component": {
+      "name": "petavu",
+      "version": "0.1.0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "apps/api",
+      "version": "0.1.0",
+      "hashes": [],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "apps/web",
+      "version": "0.1.0",
+      "hashes": [],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "apps/worker",
+      "version": "0.1.0",
+      "hashes": [],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/client-sesv2",
+      "version": "3.1146.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-3sMaymLxzaP1Ldqmu8mU4Uj2qLMDl8hHb3WYiM+H2fFHOnpTGVSToB5s15qCb0sAWqbXmFf+0vBLfwazpB8LzA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/core",
+      "version": "3.978.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-LbY9aGsEiznDWmUc30Nwv3aIX/+dbwTx8KfS0yOC3NPYMO+O91e6jkT1azf34FwjOndq8/Q+RcVVZz5xnerwdg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/credential-provider-env",
+      "version": "3.972.72",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-xTKO/FWJPozTIXbozVnVGoNBhaGba8TBcx+KyUjRVeOlXE+dUc7GTR1cLvu0uTdIdmemzaFbqqCshXeZA1fZew=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/credential-provider-http",
+      "version": "3.972.74",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-u91E/hT8f4d1xy0Jl7VG4nVKJ3lxbrZkoBTeSVoJdWBiSEUMwMS/9+e0H/aJVQV//Lt5wuzP+E69v4aRSsNTmw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/credential-provider-ini",
+      "version": "3.973.17",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-ged4KXdBkvIC81bLvNHHuQKdKak/VXhQTR1NWYTTqW0474nlmsxy9O/vlgTIohDDWH3xpBdtVMZRyjb+DnocDA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/credential-provider-login",
+      "version": "3.972.79",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-L+Z85anONJd8MaiuraO4wRxATCdEejBZ3K3eymzWI5JPXa9sOS9CkIm72PBKqXKX+Z9p9NGMX5AIMXm0LEflgw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/credential-provider-node",
+      "version": "3.972.84",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-oHt854odINVwzwsh+c5x69j0ajm4DbqqqVJ+O1ECsCIZeMDAbzFpXItaqP7UZstJj/ATdTk/KFSH0LaNAgV+kA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/credential-provider-process",
+      "version": "3.972.72",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-rLIp2xbMjX/k9/od7APpqq1ZgXXnV0pOL1Th3ZsL8Wu0TRtBsDTVS8iPqcfRFcHakFxPvR04OSTv2ka2qOb/2A=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/credential-provider-sso",
+      "version": "3.973.16",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-IGihaJfFZYacJJr/odqILCoK7W/mvrZ7cuK7ECn3sAu4vLC6u0V8bS7mCGbdugJ8Aum2tnvqmx0F2MRFp2rn9g=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/credential-provider-web-identity",
+      "version": "3.972.78",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-/y9WvNtlcPBGLR0qc1a+9J/xtYZfVczvLUOuXaVWylzttH7ewsxwHtjmiJSolNrVSDorIxHGHMU61CbonRkmwA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/nested-clients",
+      "version": "3.997.46",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-oRxtBcka/JGHGs9l9p9IVajGoTP8vTPmoAzdHGy4Qcy9P5vPnDf6nhIeM/COQNY9k/OahImTRaLkHftoXvfcmQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/signature-v4-multi-region",
+      "version": "3.996.47",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Zk08macMvQTHzQJCLJVkOlviVoqwYMrpXv4lmLN7b7sAbiMoOK7Go0NYdR5UeF+MW8LIbRmwrNy9u/5VvX1U5g=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/token-providers",
+      "version": "3.1138.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-GpyAr0DD63YOEmYFM6Df+gJuIgC92MMTiBK4FTKfxii5MJ9ge20epR7LyroulscYlG89J+ZB2ivFDPjvfQhzdw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/types",
+      "version": "3.974.6",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-v/clNZzZnDxGyvpHMOGpJKVXFAExJzUNAAjaWGdcx8QAcXLGwTaOkw33p5SHAi0YAioK32xB3hWwOekRVfmfKg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws-sdk/xml-builder",
+      "version": "3.972.41",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-ctjVSyCMegrWfXlx6VqzSBFI6UqmQ5ZlnfMhdLIiWmhoH8UAQxSCP5N3OpG7X3k4LnS7ou74C4mt20+bfTW2aQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@aws/lambda-invoke-store",
+      "version": "0.3.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-sl4Bm6yiMNYrZKkqqDFWN0UfnWhlS8ivKxrYl+6t0gCLrqr8y3B2IqZZbFRkfaVVp7C/baApyh71P+LeE1A2sQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@axe-core/playwright",
+      "version": "4.11.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-70vBT/Ylqpm65RQz2iCG2o0JJCEG/WCNyefTr2xcOcr1CoSee60gNQYUMZZ7YukoKkFLv26I/jjlsvwwp532oQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@electric-sql/pglite",
+      "version": "0.3.11",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-FJtjnEyez8XgmgyE5Ewmx89TGVN+75ZjykFoExApRIbJBMT4dsbsuZkF/YWLuymGDfGFHDACjvENPMEqg4FoWg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@emnapi/core",
+      "version": "1.11.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-zLpS5asjEb7lq8jYLq37N6XKaE41DIexlY1rF/z4/tIl3wo13Sqm28fRyfIsKZD+NZ8mM5RoKkpW/rBcuoSZSg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@emnapi/runtime",
+      "version": "1.11.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@emnapi/wasi-threads",
+      "version": "1.2.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-ELEBe8PsLvvJ6QMr0zLt8ffvOHW/dc1m3CEzNMg7aJUv3bMaoDtw2TXyDAwkYBuroxxuHEwhRTLJSe5sya547g=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@hexagon/base64",
+      "version": "1.1.28",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-lhqDEAvWixy3bZ+UOYbPwUbBkwBq5C1LAJ/xPC8Oi+lL54oyakv/npbA0aU2hgCsx/1NUd4IBvV03+aUBWxerw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/colour",
+      "version": "1.1.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-darwin-arm64",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-QRUlFQ0WxvdWyqqG/WtI3iupfD5rBzmCHXSdPsY91sAtVtTo7Q4cb6zOccZ3gqEqkr0f1As1ehLqmEpDsRf+lg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-darwin-x64",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-+BR255RhDlpygUpOc/Jdt1nT6DQ3XG/ERo5wbcdOf5Q320dKtPCKPLR1LJs9VGXRaMa8l1uUa0tkCNOXiAxZUw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-freebsd-wasm32",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Y/z91nEZ4uIBX5X3nfTovjU9lHNKFYbL2lpHCLVNmXQK03VIZvXBBt0KxbPGp2SdGSF+2mQU4e+hQaWOt86iAw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-freebsd-wasm32/node_modules/@img/sharp-wasm32",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Ptsga1su4tQx+LLF1ECS9U6nz5kmrXKo6XVbtR48Ke3ZRxxgaWBu7IDtEe1quo8hiupwm6WFqxVlXaSf7IINGQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-libvips-darwin-arm64",
+      "version": "1.3.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-5R89nBYiRdUlSWJxPhO+GVtaXzXSxKnRu/xqMn3KTA3L9EB9Oy/P+Nn2f2vlhPuUdy/Zusb2DarbyTpGCfEDuw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-libvips-darwin-x64",
+      "version": "1.3.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-iR2OKH80yi0U+dUplyh3/xdpFvps6YkCwsXenIJxqxR1v9o+xtKTGbS9H7cps+2Vxjc8B1j96p75NmTGjIhtpQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-libvips-linux-arm",
+      "version": "1.3.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-LmRtTsOHuvM2+wlO2Db37dx5MiZhB0FvSunciw48YjdOkZz9KAiRbm8ujeMOA1INqmei5NapFxYEK1D1ZSidmw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-libvips-linux-arm64",
+      "version": "1.3.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Y3dgX/6lE2QhQb+Gxy0WZxfg9MEm/JBjamZpS2IklP7xIQoKN4hzAm7KcMVGtaVDt3neE9OKBC7vAfonA/Lr1A=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-libvips-linux-ppc64",
+      "version": "1.3.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Le6boB8Tai0Nis+gIxIpKx68UDVVIqdR8Tin5Yf1z2LJJQLDJvCDRqRu+jC2qCoD+eIomonmOwB4smBRxfVpYQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-libvips-linux-riscv64",
+      "version": "1.3.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-aHkkIEHPRdQEegJN20MLmGtxYD9R2wQr3Cwpddnu5+YKMt6Uzax7S9h5gpZTo8wyrGuZSlfQ63OevL5mTyOC7Q=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-libvips-linux-s390x",
+      "version": "1.3.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-ra/mB6MikESDUO7Yg+Mi95bFBb9GsObURuhnOv3OqknjGe9sZrG8tCe9q0xSIGrtLgvgw0gKnFWcK4blSgQOuQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-libvips-linux-x64",
+      "version": "1.3.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-GJ//SSXbnwSDes02umB3nDJLFcQzw8a18V8fyhqr6tV515tOEMdImjjxj1AoafMRz56F3PHgftnj1QEKSU1zkw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-libvips-linuxmusl-arm64",
+      "version": "1.3.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-hvulFwtjUcagsis6BBxHwGFwWoNZjgYmULGVrZcyfNbjA8hKILbRxGg15/7w5HDyXHXUos/j6baAWqnCyQ2DWA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-libvips-linuxmusl-x64",
+      "version": "1.3.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-6zXKeE/p39I1AmA3cJG35eyBGNqNddLnUXjhwBnsGjFPWqf5VKkDBEqaEkPDoTEtkxwi2vv8Tcr2mDyP4So7Fg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-linux-arm",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-LEaXK2WdXVK5ykcw0buWyPMsmLLL2vpHLD6yrNSW+JGEL3BZPA4tpKN6iaMc4AxTTAoaX/sU1rOL51lcIz48ZQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-linux-arm64",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-LYVx5JTsOM2CBzmxreh+nl64/3H6Xb09iSLknqH47z2T2DFFxDeFLP5y4dJwe6H7uGQlHPyEEtIqyo3DYsRwdQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-linux-ppc64",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-QVxAAq8evVRI9ia2vqgwrmWucn5Dfv+JdWzj75pD8omHLPSP7f8p20O8jxzjCcuCEQEOtYOZUmX1hkiZ0kdevA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-linux-riscv64",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-LtdreXguaavKODPIfzJ4kffx7UNt1omwtK0rch4EBbbSTXPnxWmYSayXdLJw0fJzQ97kHt1gL/yh4tvU+nCyRQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-linux-s390x",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-UZasTOFiYzotTsGOCu42BfUzP6Tu6Do/947iRm1RsLKvlllxwGcn4RN27LibGWceix4Y+Pmw3jsnTcCQIgWjqA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-linux-x64",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-SxFtLTeJInhAA9Q836kux2vZNeOBQEx658qvbboZScr0wIARym3IcGmW7KpVD5sbVg0Ojy+udFQdayYIZyoNog=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-linuxmusl-arm64",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-9HbMclmI1zlNkFRs3z9/eBtDjfD0sGlrX1z6b1qwmiFY5ElDLh4BC0LPBdVp7z1DXFiKlIcznf+ZlsuZzLxQqg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-linuxmusl-x64",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-4KOphqB035HrVdqLZfCgMzzERrQkkzOwRhl4OAkRO1YCldbaFjySXMaK534Mo0V+LndnlJk+sbUyLeU0ULyD1A=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-webcontainers-wasm32",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-hfhF/FmoQyTUkA0bIKFOtw536BQSeBMe6BF6QyWlrPxT754+TFLaZ7sKKTfvvM0yJgKgaYTwnFCIZ/GuDw5SUA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-webcontainers-wasm32/node_modules/@img/sharp-wasm32",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Ptsga1su4tQx+LLF1ECS9U6nz5kmrXKo6XVbtR48Ke3ZRxxgaWBu7IDtEe1quo8hiupwm6WFqxVlXaSf7IINGQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-win32-arm64",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-X4t7g+7ZA5DKblCBEXGjUqqemj4vczING/5viFwAL8h4N3qYeyjwdCvRLHi4EdOUI+2Z7UFlp1VM+p/AuEtm6Q=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-win32-ia32",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-5Zm82LoBc43nhwNybZlG7Y1KO//Zhsn306fQl29ZOuStHLGTo3BWL83q3cznX0poxSAMuYL1On/BHBxkBeKr6A=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@img/sharp-win32-x64",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-x76eH0vEiHlcMQu8Y8IenntaACtddpT6W0wmXtWrnKcnKI7ME5DdgqhAD6SEWOEl1v2zDvkZDhFA9KnURwpfqg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@levischuck/tiny-cbor",
+      "version": "0.2.11",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@napi-rs/wasm-runtime",
+      "version": "0.2.12",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-t64wIsPEtNd4aUPuTAyeL2ubxATCBGmeluaKXEMAFk/8w6AJIVVkeLKMBpgLW6LU2t5cQxT+env/c6jxbtTQBg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-android-arm-eabi",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-DV/H8p/jt40lrao5z5g6nM9dPNPGEHL+aK6Iy/og+dbL503Uj0AHLqj1Hk9aVUSCNnsDdUEKp4TVMi0YakDYKw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-android-arm64",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-1LKwskau+8O1ktKx7TbK7jx1oMOMt4YEXZOdSNIar1TQKxm6isZ0cRXgHLibPHEcNHgYRsJWDE9zvDGBB17QDg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-darwin-arm64",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-3TTNL/7wbcpNju5YcqUrCgXnXUSbD7ogeAKatzBVHsbpjZQbNb1NDxDjqqrWoTt6XL3z9mJUMGwbAk7zQltHtA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-darwin-x64",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-vNPfkLj5Ij5111UTiYuwgxMqE7DRbOS2y58O2DIySzSHbcnu+nipmRKg+P0doRq6eKIJStyBK8dQi5Ic8pFyDw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-freebsd-x64",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-M8vQZk01qojQfCqQU0/O1j1a4zPPrz93zc9fSINY7Q/6RhQRBCYwDw7ltDCZXg5JRGlSaeS8cUXWyhPGar3cGg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-linux-arm-gnueabihf",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-7EmmEPHLzcu0G2GDh30L6G48CH38roFC2dqlQJmtRCxs6no3tTE/pvgBGatTp/o2n2oyOJcfmgndVFcUpwMnww=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-linux-arm64-gnu",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-6lsYh3Ftbk+HAIZ7wNuRF4SZDtxtFTfK+HYFAQQyW7Ig3LHqasqwfUKRXVSV5tJ+xTnxjqgKzvZSUJCAyIfHew=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-linux-arm64-musl",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-p3YqVMNT/4DNR67tIHTYGbedYmXxW9QlFmF39SkXyEbGQwpgSf6pH457/fyXBIYznTU/smnG9EH+C1uzT5j4hA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-linux-x64-gnu",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-ZM3jrHuJ0dKOhvA80gKJqBpBRmTJTFSo2+xVZR+phQcbAKRlDMSZMFDiKbSTnctkfwNFtjgDdh5g1vaEV04AvA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-linux-x64-musl",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-of5uPqk7oCRF/44a89YlWTEfjsftPywyTULwuFDKyD8QtVZoonrJR6ZWvfFE/6jBT68S0okAkAzzMEdBVWdxWw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-wasm32-wasi",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-U3PzLYKSQYzTERstgtHLd4ZTkOF9co57zTXT77r0cVUsleGZOrd6ut7rHzeWwoJSiHOVxxa0OhG1JVQeB7lLoQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-win32-arm64-msvc",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Eisd7/NM0m23ijrGr6xI2iMocdOuyl6gO27gfMfya4C5BODbUSP7ljKJ7LrA0teqZMdYHesRDzx36Js++/vhiQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-win32-ia32-msvc",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-GsE2ezwAYwh72f9gIjbGTZOf4HxEksb5M2eCaj+Y5rGYVwAdt7C12Q2e9H5LRYxWcFvLH4m4jiSZpQQ4upnPAQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@node-rs/argon2-win32-x64-msvc",
+      "version": "2.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-cJxWXanH4Ew9CfuZ4IAEiafpOBCe97bzoKowHCGk5lG/7kR4WF/eknnBlHW9m8q7t10mKq75kruPLtbSDqgRTw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/asn1-android",
+      "version": "2.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-IHKdYL5MRW76DOQCv2HSE/vUMOf2jqH4E7yhtQYe/xx+RxpPiXfkUdhex0N4/s5crsnXCGftRNzy4RJn1s6CZA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/asn1-cms",
+      "version": "2.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-CkX0H4NCIOMHOU3rh2xXZywinYZ/EnJlaOlJiGI0e5L4XjFqHf4iH30LMbXWChVppdA9ljbanjtzQFOhDNfTWg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/asn1-csr",
+      "version": "2.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-jTPTr/9rxKM+niQLMF3jiAMb0lWHUhUHIuSOhdGCIfpB4FAQYf9SoiXOgxP8bS/68IB+bj+1OHvVnDVCQfVUZw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/asn1-ecc",
+      "version": "2.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-GFd3iOjFrWX+QWH2R2dO5QSJyyRGv9CIBKtRlGlPNCvb2RvmCbBDexe91MJgV76c69d998Xsa+CvuQ98seoiPg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/asn1-pfx",
+      "version": "2.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-1y3QK9ZH1IPleAMmRoJlPS10eGkAWnULETW8zDFNUK1ffqpG7zmDY+kYBMYQgwlcQZ2iitLm2z2EBP0xzRXpaA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/asn1-pkcs8",
+      "version": "2.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Ri+BZT9bnwqlHWmhs7lvWjvJRxKev2hA2+4EbZajgeYWCbR8hyv0znF4DhsFouOhMj2nSDV/iGJ6DMQtwITnCw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/asn1-pkcs9",
+      "version": "2.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-XIXsbDQFezYk6fudczkuvawkRD4GNpISGCqfYhdkJlvcGF/RFknU+0DDJagOaJqBf+PdPzk4J9oMqDGcvfR9HQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/asn1-rsa",
+      "version": "2.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-4Jvmwlh3gZAhNZ4/u7JSyLuce9hofOFZ4o3PYKAccCImGnyaT5CMym/ATgvAvqpOYFNW531oPZvJlEBhJy9VfA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/asn1-schema",
+      "version": "2.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-GhokD41lV4gQrrLYm3wCkHfBOnJrnhDMgt4XeMW8gzfE1UdJqIuSwsE+ggf82XBjUXRJylcm+KIGQFa4utIVLw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/asn1-x509",
+      "version": "2.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-ucNVg8+ANveTpMN3fy9lA2alryONdXc2A4cEG2hMniWbvQt+YOZoe8BI80YYNO8FBcuDY1qbDQ4uQGQVraHxGA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/asn1-x509-attr",
+      "version": "2.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-/85GtKOKmgvuSJNlaFfwGWNdRSZZ+hpF02NyM01XiCdzpaZONiBltDyfluFPvFx966CR+ZHNSG1jniwpy07oGg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/utils",
+      "version": "2.0.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-+oL3HPFRIZ1St2K50lWCXiioIgSoxzz7R1J3uF6neO2yl1sgmpgY6XXJH4BdpoDkMWznQTeYF6oWNDZLCdQ4eQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@peculiar/x509",
+      "version": "1.14.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-C2Xj8FZ0uHWeCXXqX5B4/gVFQmtSkiuOolzAgutjTfseNOHT3pUjljDZsTSxXFGgio54bCzVFqmEOUrIVk8RDA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@simplewebauthn/server",
+      "version": "13.3.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-LelX/lcy5cjc15A86i/aNxHhB5eU7dd20QsbP0VLAf9e38+SLlsnqCCyecx3xqfGofhmX05h1J9fKRYWxw+luA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@smithy/core",
+      "version": "3.35.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-i4YPS4B6ts7bjn7UwLnGjiZdprOvHvgGobFZsYK3GIY3E5hIqtj0rReU69BcTpGp+fvtraSNXeG1l+jtJvF55w=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@smithy/credential-provider-imds",
+      "version": "4.5.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@smithy/fetch-http-handler",
+      "version": "5.8.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-ycSJu3tFAQ4v04CBB0agqFMVsSQ1iG3yw+SpgxRqKfaURpQD4CZ8Wn0zPMmSnOuTpTh65Vz+EA0rMrw089wvkA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@smithy/node-http-handler",
+      "version": "4.12.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-ThMkboGeONWXAelq9FvGsuJC4rOi+qyC4/zhUF58xYpxUg5sQKx2VXZYJmtNjr4dSuBJ1HeJXETQILCz3wOHvw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@smithy/signature-v4",
+      "version": "5.7.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-tHy0K0VtqNd5Y7Y41h0a0Lhh0L1GzC08dTWg0F7vRJWFtTENg7IZikf3wQkanYIRdb7ngoIPMTmqgUi401fEeQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@smithy/types",
+      "version": "4.19.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-r7jh49VJxGerfAcTQA6gXcKc+98zOp/tqRwzYjgOE+iSQsP6cEU1hq2QzbuipmP68QtYdY9wKEhiCQZIzHgZ4Q=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@tybys/wasm-util",
+      "version": "0.10.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-W3c4gRigFS0T/Ma4qIYF3GDAc5AQdHb1yL5znJT1Zv1YaD9Kitx656wBjvr19qbiosmZT8lWDM5BEMynUqX65A=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@types/node",
+      "version": "22.18.9",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-5yBtK0k/q8PjkMXbTfeIEP/XVYnz1R9qZJ3yUicdEW7ppdDJfe+MqXEhpqDL3mtn4Wvs1u0KLEG0RXzCgNpsSg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/@types/nodemailer",
+      "version": "7.0.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-ee8fxWqOchH+Hv6MDDNNy028kwvVnLplrStm4Zf/3uHWw5zzo8FoYYeffpJtGs2wWysEumMH0ZIdMGMY1eMAow=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/asn1js",
+      "version": "3.0.10",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-S2s3aOytiKdFRdulw2qPE51MzjzVOisppcVv7jVFR+Kw0kxwvFrDcYA0h7Ndqbmj0HkMIXYWaoj7fli8kgx1eg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/axe-core",
+      "version": "4.11.4",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-KunSNx+TVpkAw/6ULfhnx+HWRecjqZGTOyquAoWHYLRSdK1tB5Ihce1ZW+UY3fj33bYAFWPu7W/GRSmmrCGuxA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/bowser",
+      "version": "2.14.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-tzPjzCxygAKWFOJP011oxFHs57HzIhOEracIgAePE4pqB3LikALKnSzUyU4MGs9/iCEUuHlAJTjTc5M+u7YEGg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/detect-libc",
+      "version": "2.1.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/fsevents",
+      "version": "2.3.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/nodemailer",
+      "version": "10.0.14",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-eJoLFKg55fesSlzUekmfOv/SBXh4KUYT8oiQc2RLP0tfG0rbNMJBK7wgHJwXTJwqyKlSJMz9UzDZ4v+aHEvo8g=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/pg",
+      "version": "8.16.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-enxc1h0jA/aq5oSDMvqyW3q89ra6XIIDZgCX9vkMrnz5DFTw/Ny3Li2lFQ+pt3L6MCgm/5o2o8HW9hiJji+xvw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/pg-cloudflare",
+      "version": "1.4.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-6PQbsFWZcp9EmJEwy5cGQ2La+AMWpP46lgbb8X+U/XsHIUweYDNCpeuKck5RxL2MdVFi7krbbEi5nX4Zh7JhrQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/pg-connection-string",
+      "version": "2.14.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-qR3kGNPBLpCNtz0evbKA0Y/MRFXwSSdT+pTJvYp/bXTcReZbvX1kzF0IyTc1QnxqF7AZbOeBhNL8R5mYQZV/MA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/pg-int8",
+      "version": "1.0.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/pg-pool",
+      "version": "3.14.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-gKtPkFdQPU3DksooVLi9LsjZxrsBUZIpa+7aVx+LV5pNh0KzP4Zleud2po+ConrxbuXGBJ6Hfer6hdgpIBpBaw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/pg-protocol",
+      "version": "1.16.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-p9VOFMiHB/ZbJATetbg+99PxssTVSQRnyuPSQ67mN1+1KBOjZaZ83ZQzltnxPhJwSsC3nwVjJ10DVJlerbFzLg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/pg-types",
+      "version": "2.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/pgpass",
+      "version": "1.0.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/playwright",
+      "version": "1.57.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-ilYQj1s8sr2ppEJ2YVadYBN0Mb3mdo9J0wQ+UuDhzYqURwSoW4n1Xs5vs7ORwgDGmyEh33tRMeS8KhdkMoLXQw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/playwright-core",
+      "version": "1.63.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/playwright/node_modules/playwright-core",
+      "version": "1.57.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-agTcKlMw/mjBWOnD6kFZttAAGHgi/Nw0CZ2o6JqWSbMlI219lAFLZZCyqByTsvVAJq5XA5H8cA6PrvBRpBWEuQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/postgres-array",
+      "version": "2.0.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/postgres-bytea",
+      "version": "1.0.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-5+5HqXnsZPE65IJZSMkZtURARZelel2oXUEO8rH83VS/hxH5vv1uHquPg5wZs8yMAfdv971IU+kcPUczi7NVBQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/postgres-date",
+      "version": "1.0.7",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-suDmjLVQg78nMK2UZ454hAG+OAW+HQPZ6n++TNDUX+L0+uUlLywnoxJKDou51Zm+zTCjrCl0Nq6J9C5hP9vK/Q=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/postgres-interval",
+      "version": "1.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/pvtsutils",
+      "version": "1.3.6",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-PLgQXQ6H2FWCaeRak8vvk1GW462lMxB5s3Jm673N82zI4vqtVUPuZdffdZbPDFRoU8kAhItWFtPCWiPpp4/EDg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/pvutils",
+      "version": "1.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-BbubeCEyTuQjVMakvJQ/Sxbc93F2pwmbsxONT/ZRrwU7Ua38d8unYTwXpTVLAKJ4BDuH9IGztCjQcd/N/39Dvg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/reflect-metadata",
+      "version": "0.2.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/semver",
+      "version": "7.8.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/sharp",
+      "version": "0.35.5",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Ywn4OnzGukp7CDMrp08RQ50YKmuwG47brZgIVPTvBaaAfQlRlygrRqSrxdCiL9M+LlzLBiJ68IR1QqvzHyjC7g=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/split2",
+      "version": "4.2.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/tslib",
+      "version": "2.8.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/tsyringe",
+      "version": "4.10.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-axr3IdNuVIxnaK5XGEUFTu3YmAQ6lllgrvqfEoR16g/HGnYY/6We4oWENtAnzK6/LpJ2ur9PAb80RBt7/U4ugw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/tsyringe/node_modules/tslib",
+      "version": "1.14.1",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/typescript",
+      "version": "5.9.3",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/undici-types",
+      "version": "6.21.0",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/xtend",
+      "version": "4.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "node_modules/zod",
+      "version": "4.1.12",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ=="
+        }
+      ],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "packages/db",
+      "version": "0.1.0",
+      "hashes": [],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "packages/design",
+      "version": "0.1.0",
+      "hashes": [],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "packages/security",
+      "version": "0.1.0",
+      "hashes": [],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "packages/seo",
+      "version": "0.1.0",
+      "hashes": [],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "packages/shared",
+      "version": "0.1.0",
+      "hashes": [],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "petavu",
+      "version": "0.1.0",
+      "hashes": [],
+      "properties": [
+        {
+          "name": "dev",
+          "value": "false"
+        }
+      ]
+    }
+  ]
+}

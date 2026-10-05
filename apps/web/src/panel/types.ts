@@ -21,6 +21,7 @@ export interface PanelSession {
   readonly userId: string;
   readonly displayName: string;
   readonly platformRole: string | null;
+  readonly impersonatedBy?:string|null;
   readonly activeBusinessId: string | null;
   readonly businesses: readonly PanelBusiness[];
   /** توکن CSRF نشست؛ هر فرم تغییردهنده آن را می‌فرستد و API می‌سنجد. */

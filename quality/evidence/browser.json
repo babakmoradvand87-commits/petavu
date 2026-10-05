@@ -1,0 +1,416 @@
+{
+  "checked_at": "2026-10-04T16:21:24.270Z",
+  "browser": "Chromium",
+  "surfaces": [
+    {
+      "surface": "public",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "width": 390,
+        "documentWidth": 390,
+        "lang": "fa-IR",
+        "dir": "rtl",
+        "heads": 1,
+        "fonts": "loaded",
+        "browser_lab": {
+          "lcp": 364,
+          "cls": 0.025546544154616754,
+          "events": []
+        },
+        "targets": [
+          {
+            "tag": "SUMMARY",
+            "w": 48,
+            "h": 44
+          }
+        ]
+      },
+      "violations": [],
+      "errors": []
+    },
+    {
+      "surface": "public",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "status": 200,
+      "metrics": {
+        "width": 1440,
+        "documentWidth": 1440,
+        "lang": "fa-IR",
+        "dir": "rtl",
+        "heads": 1,
+        "fonts": "loaded",
+        "browser_lab": {
+          "lcp": 328,
+          "cls": 0.03477539031103315,
+          "events": []
+        },
+        "targets": []
+      },
+      "violations": [],
+      "errors": []
+    },
+    {
+      "surface": "panel",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "width": 390,
+        "documentWidth": 390,
+        "lang": "fa-IR",
+        "dir": "rtl",
+        "heads": 1,
+        "fonts": "loaded",
+        "browser_lab": {
+          "lcp": 196,
+          "cls": 0.001830874863720319,
+          "events": []
+        },
+        "targets": [
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "BUTTON",
+            "w": 71,
+            "h": 44
+          }
+        ]
+      },
+      "violations": [],
+      "errors": []
+    },
+    {
+      "surface": "panel",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "status": 200,
+      "metrics": {
+        "width": 1440,
+        "documentWidth": 1440,
+        "lang": "fa-IR",
+        "dir": "rtl",
+        "heads": 1,
+        "fonts": "loaded",
+        "browser_lab": {
+          "lcp": 192,
+          "cls": 0.0003110219696421682,
+          "events": []
+        },
+        "targets": [
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "BUTTON",
+            "w": 71,
+            "h": 44
+          }
+        ]
+      },
+      "violations": [],
+      "errors": []
+    },
+    {
+      "surface": "admin",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "width": 390,
+        "documentWidth": 390,
+        "lang": "fa-IR",
+        "dir": "rtl",
+        "heads": 1,
+        "fonts": "loaded",
+        "browser_lab": {
+          "lcp": 148,
+          "cls": 0.0018294791308509555,
+          "events": []
+        },
+        "targets": [
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "BUTTON",
+            "w": 71,
+            "h": 44
+          }
+        ]
+      },
+      "violations": [],
+      "errors": []
+    },
+    {
+      "surface": "admin",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "status": 200,
+      "metrics": {
+        "width": 1440,
+        "documentWidth": 1440,
+        "lang": "fa-IR",
+        "dir": "rtl",
+        "heads": 1,
+        "fonts": "loaded",
+        "browser_lab": {
+          "lcp": 164,
+          "cls": 0.0003108271846064815,
+          "events": []
+        },
+        "targets": [
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "BUTTON",
+            "w": 71,
+            "h": 44
+          }
+        ]
+      },
+      "violations": [],
+      "errors": []
+    },
+    {
+      "surface": "shop",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "width": 390,
+        "documentWidth": 390,
+        "lang": "fa-IR",
+        "dir": "rtl",
+        "heads": 1,
+        "fonts": "loaded",
+        "browser_lab": {
+          "lcp": 180,
+          "cls": 0.01292238737164657,
+          "events": []
+        },
+        "targets": [
+          {
+            "tag": "SUMMARY",
+            "w": 48,
+            "h": 44
+          }
+        ]
+      },
+      "violations": [],
+      "errors": []
+    },
+    {
+      "surface": "shop",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "status": 200,
+      "metrics": {
+        "width": 1440,
+        "documentWidth": 1440,
+        "lang": "fa-IR",
+        "dir": "rtl",
+        "heads": 1,
+        "fonts": "loaded",
+        "browser_lab": {
+          "lcp": 200,
+          "cls": 0.004578057748300058,
+          "events": []
+        },
+        "targets": []
+      },
+      "violations": [],
+      "errors": []
+    },
+    {
+      "surface": "admin_shop",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "metrics": {
+        "width": 390,
+        "documentWidth": 390,
+        "lang": "fa-IR",
+        "dir": "rtl",
+        "heads": 1,
+        "fonts": "loaded",
+        "browser_lab": {
+          "lcp": 172,
+          "cls": 0.001830874863720319,
+          "events": []
+        },
+        "targets": [
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 340,
+            "h": 44
+          },
+          {
+            "tag": "BUTTON",
+            "w": 71,
+            "h": 44
+          }
+        ]
+      },
+      "violations": [],
+      "errors": []
+    },
+    {
+      "surface": "admin_shop",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "status": 200,
+      "metrics": {
+        "width": 1440,
+        "documentWidth": 1440,
+        "lang": "fa-IR",
+        "dir": "rtl",
+        "heads": 1,
+        "fonts": "loaded",
+        "browser_lab": {
+          "lcp": 152,
+          "cls": 0.0003110219696421682,
+          "events": []
+        },
+        "targets": [
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "INPUT",
+            "w": 414,
+            "h": 44
+          },
+          {
+            "tag": "BUTTON",
+            "w": 71,
+            "h": 44
+          }
+        ]
+      },
+      "violations": [],
+      "errors": []
+    }
+  ],
+  "warnings": [],
+  "passed": true
+}

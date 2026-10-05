@@ -235,6 +235,7 @@ export function createPipeline(options: PipelineOptions) {
         }
       }
 
+      if(auth.kind==='session'&&auth.impersonatedBy&&MUTATING_METHODS.includes(matched.method)&&matched.path.startsWith('/api/v1/auth/')&&!['mfa.stopImpersonate','auth.logout','auth.switchBusiness'].includes(matched.name))throw new AppError('forbidden',{details:{reason:'credential_mutation_during_impersonation'}});
       // ۵. کسب‌وکار مؤثر.
       /*
        * هدر خالی یا فقط فاصله، «نبودِ هدر» است — نه یک uuid نامعتبر.
